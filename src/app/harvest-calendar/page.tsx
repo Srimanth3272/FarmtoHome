@@ -6,6 +6,7 @@ import { Calendar, MapPin, Sparkles, Clock, CheckCircle2, ArrowRight, Filter } f
 import { HarvestCalendarClient } from './HarvestCalendarClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface HarvestCalendarPageProps {
   searchParams: {

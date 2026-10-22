@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { SellerDashboardClient } from './SellerDashboardClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export default async function SellerDashboardPage() {
   const [products, harvestListings, orders, categories, farmer] = await Promise.all([

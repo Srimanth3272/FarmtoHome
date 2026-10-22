@@ -6,6 +6,7 @@ import { Recycle, MapPin, Tag, Phone, AlertCircle, Plus, CheckCircle2 } from 'lu
 import { WasteExchangeClient } from './WasteExchangeClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface WasteExchangePageProps {
   searchParams: {

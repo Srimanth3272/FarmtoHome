@@ -7,6 +7,7 @@ import { Clock, Heart, Share2, ArrowLeft, MessageSquare, BookOpen, User, CheckCi
 import { BlogArticleClient } from './BlogArticleClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface BlogArticlePageProps {
   params: { slug: string };

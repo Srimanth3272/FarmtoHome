@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { AdminDashboardClient } from './AdminDashboardClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
   const [users, farmers, products, orders, blogPosts, coupons, wasteListings, commissionPayments] = await Promise.all([

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { Users, MapPin, Star, ShieldCheck, Sprout, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export default async function FarmersDirectoryPage() {
   const farmers = await prisma.farmerProfile.findMany({

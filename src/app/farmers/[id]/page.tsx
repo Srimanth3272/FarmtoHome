@@ -8,6 +8,7 @@ import { MapPin, Star, ShieldCheck, Sprout, Mail, Phone, Calendar, ArrowLeft, Aw
 import { ContactFarmerButton } from './ContactFarmerButton';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface FarmerProfilePageProps {
   params: { id: string };

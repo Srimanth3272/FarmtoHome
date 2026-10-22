@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { Package, Clock, CheckCircle2, ChevronRight, FileText, ShoppingBag, ArrowRight } from 'lucide-react';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export default async function OrdersPage() {
   const orders = await prisma.order.findMany({

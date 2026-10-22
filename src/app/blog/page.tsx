@@ -6,6 +6,7 @@ import { BookOpen, Clock, Heart, Search, Globe, ArrowRight, Sparkles, Tag } from
 import { BlogListClient } from './BlogListClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface BlogPageProps {
   searchParams: {

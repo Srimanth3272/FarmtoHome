@@ -6,6 +6,7 @@ import { SlidersHorizontal, ArrowUpDown, Filter, Sparkles } from 'lucide-react';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface ShopPageProps {
   searchParams: {

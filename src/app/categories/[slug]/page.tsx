@@ -7,6 +7,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { ArrowLeft, Sparkles, Sprout } from 'lucide-react';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface CategoryPageProps {
   params: { slug: string };

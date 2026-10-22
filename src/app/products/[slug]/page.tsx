@@ -9,6 +9,7 @@ import { FarmPassportModal } from '@/components/FarmPassportModal';
 import { ProductDetailClient } from './ProductDetailClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface ProductPageProps {
   params: { slug: string };

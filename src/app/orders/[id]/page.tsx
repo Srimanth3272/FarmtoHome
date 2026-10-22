@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { OrderDetailClient } from './OrderDetailClient';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface OrderDetailPageProps {
   params: { id: string };

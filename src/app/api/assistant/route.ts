@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { askSmartFarmingAssistant } from '@/lib/ai-assistant';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { prompt, language, userState } = await request.json();
