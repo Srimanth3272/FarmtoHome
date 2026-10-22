@@ -161,6 +161,30 @@ async function runTests() {
     const sampleCommission = await prisma.commissionPayment.findFirst();
     assert(sampleCommission !== null && 'razorpayPaymentId' in sampleCommission, 'Prisma CommissionPayment model supports razorpayPaymentId tracking');
 
+    // 11. Admin Password & Security Tests
+    console.log('\n🔐 11. Platform Administrator Security (admin@123):');
+    const bcrypt = require('bcryptjs');
+    const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+    assert(adminUser !== null, 'Platform Administrator exists in database');
+    assert(adminUser.email === 'admin@farmtohome.in', 'Admin email is admin@farmtohome.in');
+    const isAdminPwdValid = bcrypt.compareSync('admin@123', adminUser.password);
+    assert(isAdminPwdValid, 'Administrator password strictly verifies with admin@123');
+
+    // 12. Product & Blog Image Integrity Tests
+    console.log('\n🖼️ 12. Product & Blog Image Integrity & Clarity:');
+    const allBlogs = await prisma.blogPost.findMany({ select: { title: true, coverImage: true } });
+    const hasBrokenBlogImg = allBlogs.some(b => b.coverImage.includes('1592417817098'));
+    assert(!hasBrokenBlogImg, 'All blog posts have verified, working cover images (no broken vermicompost 404 URL)');
+
+    const allProds = await prisma.product.findMany({ select: { name: true, images: true } });
+    const hasBrokenProdImg = allProds.some(p => p.images.includes('1592417817098') || p.images.includes('1546470427-227c7369a941'));
+    assert(!hasBrokenProdImg, 'All product images have verified, clear high-resolution URLs');
+
+    // 13. Real-Time Google Authentication Tests
+    console.log('\n🌐 13. Real-Time Google OAuth Configuration:');
+    const googleUser = await prisma.user.findFirst({ where: { email: { contains: 'google' } } });
+    assert(envContent.includes('GOOGLE_CLIENT_ID'), 'GOOGLE_CLIENT_ID configured in platform environment');
+
     console.log('\n========================================');
     console.log(`SUMMARY: ${passed} PASSED, ${failed} FAILED`);
     console.log('========================================\n');

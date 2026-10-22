@@ -138,8 +138,18 @@ export const BlogArticleClient: React.FC<BlogArticleClientProps> = ({ post, rela
       </div>
 
       {/* Cover Image */}
-      <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-elevated border border-cream-300">
-        <Image src={post.coverImage} alt={post.title} fill priority className="object-cover" />
+      <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-elevated border border-cream-300 bg-cream-100">
+        <Image
+          src={
+            post.coverImage && !post.coverImage.includes('1592417817098')
+              ? post.coverImage
+              : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&auto=format&fit=crop&q=80'
+          }
+          alt={post.title}
+          fill
+          priority
+          className="object-cover"
+        />
       </div>
 
       {/* Main Formatted Content */}

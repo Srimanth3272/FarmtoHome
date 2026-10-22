@@ -26,6 +26,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import RazorpaySettingsCard from '@/components/RazorpaySettingsCard';
+import { GoogleSettingsCard } from '@/components/GoogleSettingsCard';
 
 interface AdminDashboardClientProps {
   users: any[];
@@ -347,7 +348,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
           }`}
         >
           <Key className="w-3.5 h-3.5 text-blue-600" />
-          <span>Razorpay Gateway Credentials</span>
+          <span>Google Auth & Payment Credentials</span>
         </button>
       </div>
 
@@ -932,9 +933,10 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
         </div>
       )}
 
-      {/* Tab: Razorpay Payment Gateway Credentials */}
+      {/* Tab: Google Auth & Razorpay Credentials */}
       {activeTab === 'payment' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
+          <GoogleSettingsCard />
           <RazorpaySettingsCard />
         </div>
       )}

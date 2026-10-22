@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Lock, ArrowRight, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { User, Lock, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { useAuth, DEMO_USERS } from '@/lib/auth-context';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
@@ -14,44 +14,79 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    setTimeout(() => {
-      // Check if admin or farmer by email
-      if (email.includes('admin')) {
-        login(DEMO_USERS.ADMIN);
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const isRoleAdmin = cleanEmail.includes('admin') || cleanEmail === 'admin@farmtohome.in';
+
+      if (isRoleAdmin) {
+        // Enforce admin@123 password
+        if (password.trim() !== 'admin@123') {
+          throw new Error('Invalid administrator password. Please use admin@123');
+        }
+
+        const res = await fetch('/api/auth/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, password: password.trim() }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Admin authentication failed');
+        }
+
+        login(data.user || DEMO_USERS.ADMIN);
         router.push('/admin/dashboard');
-      } else if (email.includes('farmer') || email.includes('patel')) {
+      } else if (cleanEmail.includes('farmer') || cleanEmail.includes('patel')) {
         login(DEMO_USERS.FARMER);
         router.push('/seller/dashboard');
       } else {
         login({
           id: `user-${Date.now()}`,
           name: email.split('@')[0],
-          email,
+          email: cleanEmail,
           role: 'CUSTOMER',
         });
-        router.push('/account');
+        router.push('/shop');
       }
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   const handleQuickDemo = (role: 'CUSTOMER' | 'FARMER' | 'ADMIN') => {
-    switchDemoUser(role);
-    if (role === 'ADMIN') router.push('/admin/dashboard');
-    else if (role === 'FARMER') router.push('/seller/dashboard');
-    else router.push('/shop');
+    if (role === 'ADMIN') {
+      setEmail('admin@farmtohome.in');
+      setPassword('admin@123');
+      switchDemoUser('ADMIN');
+      router.push('/admin/dashboard');
+    } else if (role === 'FARMER') {
+      setEmail('ramesh.patel@farmtohome.in');
+      setPassword('Farm@123');
+      switchDemoUser('FARMER');
+      router.push('/seller/dashboard');
+    } else {
+      setEmail('priya@example.com');
+      setPassword('Customer@123');
+      switchDemoUser('CUSTOMER');
+      router.push('/shop');
+    }
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-12 sm:py-16 space-y-8">
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-4">
-          <Logo />
+          <Logo size="lg" />
         </div>
         <h1 className="font-serif font-black text-2xl sm:text-3xl text-forest-950">
           Sign In to Farm to Home
@@ -90,7 +125,7 @@ export default function LoginPage() {
             className="p-2.5 rounded-xl bg-white border border-forest-200 hover:bg-forest-100 text-center transition-colors shadow-sm"
           >
             <p className="font-bold text-xs text-forest-950">Admin</p>
-            <p className="text-[10px] text-gray-400">Dr. Anand</p>
+            <p className="text-[10px] text-forest-700 font-semibold">admin@123</p>
           </button>
         </div>
       </div>
@@ -111,6 +146,13 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">Email Address:</label>
@@ -119,7 +161,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                placeholder="name@example.com"
+                placeholder="name@example.com (or admin@farmtohome.in)"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600"
@@ -128,7 +170,14 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Password:</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-gray-700">Password:</label>
+              {email.toLowerCase().includes('admin') && (
+                <span className="text-[10px] font-bold text-forest-800 bg-forest-50 px-2 py-0.5 rounded-full border border-forest-200">
+                  Password: admin@123
+                </span>
+              )}
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input

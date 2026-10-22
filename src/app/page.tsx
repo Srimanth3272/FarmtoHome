@@ -521,24 +521,30 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {blogPosts.map((post) => (
-            <Link
-              key={post.id}
-              href={`/blog/${post.slug}`}
-              className="group bg-white rounded-2xl border border-cream-300 shadow-card hover:shadow-elevated transition-all overflow-hidden flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative w-full aspect-[16/10] bg-cream-100 overflow-hidden">
-                  <Image
-                    src={post.coverImage}
-                    alt={post.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-forest-900/90 text-harvest-300 backdrop-blur-sm">
-                    {post.category}
-                  </span>
-                </div>
+          {blogPosts.map((post) => {
+            const safeCoverImage =
+              post.coverImage && !post.coverImage.includes('1592417817098')
+                ? post.coverImage
+                : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&auto=format&fit=crop&q=80';
+
+            return (
+              <Link
+                key={post.id}
+                href={`/blog/${post.slug}`}
+                className="group bg-white rounded-2xl border border-cream-300 shadow-card hover:shadow-elevated transition-all overflow-hidden flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative w-full aspect-[16/10] bg-cream-100 overflow-hidden">
+                    <Image
+                      src={safeCoverImage}
+                      alt={post.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-forest-900/90 text-harvest-300 backdrop-blur-sm">
+                      {post.category}
+                    </span>
+                  </div>
 
                 <div className="p-5 space-y-2">
                   <div className="flex items-center gap-3 text-[11px] text-gray-400">

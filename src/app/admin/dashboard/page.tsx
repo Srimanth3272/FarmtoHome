@@ -1,6 +1,7 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { AdminDashboardClient } from './AdminDashboardClient';
+import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -41,17 +42,19 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
-      <AdminDashboardClient
-        users={users as any}
-        farmers={farmers as any}
-        products={products as any}
-        orders={orders as any}
-        blogPosts={blogPosts as any}
-        coupons={coupons as any}
-        wasteListings={wasteListings as any}
-        commissionPayments={commissionPayments as any}
-        totalRevenue={totalRevenue}
-      />
+      <AdminAuthGuard>
+        <AdminDashboardClient
+          users={users as any}
+          farmers={farmers as any}
+          products={products as any}
+          orders={orders as any}
+          blogPosts={blogPosts as any}
+          coupons={coupons as any}
+          wasteListings={wasteListings as any}
+          commissionPayments={commissionPayments as any}
+          totalRevenue={totalRevenue}
+        />
+      </AdminAuthGuard>
     </div>
   );
 }

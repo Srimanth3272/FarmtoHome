@@ -22,14 +22,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, featured = fa
 
   const isFavorited = isInWishlist(product.id);
 
+  const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&auto=format&fit=crop&q=80';
   let imageList: string[] = [];
   try {
     const parsed = JSON.parse(product.images);
     imageList = Array.isArray(parsed) ? parsed : [product.images];
   } catch {
-    imageList = [product.images || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80'];
+    imageList = [product.images || FALLBACK_PRODUCT_IMAGE];
   }
-  const mainImage = imageList[0] || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80';
+  const rawMainImage = imageList[0] || FALLBACK_PRODUCT_IMAGE;
+  const initialImage = rawMainImage.includes('1592417817098') ? FALLBACK_PRODUCT_IMAGE : rawMainImage;
+  const [imgSrc, setImgSrc] = useState(initialImage);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -52,11 +55,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, featured = fa
         <div className="relative w-full aspect-square bg-cream-100 overflow-hidden">
           <Link href={`/products/${product.slug}`} className="block w-full h-full">
             <Image
-              src={mainImage}
+              src={imgSrc}
               alt={product.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={() => setImgSrc(FALLBACK_PRODUCT_IMAGE)}
             />
           </Link>
 

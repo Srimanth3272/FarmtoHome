@@ -51,18 +51,27 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
+  const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&auto=format&fit=crop&q=80';
   let images: string[] = [];
   try {
     const parsed = JSON.parse(product.images);
-    images = Array.isArray(parsed) ? parsed : [product.images];
+    images = (Array.isArray(parsed) ? parsed : [product.images]).map((img) =>
+      typeof img === 'string' && img.includes('1592417817098') ? FALLBACK_PRODUCT_IMAGE : img
+    );
   } catch {
-    images = [product.images];
+    images = [
+      product.images
+        ? product.images.includes('1592417817098')
+          ? FALLBACK_PRODUCT_IMAGE
+          : product.images
+        : FALLBACK_PRODUCT_IMAGE,
+    ];
   }
   if (images.length === 0) {
-    images = ['https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80'];
+    images = [FALLBACK_PRODUCT_IMAGE];
   }
 
-  const [selectedImage, setSelectedImage] = useState(images[0]);
+  const [selectedImage, setSelectedImage] = useState(images[0] || FALLBACK_PRODUCT_IMAGE);
   const [quantity, setQuantity] = useState(1);
   const [showPassport, setShowPassport] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -126,6 +135,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
               fill
               priority
               className="object-cover"
+              onError={() => setSelectedImage(FALLBACK_PRODUCT_IMAGE)}
             />
             {product.isOrganic && (
               <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-forest-900/90 text-harvest-300 backdrop-blur-md shadow-sm">

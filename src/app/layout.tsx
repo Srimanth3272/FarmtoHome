@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     'farm waste exchange',
     'kisan market',
   ],
+  icons: {
+    icon: '/logo.jpeg',
+    shortcut: '/logo.jpeg',
+    apple: '/logo.jpeg',
+  },
 };
 
 export default function RootLayout({

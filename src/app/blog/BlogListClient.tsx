@@ -128,69 +128,82 @@ export const BlogListClient: React.FC<BlogListClientProps> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/blog/${post.slug}`}
-                className="group bg-white rounded-3xl border border-cream-300 shadow-card hover:shadow-elevated transition-all overflow-hidden flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative aspect-[16/10] bg-cream-100">
-                    <Image
-                      src={post.coverImage}
-                      alt={post.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-forest-900/90 text-harvest-300 backdrop-blur-sm">
-                      {post.category}
-                    </span>
-                    <span className="absolute top-3 right-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/90 text-forest-950 backdrop-blur-sm">
-                      {post.language.toUpperCase()}
-                    </span>
-                  </div>
-
-                  <div className="p-6 space-y-2.5">
-                    <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{post.readTimeMinutes} min read</span>
-                      </span>
-                      <span>•</span>
-                      <span>By {post.authorName}</span>
-                    </div>
-
-                    <h3 className="font-serif font-bold text-base sm:text-lg text-forest-950 group-hover:text-forest-700 transition-colors line-clamp-2 leading-snug">
-                      {post.title}
-                    </h3>
-
-                    <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
-                      {post.excerpt}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-6 pt-0 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 mt-2">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-forest-800 font-semibold">
-                      <Heart className="w-3.5 h-3.5 fill-red-400 text-red-400" />
-                      <span>{post.likesCount}</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>{post.comments ? post.comments.length : 0}</span>
-                    </span>
-                  </div>
-
-                  <span className="text-forest-800 font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                    <span>Read Article</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </div>
-              </Link>
+              <BlogCardItem key={post.id} post={post} />
             ))}
           </div>
         )}
       </div>
     </div>
+  );
+};
+
+export const BlogCardItem: React.FC<{ post: BlogPostItem }> = ({ post }) => {
+  const FALLBACK_BLOG_IMAGE = 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&auto=format&fit=crop&q=80';
+  const initial =
+    post.coverImage && !post.coverImage.includes('1592417817098')
+      ? post.coverImage
+      : FALLBACK_BLOG_IMAGE;
+  const [imgSrc, setImgSrc] = useState(initial);
+
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group bg-white rounded-3xl border border-cream-300 shadow-card hover:shadow-elevated transition-all overflow-hidden flex flex-col justify-between"
+    >
+      <div>
+        <div className="relative aspect-[16/10] bg-cream-100 overflow-hidden">
+          <Image
+            src={imgSrc}
+            alt={post.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={() => setImgSrc(FALLBACK_BLOG_IMAGE)}
+          />
+          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-forest-900/90 text-harvest-300 backdrop-blur-sm">
+            {post.category}
+          </span>
+          <span className="absolute top-3 right-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/90 text-forest-950 backdrop-blur-sm">
+            {post.language.toUpperCase()}
+          </span>
+        </div>
+
+        <div className="p-6 space-y-2.5">
+          <div className="flex items-center gap-2 text-[11px] text-gray-400">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{post.readTimeMinutes} min read</span>
+            </span>
+            <span>•</span>
+            <span>By {post.authorName}</span>
+          </div>
+
+          <h3 className="font-serif font-bold text-base sm:text-lg text-forest-950 group-hover:text-forest-700 transition-colors line-clamp-2 leading-snug">
+            {post.title}
+          </h3>
+
+          <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+            {post.excerpt}
+          </p>
+        </div>
+      </div>
+
+      <div className="p-6 pt-0 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 mt-2">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 text-forest-800 font-semibold">
+            <Heart className="w-3.5 h-3.5 fill-red-400 text-red-400" />
+            <span>{post.likesCount}</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>{post.comments ? post.comments.length : 0}</span>
+          </span>
+        </div>
+
+        <span className="text-forest-800 font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">
+          <span>Read Article</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </span>
+      </div>
+    </Link>
   );
 };

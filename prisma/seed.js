@@ -28,13 +28,14 @@ async function main() {
   await prisma.user.deleteMany();
 
   const hashedPassword = await bcrypt.hash('Farm@123', 10);
+  const adminHashedPassword = await bcrypt.hash('admin@123', 10);
 
   // 1. Users
   const admin = await prisma.user.create({
     data: {
       name: 'Dr. Anand Swaminathan',
       email: 'admin@farmtohome.in',
-      password: hashedPassword,
+      password: adminHashedPassword,
       phone: '+91 98450 11223',
       role: 'ADMIN',
       isVerified: true,
@@ -334,7 +335,7 @@ async function main() {
       slug: 'organic-farming',
       name: 'Organic Soil & Crop Care',
       description: 'Pure vermicompost, aged cow dung manure, neem cake soil amendments, Panchagavya, and natural biofertilizers.',
-      image: 'https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?w=600&auto=format&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&auto=format&fit=crop&q=80',
       icon: 'Leaf',
       banner: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1400&auto=format&fit=crop&q=80',
     },
@@ -378,7 +379,7 @@ async function main() {
       sku: 'F2H-PROD-TOM-01',
       images: JSON.stringify([
         'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1546470427-227c7369a941?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1561136594-7f68413baa99?w=800&auto=format&fit=crop&q=80',
       ]),
       originLocation: 'Anand, Gujarat',
       harvestDate: 'Fresh Morning Harvest (Picked Daily)',
@@ -533,7 +534,7 @@ async function main() {
       stock: 150,
       sku: 'F2H-PROD-VERM-04',
       images: JSON.stringify([
-        'https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=800&auto=format&fit=crop&q=80',
         'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&auto=format&fit=crop&q=80',
       ]),
       originLocation: 'Theni, Tamil Nadu',
@@ -586,7 +587,7 @@ async function main() {
       sku: 'F2H-PROD-NEEM-05',
       images: JSON.stringify([
         'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&auto=format&fit=crop&q=80',
       ]),
       originLocation: 'Anand, Gujarat',
       harvestDate: 'Cold Expelled - Sept 2026',
@@ -760,7 +761,7 @@ async function main() {
       sku: 'F2H-PROD-MAMRA-10',
       images: JSON.stringify([
         'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1568271679468-8850b88f4d1b?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?w=800&auto=format&fit=crop&q=80',
       ]),
       originLocation: 'Pulwama & Anand Organic Collaborative, Kashmir / Gujarat',
       harvestDate: 'Fresh Autumn Harvest - Oct 2026',
@@ -839,7 +840,7 @@ async function main() {
         preOrderPrice: 42.0,
         unit: '1 kg',
         description: 'Naturally sweet deep red native carrots harvested with fresh crisp greens. High beta-carotene, ideal for traditional Gajar ka Halwa and raw cold-pressed salads.',
-        image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80',
+        image: 'https://images.unsplash.com/photo-1447175008436-054170c2e979?w=800&auto=format&fit=crop&q=80',
         season: 'Rabi',
         status: 'UPCOMING',
       },
@@ -913,7 +914,7 @@ async function main() {
         district: 'Anand',
         pincode: '388540',
         collectionTerms: 'Looking to exchange for native heirloom vegetable seeds or neem oil supplies.',
-        image: 'https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?w=800&auto=format&fit=crop&q=80',
+        image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&auto=format&fit=crop&q=80',
         status: 'AVAILABLE',
       },
     ],
@@ -953,7 +954,7 @@ Never drop worms onto bare plastic or fresh food waste.
 
 ### 4. Harvesting Your Vermicast
 Within 45 to 60 days, your bin will transform into a rich, dark brown material resembling fine coffee grounds. Push the finished compost to one side and add fresh kitchen scraps on the other side. Within 48 hours, the worms will migrate to the fresh food, allowing you to harvest the finished compost cleanly!`,
-      coverImage: 'https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?w=1200&auto=format&fit=crop&q=80',
+      coverImage: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&auto=format&fit=crop&q=80',
       authorId: farmerMeenakshi.id,
       authorName: 'Meenakshi Sundaram',
       authorRole: 'Organic Agroforestry Specialist',

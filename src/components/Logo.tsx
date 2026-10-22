@@ -1,68 +1,74 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface LogoProps {
   className?: string;
   variant?: 'light' | 'dark';
+  size?: 'sm' | 'md' | 'lg' | 'hero';
+  showText?: boolean;
+  showTagline?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className = '', variant = 'dark' }) => {
+export const Logo: React.FC<LogoProps> = ({
+  className = '',
+  variant = 'dark',
+  size = 'md',
+  showText = true,
+  showTagline = true,
+}) => {
   const isLight = variant === 'light';
+
+  // Responsive size definitions
+  const sizeConfig = {
+    sm: { img: 'h-8 sm:h-9 w-auto', text: 'text-lg', sub: 'text-[9px]' },
+    md: { img: 'h-10 sm:h-12 w-auto', text: 'text-xl sm:text-2xl', sub: 'text-[10px]' },
+    lg: { img: 'h-14 sm:h-16 w-auto', text: 'text-2xl sm:text-3xl', sub: 'text-xs' },
+    hero: { img: 'h-20 sm:h-24 w-auto', text: 'text-3xl sm:text-4xl', sub: 'text-sm' },
+  };
+
+  const cfg = sizeConfig[size] || sizeConfig.md;
 
   return (
     <Link href="/" className={`group flex items-center gap-3 select-none ${className}`}>
-      {/* House & Leaf Motif Badge */}
-      <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-forest-800 to-forest-950 text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
-        <svg
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6"
-        >
-          {/* House Roof and Chimney outline */}
-          <path
-            d="M5 16L16 6L27 16"
-            stroke="#FDE047"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M8 15V24C8 25.1046 8.89543 26 10 26H22C23.1046 26 24 25.1046 24 24V15"
-            stroke="#86EFAC"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Sprouting leaf growing out from hearth of the home */}
-          <path
-            d="M16 23V14M16 14C16 11 19 10 21 11C21 13 19 16 16 16M16 17C16 15 13 14 11 15C11 17 13 19 16 19"
-            stroke="#4ADE80"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        {/* Subtle glowing halo */}
-        <div className="absolute -inset-0.5 rounded-xl bg-forest-400 opacity-20 blur-sm group-hover:opacity-40 transition-opacity" />
+      {/* Official Farm to Home (F2H) App Logo */}
+      <div
+        className={`relative overflow-hidden rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-105 shrink-0 ${
+          isLight
+            ? 'bg-[#FBF6EE] p-1 border border-cream-200/30'
+            : 'border border-cream-200/80 bg-[#FBF6EE]'
+        }`}
+      >
+        <Image
+          src="/logo.jpeg"
+          alt="Farm to Home (F2H) Logo"
+          width={160}
+          height={120}
+          className={`${cfg.img} object-contain rounded-xl`}
+          priority
+        />
       </div>
 
-      <div className="flex flex-col">
-        <span
-          className={`font-serif font-bold text-xl tracking-tight leading-none ${
-            isLight ? 'text-white' : 'text-forest-950'
-          }`}
-        >
-          Farm to Home
-        </span>
-        <span
-          className={`text-[10px] uppercase font-semibold tracking-widest mt-0.5 ${
-            isLight ? 'text-forest-200' : 'text-earth-600'
-          }`}
-        >
-          Fresh from the Farm
-        </span>
-      </div>
+      {showText && (
+        <div className="flex flex-col">
+          <span
+            className={`font-serif font-black tracking-tight leading-none ${cfg.text} ${
+              isLight ? 'text-white' : 'text-forest-950'
+            }`}
+          >
+            Farm to Home
+          </span>
+          {showTagline && (
+            <span
+              className={`uppercase font-bold tracking-widest mt-1 ${cfg.sub} ${
+                isLight ? 'text-harvest-300' : 'text-earth-600'
+              }`}
+            >
+              Fresh from the Farm
+            </span>
+          )}
+        </div>
+      )}
     </Link>
   );
 };

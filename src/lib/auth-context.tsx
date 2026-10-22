@@ -7,7 +7,7 @@ interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   login: (userData: UserSession) => void;
-  loginWithGoogle: (customEmail?: string, customName?: string) => void;
+  loginWithGoogle: (customEmail?: string, customName?: string, customAvatar?: string, googleSub?: string) => void;
   logout: () => void;
   switchDemoUser: (role: 'CUSTOMER' | 'FARMER' | 'ADMIN') => void;
 }
@@ -90,13 +90,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('f2h_user', JSON.stringify(userData));
   };
 
-  const loginWithGoogle = (customEmail?: string, customName?: string) => {
+  const loginWithGoogle = (customEmail?: string, customName?: string, customAvatar?: string, googleSub?: string) => {
     const googleUser: UserSession = {
-      id: `google-user-${Date.now()}`,
+      id: googleSub ? `google-${googleSub}` : `google-user-${Date.now()}`,
       name: customName || 'Arjun Sharma',
       email: customEmail || 'arjun.sharma@gmail.com',
       role: 'CUSTOMER',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+      avatar: customAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
       phone: '+91 98112 34567',
       isVerified: true,
       provider: 'google',
