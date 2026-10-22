@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(uuid())
+  name          String
+  email         String          @unique
+  password      String
+  phone         String?
+  role          String          @default("CUSTOMER") // CUSTOMER, FARMER, ADMIN, AUTHOR
+  avatar        String?
+  isVerified    Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  farmerProfile FarmerProfile?
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  blogPosts     BlogPost[]
+  blogComments  BlogComment[]
+  wasteListings WasteExchangeListing[]
+  supportTickets SupportTicket[]
+}
+
+model FarmerProfile {
+  id                  String           @id @default(uuid())
+  userId              String           @unique
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farmName            String
+  story               String
+  experienceYears     Int              @default(5)
+  state               String
+  district            String
+  village             String?
+  pincode             String
+  farmSizeAcres       Float?           @default(5.0)
+  farmingMethods      String           // comma separated: "Natural Farming, ZBNF, Desi Cow Manure"
+  certifications      String?          // e.g., "PGS-India Green, NPOP in progress"
+  verificationStatus  String           @default("PENDING") // PENDING, VERIFIED, REJECTED
+  aadharNumber        String?          // 12-digit UIDAI format XXXX-XXXX-XXXX
+  phone               String?          // Farmer contact mobile
+  email               String?          // Farmer contact email
+  idProofDoc          String?          // Uploaded document reference
+  commissionRate      Float            @default(5.0) // 5% platform commission
+  totalCommissionPaid Float            @default(0.0)
+  totalCommissionDue  Float            @default(0.0)
+  rating              Float            @default(4.8)
+  reviewsCount        Int              @default(0)
+  isOrganicCertified  Boolean          @default(false)
+  bannerImage         String?
+  profileImage        String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  products            Product[]
+  harvestListings     HarvestListing[]
+  commissionPayments  CommissionPayment[]
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  landmark     String?
+  city         String
+  state        String
+  pincode      String
+  isDefault    Boolean  @default(false)
+  type         String   @default("HOME") // HOME, WORK, FARM
+  createdAt    DateTime @default(now())
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  name        String
+  description String
+  image       String
+  icon        String
+  banner      String?
+  products    Product[]
+}
+
+model Product {
+  id                   String        @id @default(uuid())
+  slug                 String        @unique
+  name                 String
+  description          String
+  categoryId           String
+  category             Category      @relation(fields: [categoryId], references: [id])
+  farmerId             String
+  farmer               FarmerProfile @relation(fields: [farmerId], references: [id])
+  price                Float
+  farmerBasePrice      Float?
+  commissionAmount     Float?        @default(0.0)
+  approvalStatus       String        @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminRemarks         String?
+  compareAtPrice       Float?
+  unit                 String        // "1 kg", "500 g", "1 pack (50 seeds)", "1 bag (25 kg)", "1 bundle", "1 quintal"
+  minOrderQty          Int           @default(1)
+  stock                Int           @default(50)
+  sku                  String?
+  images               String        // JSON array string of image URLs
+  originLocation       String        // e.g. "Guntur, Andhra Pradesh"
+  harvestDate          String?       // "Fresh Harvest - 2 days ago"
+  storageInstructions  String?
+  shelfLifeDays        Int?
+  isOrganic            Boolean       @default(true)
+  isVerified           Boolean       @default(true)
+  isActive             Boolean       @default(false)
+  certificationDetails String?
+  featured             Boolean       @default(false)
+  rating               Float         @default(4.8)
+  reviewCount          Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  farmPassport         FarmPassport?
+  reviews              Review[]
+  cartItems            CartItem[]
+  wishlistItems        WishlistItem[]
+  orderItems           OrderItem[]
+}
+
+model FarmPassport {
+  id                 String   @id @default(uuid())
+  productId          String   @unique
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batchNumber        String   // e.g., "F2H-2026-AP-0982"
+  farmName           String
+  farmerName         String
+  location           String
+  harvestDate        String
+  declaredPractices  String   // e.g., "Zero Chemical, Desi Cow Jivamrutha, Neem Astra Spray"
+  soilType           String   // e.g., "Rich Black Cotton Soil"
+  waterSource        String   // e.g., "Borewell & Rainwater Harvesting"
+  chemicalFreeYears  Int      @default(3)
+  verificationBadge  String   @default("Locally Verified Farm")
+  labReportUrl       String?
+  traceabilityNotes  String?
+  createdAt          DateTime @default(now())
+}
+
+model HarvestListing {
+  id                  String        @id @default(uuid())
+  farmerId            String
+  farmer              FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  cropName            String
+  category            String        // "Fruits", "Vegetables", "Grains", "Millets"
+  expectedHarvestDate String        // "Nov 10, 2026"
+  expectedQuantity    String        // "500 kg"
+  state               String
+  district            String
+  preOrderAvailable   Boolean       @default(true)
+  preOrderPrice       Float?
+  unit                String        @default("1 kg")
+  description         String
+  image               String
+  season              String        // "Kharif", "Rabi", "Zaid", "Year-round"
+  status              String        @default("UPCOMING") // UPCOMING, HARVESTING, COMPLETED
+  createdAt           DateTime      @default(now())
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id                 String      @id @default(uuid())
+  orderNumber        String      @unique // e.g. "F2H-ORD-88219"
+  userId             String
+  user               User        @relation(fields: [userId], references: [id])
+  status             String      @default("PENDING") // PENDING, CONFIRMED, PROCESSING, DISPATCHED, DELIVERED, CANCELLED
+  totalAmount        Float
+  subtotal           Float
+  shippingFee        Float       @default(40.0)
+  discountAmount     Float       @default(0.0)
+  couponCode         String?
+  paymentMethod      String      // "COD", "UPI", "CARD", "NETBANKING", "RAZORPAY"
+  paymentStatus      String      @default("PAID") // PENDING, PAID, REFUNDED
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
+  razorpaySignature  String?
+  deliveryAddress    String      // JSON string of snapshot address
+  deliverySlot       String?     // e.g. "Morning Slot (7 AM - 11 AM)"
+  estimatedDelivery  String?
+  notes              String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  items              OrderItem[]
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  farmerId        String
+  productName     String
+  productUnit     String
+  priceAtPurchase Float
+  quantity        Int
+  itemTotal       Float
+}
+
+model Review {
+  id               String   @id @default(uuid())
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName         String
+  rating           Int      @default(5)
+  comment          String
+  verifiedPurchase Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}
+
+model BlogPost {
+  id              String        @id @default(uuid())
+  slug            String        @unique
+  title           String
+  excerpt         String
+  content         String        // Full markdown or formatted HTML content
+  coverImage      String
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id])
+  authorName      String
+  authorRole      String        @default("Organic Farmer & Agronomist")
+  category        String        // e.g., "Vermicomposting", "Natural Pest Control", "Soil Health"
+  tags            String        // comma-separated
+  readTimeMinutes Int           @default(5)
+  language        String        @default("en") // en, te, hi
+  isPublished     Boolean       @default(true)
+  isApproved      Boolean       @default(true)
+  likesCount      Int           @default(12)
+  viewsCount      Int           @default(140)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  comments        BlogComment[]
+}
+
+model BlogComment {
+  id        String   @id @default(uuid())
+  postId    String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName  String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model WasteExchangeListing {
+  id              String   @id @default(uuid())
+  sellerId        String
+  seller          User     @relation(fields: [sellerId], references: [id])
+  sellerName      String
+  sellerPhone     String
+  title           String
+  description     String
+  materialType    String   // "CROP_RESIDUE", "COMPOSTABLE_ORGANIC", "COCONUT_HUSK", "WOOD_OFFCUTS", "MANURE", "OTHER"
+  quantity        String   // "2 Trolleys", "500 kg", "10 Bags"
+  listingType     String   // "SALE", "DONATION", "EXCHANGE"
+  price           Float?   // null if donation/exchange
+  state           String
+  district        String
+  pincode         String
+  collectionTerms String   // "Buyer must arrange tractor / pickup from field"
+  image           String
+  status          String   @default("AVAILABLE") // AVAILABLE, RESERVED, COMPLETED
+  createdAt       DateTime @default(now())
+}
+
+model Coupon {
+  id                String   @id @default(uuid())
+  code              String   @unique
+  description       String
+  discountPercent   Int
+  discountMaxAmount Float
+  minOrderAmount    Float
+  isActive          Boolean  @default(true)
+}
+
+model PinCodeDelivery {
+  pincode       String  @id
+  district      String
+  state         String
+  isDeliverable Boolean @default(true)
+  estimatedDays Int     @default(2)
+  standardRate  Float   @default(40.0)
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  priority  String   @default("MEDIUM")
+  createdAt DateTime @default(now())
+}
+
+model CommissionPayment {
+  id             String        @id @default(uuid())
+  farmerId       String
+  farmer         FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  amount         Float
+  paymentMethod     String        @default("UPI") // UPI, RAZORPAY, BANK_TRANSFER, CHEQUE
+  transactionUtr    String?       // 12-digit Indian bank UTR / transaction ID
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  status            String        @default("COMPLETED") // PENDING, COMPLETED, REJECTED
+  notes          String?
+  createdAt      DateTime      @default(now())
+}
+
