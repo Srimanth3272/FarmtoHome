@@ -239,10 +239,10 @@ export const GoogleSettingsCard: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleCopy('https://farmtohome.vercel.app', 'vercel')}
+                onClick={() => handleCopy('https://farmto-home-nu.vercel.app', 'vercel')}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-cream-300 font-mono text-[11px] text-forest-900 hover:bg-cream-100"
               >
-                <span>https://farmtohome.vercel.app (or your Vercel URL)</span>
+                <span>https://farmto-home-nu.vercel.app</span>
                 {copiedOrigin === 'vercel' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-400" />}
               </button>
             </div>
