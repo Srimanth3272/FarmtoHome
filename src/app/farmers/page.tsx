@@ -4,32 +4,41 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { Users, MapPin, Star, ShieldCheck, Sprout, ArrowRight, CheckCircle2 } from 'lucide-react';
 
+import { FALLBACK_FARMERS } from '@/lib/fallback-data';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 export default async function FarmersDirectoryPage() {
-  const farmers = await prisma.farmerProfile.findMany({
-    include: {
-      user: {
-        select: { name: true, avatar: true, email: true },
-      },
-      products: {
-        where: { isActive: true },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          price: true,
-          unit: true,
-          images: true,
+  let farmers: any[] = [];
+  try {
+    const dbFarmers = await prisma.farmerProfile.findMany({
+      include: {
+        user: {
+          select: { name: true, avatar: true, email: true },
+        },
+        products: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            price: true,
+            unit: true,
+            images: true,
+          },
+        },
+        _count: {
+          select: { products: true },
         },
       },
-      _count: {
-        select: { products: true },
-      },
-    },
-    orderBy: { experienceYears: 'desc' },
-  });
+      orderBy: { experienceYears: 'desc' },
+    });
+    farmers = dbFarmers && dbFarmers.length > 0 ? dbFarmers : (FALLBACK_FARMERS as any);
+  } catch (err) {
+    console.error('Database connection notice on FarmersDirectoryPage:', err);
+    farmers = FALLBACK_FARMERS as any;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">

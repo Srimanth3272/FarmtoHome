@@ -25,46 +25,70 @@ import { prisma } from '@/lib/prisma';
 import { ProductCard } from '@/components/ProductCard';
 import { PinCodeChecker } from '@/components/PinCodeChecker';
 import { ProductItem } from '@/lib/types';
+import {
+  FALLBACK_CATEGORIES,
+  FALLBACK_PRODUCTS,
+  FALLBACK_FARMERS,
+  FALLBACK_BLOG_POSTS,
+} from '@/lib/fallback-data';
 
 export const revalidate = 0; // Dynamic server rendering
 
 export default async function HomePage() {
-  // Fetch real data from Prisma database
-  const [products, categories, farmers, blogPosts] = await Promise.all([
-    prisma.product.findMany({
-      where: { isActive: true },
-      include: {
-        category: true,
-        farmer: {
-          include: {
-            user: { select: { name: true, avatar: true } },
-          },
-        },
-        farmPassport: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.category.findMany(),
-    prisma.farmerProfile.findMany({
-      include: {
-        user: { select: { name: true, avatar: true } },
-        products: { take: 3 },
-      },
-      take: 4,
-    }),
-    prisma.blogPost.findMany({
-      where: { isPublished: true },
-      take: 3,
-      orderBy: { viewsCount: 'desc' },
-    }),
-  ]);
+  // Fetch real data from Prisma database with graceful fallback
+  let products: any[] = [];
+  let categories: any[] = [];
+  let farmers: any[] = [];
+  let blogPosts: any[] = [];
 
-  const freshHarvest = products.filter((p) => p.category.slug === 'fresh-produce');
-  const organicManures = products.filter((p) => p.category.slug === 'organic-farming');
+  try {
+    const results = await Promise.all([
+      prisma.product.findMany({
+        where: { isActive: true },
+        include: {
+          category: true,
+          farmer: {
+            include: {
+              user: { select: { name: true, avatar: true } },
+            },
+          },
+          farmPassport: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.category.findMany(),
+      prisma.farmerProfile.findMany({
+        include: {
+          user: { select: { name: true, avatar: true } },
+          products: { take: 3 },
+        },
+        take: 4,
+      }),
+      prisma.blogPost.findMany({
+        where: { isPublished: true },
+        take: 3,
+        orderBy: { viewsCount: 'desc' },
+      }),
+    ]);
+
+    products = results[0] && results[0].length > 0 ? results[0] : (FALLBACK_PRODUCTS as any);
+    categories = results[1] && results[1].length > 0 ? results[1] : (FALLBACK_CATEGORIES as any);
+    farmers = results[2] && results[2].length > 0 ? results[2] : (FALLBACK_FARMERS as any);
+    blogPosts = results[3] && results[3].length > 0 ? results[3] : (FALLBACK_BLOG_POSTS as any);
+  } catch (err) {
+    console.error('Database connection notice (using resilient fallback catalog):', err);
+    products = FALLBACK_PRODUCTS as any;
+    categories = FALLBACK_CATEGORIES as any;
+    farmers = FALLBACK_FARMERS as any;
+    blogPosts = FALLBACK_BLOG_POSTS as any;
+  }
+
+  const freshHarvest = products.filter((p) => p.category?.slug === 'fresh-produce');
+  const organicManures = products.filter((p) => p.category?.slug === 'organic-farming');
   const seedsAndTools = products.filter(
-    (p) => p.category.slug === 'seeds-and-planting' || p.category.slug === 'gardening-tools'
+    (p) => p.category?.slug === 'seeds-and-planting' || p.category?.slug === 'gardening-tools'
   );
-  const woodAndMaterials = products.filter((p) => p.category.slug === 'wood-and-materials');
+  const woodAndMaterials = products.filter((p) => p.category?.slug === 'wood-and-materials');
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20 overflow-hidden">

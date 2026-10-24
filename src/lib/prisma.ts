@@ -12,18 +12,53 @@ function getDatabaseUrl(): string {
     return process.env.DATABASE_URL;
   }
 
-  // SQLite resolution for local dev and Vercel serverless functions
-  const prismaDirDb = path.join(process.cwd(), 'prisma', 'dev.db');
-  const rootDirDb = path.join(process.cwd(), 'dev.db');
+  const isServerless = Boolean(
+    process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT
+  );
 
-  if (fs.existsSync(prismaDirDb)) {
-    return `file:${prismaDirDb}`;
-  } else if (fs.existsSync(rootDirDb)) {
-    return `file:${rootDirDb}`;
+  const candidateSources = [
+    path.join(process.cwd(), 'prisma', 'dev.db'),
+    path.join(process.cwd(), 'dev.db'),
+    path.resolve('./prisma/dev.db'),
+    path.resolve('./dev.db'),
+    path.join(__dirname, '..', '..', 'prisma', 'dev.db'),
+    path.join(__dirname, '..', '..', 'dev.db'),
+    '/var/task/prisma/dev.db',
+    '/var/task/dev.db',
+  ];
+
+  let sourceDb: string | null = null;
+  for (const src of candidateSources) {
+    try {
+      if (fs.existsSync(src)) {
+        sourceDb = src;
+        break;
+      }
+    } catch {
+      // ignore
+    }
   }
 
-  // Fallback for Vercel build time
-  return `file:${prismaDirDb}`;
+  if (isServerless) {
+    const tmpDbPath = '/tmp/dev.db';
+    if (sourceDb) {
+      try {
+        if (!fs.existsSync(tmpDbPath)) {
+          fs.copyFileSync(sourceDb, tmpDbPath);
+        }
+        return `file:${tmpDbPath}`;
+      } catch (err) {
+        console.error('Failed copying SQLite database to /tmp:', err);
+      }
+    }
+    return `file:${tmpDbPath}`;
+  }
+
+  if (sourceDb) {
+    return `file:${sourceDb}`;
+  }
+
+  return `file:${path.join(process.cwd(), 'prisma', 'dev.db')}`;
 }
 
 const resolvedDbUrl = getDatabaseUrl();

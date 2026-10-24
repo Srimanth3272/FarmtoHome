@@ -4,6 +4,11 @@ import { prisma } from '@/lib/prisma';
 import { ProductCard } from '@/components/ProductCard';
 import { SlidersHorizontal, ArrowUpDown, Filter, Sparkles } from 'lucide-react';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import {
+  FALLBACK_CATEGORIES,
+  FALLBACK_PRODUCTS,
+  FALLBACK_FARMERS,
+} from '@/lib/fallback-data';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -56,31 +61,45 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   if (sort === 'price-desc') orderBy = { price: 'desc' };
   if (sort === 'rating') orderBy = { rating: 'desc' };
 
-  const [products, categories, farmers] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy,
-      include: {
-        category: true,
-        farmer: {
-          include: {
-            user: { select: { name: true, avatar: true } },
+  let products: any[] = [];
+  let categories: any[] = [];
+  let farmers: any[] = [];
+
+  try {
+    const results = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy,
+        include: {
+          category: true,
+          farmer: {
+            include: {
+              user: { select: { name: true, avatar: true } },
+            },
           },
+          farmPassport: true,
         },
-        farmPassport: true,
-      },
-    }),
-    prisma.category.findMany({
-      include: {
-        _count: { select: { products: true } },
-      },
-    }),
-    prisma.farmerProfile.findMany({
-      include: {
-        user: { select: { name: true } },
-      },
-    }),
-  ]);
+      }),
+      prisma.category.findMany({
+        include: {
+          _count: { select: { products: true } },
+        },
+      }),
+      prisma.farmerProfile.findMany({
+        include: {
+          user: { select: { name: true } },
+        },
+      }),
+    ]);
+    products = results[0] && results[0].length > 0 ? results[0] : (FALLBACK_PRODUCTS as any);
+    categories = results[1] && results[1].length > 0 ? results[1] : (FALLBACK_CATEGORIES as any);
+    farmers = results[2] && results[2].length > 0 ? results[2] : (FALLBACK_FARMERS as any);
+  } catch (err) {
+    console.error('Database connection notice on ShopPage:', err);
+    products = FALLBACK_PRODUCTS as any;
+    categories = FALLBACK_CATEGORIES as any;
+    farmers = FALLBACK_FARMERS as any;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">

@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { BookOpen, Clock, Heart, Search, Globe, ArrowRight, Sparkles, Tag } from 'lucide-react';
 import { BlogListClient } from './BlogListClient';
 
+import { FALLBACK_BLOG_POSTS } from '@/lib/fallback-data';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -30,13 +32,20 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     ];
   }
 
-  const posts = await prisma.blogPost.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      comments: true,
-    },
-  });
+  let posts: any[] = [];
+  try {
+    const dbPosts = await prisma.blogPost.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        comments: true,
+      },
+    });
+    posts = dbPosts && dbPosts.length > 0 ? dbPosts : (FALLBACK_BLOG_POSTS as any);
+  } catch (err) {
+    console.error('Database connection notice on BlogPage:', err);
+    posts = FALLBACK_BLOG_POSTS as any;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
