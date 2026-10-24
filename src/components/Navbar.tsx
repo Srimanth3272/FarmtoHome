@@ -285,54 +285,6 @@ export const Navbar: React.FC = () => {
                           )}
                         </div>
 
-                        {/* Interactive Demo Switcher */}
-                        <div className="pt-2 border-t border-gray-100">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 mb-1">
-                            Switch Role (Interactive Preview):
-                          </p>
-                          <div className="grid grid-cols-3 gap-1">
-                            <button
-                              onClick={() => {
-                                switchDemoUser('CUSTOMER');
-                                setUserMenuOpen(false);
-                              }}
-                              className={`px-1.5 py-1 rounded text-[10px] font-bold ${
-                                user.role === 'CUSTOMER'
-                                  ? 'bg-forest-800 text-white'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              Customer
-                            </button>
-                            <button
-                              onClick={() => {
-                                switchDemoUser('FARMER');
-                                setUserMenuOpen(false);
-                              }}
-                              className={`px-1.5 py-1 rounded text-[10px] font-bold ${
-                                user.role === 'FARMER'
-                                  ? 'bg-forest-800 text-white'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              Farmer
-                            </button>
-                            <button
-                              onClick={() => {
-                                switchDemoUser('ADMIN');
-                                setUserMenuOpen(false);
-                              }}
-                              className={`px-1.5 py-1 rounded text-[10px] font-bold ${
-                                user.role === 'ADMIN'
-                                  ? 'bg-forest-800 text-white'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              Admin
-                            </button>
-                          </div>
-                        </div>
-
                         <div className="pt-2 border-t border-gray-100">
                           <button
                             onClick={() => {

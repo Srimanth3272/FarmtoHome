@@ -74,12 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (stored) {
         setUser(JSON.parse(stored));
       } else {
-        // Default to Customer Priya for immediate interactive experience
-        setUser(DEMO_USERS.CUSTOMER);
-        localStorage.setItem('f2h_user', JSON.stringify(DEMO_USERS.CUSTOMER));
+        setUser(null);
       }
     } catch {
-      setUser(DEMO_USERS.CUSTOMER);
+      setUser(null);
     } finally {
       setLoading(false);
     }

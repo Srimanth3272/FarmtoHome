@@ -182,8 +182,8 @@ async function runTests() {
 
     // 13. Real-Time Google Authentication Tests
     console.log('\n🌐 13. Real-Time Google OAuth Configuration:');
-    const googleUser = await prisma.user.findFirst({ where: { email: { contains: 'google' } } });
-    assert(envContent.includes('GOOGLE_CLIENT_ID'), 'GOOGLE_CLIENT_ID configured in platform environment');
+    assert(envContent.includes('GOOGLE_CLIENT_ID'), 'GOOGLE_CLIENT_ID defined in platform environment');
+    assert(Boolean(process.env.GOOGLE_CLIENT_SECRET || envContent.match(/GOOGLE_CLIENT_SECRET\s*=\s*["']?GOCSPX-/)), 'User Google Client Secret starting with GOCSPX securely stored in .env');
 
     console.log('\n========================================');
     console.log(`SUMMARY: ${passed} PASSED, ${failed} FAILED`);

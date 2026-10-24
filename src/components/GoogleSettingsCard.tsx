@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { GoogleIcon } from './GoogleSignInButton';
-import { CheckCircle2, AlertCircle, Copy, Check, ExternalLink, Save, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Copy, Check, ExternalLink, Save, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
 
 export const GoogleSettingsCard: React.FC = () => {
   const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
   const [isConfigured, setIsConfigured] = useState(false);
+  const [hasSecret, setHasSecret] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -23,7 +25,9 @@ export const GoogleSettingsCard: React.FC = () => {
       const data = await res.json();
       if (res.ok) {
         setClientId(data.clientId || '');
+        if (data.clientSecret) setClientSecret(data.clientSecret);
         setIsConfigured(Boolean(data.isConfigured));
+        setHasSecret(Boolean(data.hasSecret));
       }
     } catch (err) {
       console.error('Failed to load Google config:', err);
@@ -34,7 +38,7 @@ export const GoogleSettingsCard: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientId.trim()) {
+    if (!clientId.trim() && !clientSecret.trim()) {
       setStatusMessage({ type: 'error', text: 'Please enter a valid Google Client ID' });
       return;
     }
@@ -46,18 +50,22 @@ export const GoogleSettingsCard: React.FC = () => {
       const res = await fetch('/api/auth/google/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: clientId.trim() }),
+        body: JSON.stringify({
+          clientId: clientId.trim(),
+          clientSecret: clientSecret.trim(),
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to save Google Client ID');
+        throw new Error(data.error || 'Failed to save Google credentials');
       }
 
-      setIsConfigured(true);
+      setIsConfigured(Boolean(data.isConfigured));
+      setHasSecret(Boolean(data.hasSecret));
       setStatusMessage({
         type: 'success',
-        text: 'Google Client ID saved to .env & runtime memory! Google Sign-In is now active.',
+        text: 'Google credentials saved to .env & runtime memory! Real-time Google Sign-In is active.',
       });
     } catch (err: any) {
       setStatusMessage({ type: 'error', text: err.message || 'Error updating Google configuration.' });
@@ -81,10 +89,10 @@ export const GoogleSettingsCard: React.FC = () => {
           </div>
           <div>
             <h2 className="font-serif font-black text-xl text-forest-950">
-              Google OAuth 2.0 Sign-In Configuration
+              Real-Time Google OAuth 2.0 Sign-In
             </h2>
             <p className="text-xs text-gray-500">
-              Official Google Identity Services (GSI) for customer one-click authentication.
+              Live Google Identity Services (GSI) authentication with verified customer accounts.
             </p>
           </div>
         </div>
@@ -98,7 +106,7 @@ export const GoogleSettingsCard: React.FC = () => {
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
               <AlertCircle className="w-3.5 h-3.5" />
-              <span>Interactive Mode Active</span>
+              <span>Awaiting Client ID</span>
             </span>
           )}
         </div>
@@ -124,20 +132,50 @@ export const GoogleSettingsCard: React.FC = () => {
       {/* Configuration Form */}
       <form onSubmit={handleSave} className="space-y-4">
         <div>
-          <label className="block text-xs font-bold text-gray-700 mb-1">
-            Google Client ID (Web Application):
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold text-gray-700">
+              Google Client ID (Web Application):
+            </label>
+            <span className="text-[11px] text-gray-400">
+              Ends with <code className="bg-cream-100 px-1 py-0.5 rounded text-forest-800 font-mono">.apps.googleusercontent.com</code>
+            </span>
+          </div>
           <div className="relative">
             <input
               type="text"
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              placeholder="e.g. 1234567890-abcdefg1234567.apps.googleusercontent.com"
+              placeholder="Paste your Google Web Client ID"
               className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
             />
           </div>
           <p className="text-[11px] text-gray-400 mt-1">
-            Obtain this from the Google Cloud Console under Credentials &gt; OAuth 2.0 Client IDs.
+            Copy the <strong>Client ID</strong> from Google Cloud Console &gt; APIs & Services &gt; Credentials.
+          </p>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold text-gray-700">
+              Google Client Secret (Key):
+            </label>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+              hasSecret ? 'text-green-700 bg-green-50 border-green-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+            }`}>
+              {hasSecret ? 'Connected' : 'Not Set'}
+            </span>
+          </div>
+          <div className="relative">
+            <input
+              type="password"
+              value={clientSecret}
+              onChange={(e) => setClientSecret(e.target.value)}
+              placeholder={hasSecret ? '•••••••••••••••••••• (Configured in .env)' : 'Paste your Google Client Secret'}
+              className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+            />
+          </div>
+          <p className="text-[11px] text-gray-400 mt-1">
+            Secret status: <span className="text-forest-800 font-bold">{hasSecret ? 'Securely stored in .env' : 'Enter secret from Google Cloud'}</span>
           </p>
         </div>
 
@@ -148,7 +186,7 @@ export const GoogleSettingsCard: React.FC = () => {
             className="px-5 py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs shadow-soft transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? 'Saving...' : 'Save & Activate Google Client ID'}</span>
+            <span>{saving ? 'Saving...' : 'Save & Activate Google OAuth'}</span>
           </button>
 
           <a
@@ -157,7 +195,7 @@ export const GoogleSettingsCard: React.FC = () => {
             rel="noopener noreferrer"
             className="text-xs font-bold text-forest-800 hover:underline flex items-center gap-1"
           >
-            <span>Open Google Cloud Console</span>
+            <span>Open Google Cloud Credentials</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
@@ -167,7 +205,7 @@ export const GoogleSettingsCard: React.FC = () => {
       <div className="p-4 rounded-2xl bg-cream-50 border border-cream-200 space-y-3">
         <p className="text-xs font-bold text-forest-950 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-harvest-500" />
-          <span>Quick 2-Minute Google Cloud Console Setup Guide:</span>
+          <span>Where to Find Your Client ID in Google Cloud Console:</span>
         </p>
         <ol className="text-xs text-gray-600 space-y-2 list-decimal list-inside leading-relaxed">
           <li>
@@ -182,10 +220,14 @@ export const GoogleSettingsCard: React.FC = () => {
             </a>
             .
           </li>
-          <li>Click <strong>Create Credentials</strong> &gt; <strong>OAuth Client ID</strong>.</li>
-          <li>Choose Application type: <strong>Web application</strong>.</li>
           <li>
-            Under <strong>Authorized JavaScript origins</strong>, add your domains:
+            Find your OAuth 2.0 Web Client under <strong>OAuth 2.0 Client IDs</strong>.
+          </li>
+          <li>
+            Right above or next to the secret, you will find the <strong>Client ID</strong> (format: <code className="bg-white px-1 py-0.5 rounded font-mono text-[10px]">xxxxxx.apps.googleusercontent.com</code>).
+          </li>
+          <li>
+            Ensure your <strong>Authorized JavaScript origins</strong> includes:
             <div className="flex flex-wrap gap-2 mt-1.5 ml-4">
               <button
                 type="button"
@@ -205,7 +247,7 @@ export const GoogleSettingsCard: React.FC = () => {
               </button>
             </div>
           </li>
-          <li>Copy the generated <strong>Client ID</strong> and paste it in the box above!</li>
+          <li>Copy and paste your Client ID into the box above and click <strong>Save & Activate</strong>!</li>
         </ol>
       </div>
     </div>

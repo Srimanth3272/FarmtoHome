@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { CheckCircle2, Sparkles, ArrowRight, X, ExternalLink, KeyRound, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Sparkles, X, ExternalLink, KeyRound, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface GoogleSignInButtonProps {
   redirectUrl?: string;
@@ -55,20 +55,17 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   label = 'Sign in with Google',
 }) => {
   const router = useRouter();
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string>('');
   const [isGsiReady, setIsGsiReady] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [quickClientIdInput, setQuickClientIdInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'account' | 'configure'>('account');
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [clientIdInput, setClientIdInput] = useState('');
   const [statusAlert, setStatusAlert] = useState<string | null>(null);
 
-  const officialGsiRef = useRef<HTMLDivElement>(null);
+  const officialGsiContainerRef = useRef<HTMLDivElement>(null);
 
-  // 1. Fetch Google Client ID & load Google Identity Services Script
+  // 1. Fetch Google Configuration & load Google Identity Services Script
   useEffect(() => {
     let isMounted = true;
 
@@ -104,9 +101,9 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     };
   }, []);
 
-  // 2. Initialize GSI when client ID & SDK are available
+  // 2. Initialize Google Identity Services when client ID & SDK are ready
   useEffect(() => {
-    if (isGsiReady && googleClientId && window.google?.accounts?.id) {
+    if (isGsiReady && googleClientId && googleClientId.includes('.apps.googleusercontent.com') && window.google?.accounts?.id) {
       try {
         window.google.accounts.id.initialize({
           client_id: googleClientId,
@@ -115,23 +112,24 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
           cancel_on_tap_outside: true,
         });
 
-        if (officialGsiRef.current) {
-          officialGsiRef.current.innerHTML = '';
-          window.google.accounts.id.renderButton(officialGsiRef.current, {
+        if (officialGsiContainerRef.current) {
+          officialGsiContainerRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(officialGsiContainerRef.current, {
             theme: 'outline',
             size: 'large',
-            width: '100%',
+            width: 380,
             text: 'continue_with',
             shape: 'pill',
+            logo_alignment: 'left',
           });
         }
       } catch (e) {
-        console.error('Error rendering Google GIS button:', e);
+        console.error('Error initializing Google GIS:', e);
       }
     }
   }, [isGsiReady, googleClientId]);
 
-  // 3. Handle official Google Credential Response
+  // 3. Handle Real Google Credential Response
   const handleGoogleCredentialResponse = async (response: any) => {
     if (!response || !response.credential) return;
     setLoading(true);
@@ -149,6 +147,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         throw new Error(data.error || 'Google authentication failed');
       }
 
+      // Real Google user signed in
       login(data.user);
       router.push(redirectUrl);
     } catch (err: any) {
@@ -158,275 +157,193 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     }
   };
 
-  // 4. Handle Direct / Interactive Google Sign-In
-  const executeInteractiveGoogleLogin = async (email?: string, name?: string) => {
-    setLoading(true);
-    const targetEmail = email || 'arjun.sharma@gmail.com';
-    const targetName = name || (email ? email.split('@')[0] : 'Arjun Sharma');
-
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: targetEmail,
-          name: targetName,
-          picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.user) {
-        login(data.user);
-      } else {
-        loginWithGoogle(targetEmail, targetName);
-      }
-
-      setShowPicker(false);
-      router.push(redirectUrl);
-    } catch {
-      loginWithGoogle(targetEmail, targetName);
-      setShowPicker(false);
-      router.push(redirectUrl);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 5. Trigger Google OAuth on main button click
-  const handleMainButtonClick = () => {
-    if (googleClientId && window.google?.accounts?.id) {
+  // 4. Trigger Real Google OAuth Popup
+  const handleButtonClick = () => {
+    if (googleClientId && googleClientId.includes('.apps.googleusercontent.com') && window.google?.accounts?.id) {
       try {
+        // Trigger Google One-Tap or native prompt
         window.google.accounts.id.prompt((notification: any) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            setShowPicker(true);
+            // If One-Tap is skipped by browser policy, click the rendered official Google button
+            const iframe = officialGsiContainerRef.current?.querySelector('div[role="button"]') as HTMLElement;
+            if (iframe) iframe.click();
           }
         });
       } catch {
-        setShowPicker(true);
+        // Fallback to official button container click
+        const iframe = officialGsiContainerRef.current?.querySelector('div[role="button"]') as HTMLElement;
+        if (iframe) iframe.click();
       }
     } else {
-      setShowPicker(true);
+      // Need Client ID
+      setShowConfigModal(true);
     }
   };
 
-  // 6. Save Google Client ID directly from modal
-  const handleSaveClientId = async () => {
-    if (!quickClientIdInput.trim()) return;
+  // 5. Save Client ID directly from modal
+  const handleSaveClientId = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clientIdInput.trim()) return;
+
     setLoading(true);
+    setStatusAlert(null);
+
     try {
       const res = await fetch('/api/auth/google/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: quickClientIdInput.trim() }),
+        body: JSON.stringify({
+          clientId: clientIdInput.trim(),
+        }),
       });
+
       const data = await res.json();
-      if (res.ok) {
-        setGoogleClientId(quickClientIdInput.trim());
-        setActiveTab('account');
-        setStatusAlert('Google Client ID activated! You can now use real Google OAuth.');
-      } else {
-        throw new Error(data.error);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save Google Client ID');
+      }
+
+      setGoogleClientId(clientIdInput.trim());
+      setShowConfigModal(false);
+      setStatusAlert('Google Client ID connected! Google Sign-In is now active.');
+
+      // Initialize GSI immediately
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: clientIdInput.trim(),
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        if (officialGsiContainerRef.current) {
+          officialGsiContainerRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(officialGsiContainerRef.current, {
+            theme: 'outline',
+            size: 'large',
+            width: 380,
+            text: 'continue_with',
+            shape: 'pill',
+            logo_alignment: 'left',
+          });
+        }
+
+        // Open prompt
+        window.google.accounts.id.prompt();
       }
     } catch (err: any) {
-      setStatusAlert(err.message || 'Failed to save Google Client ID');
+      setStatusAlert(err.message || 'Error saving Google Client ID');
     } finally {
       setLoading(false);
     }
   };
 
-  const getButtonStyles = () => {
-    switch (variant) {
-      case 'outline':
-        return 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm';
-      case 'pill':
-        return 'bg-white hover:bg-forest-50 text-forest-950 border border-cream-300 shadow-sm rounded-full';
-      case 'compact':
-        return 'bg-white hover:bg-cream-100 text-forest-950 border border-cream-200 text-xs px-2.5 py-1.5 rounded-lg';
-      default:
-        return 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 shadow-sm';
-    }
-  };
+  const isConfigured = Boolean(googleClientId && googleClientId.includes('.apps.googleusercontent.com'));
 
   return (
     <>
-      {/* Official GSI container if ready */}
-      {googleClientId && <div ref={officialGsiRef} className="w-full mb-2 hidden" />}
+      {/* Official Google GSI Rendered Button Container */}
+      <div className="w-full flex justify-center">
+        {isConfigured ? (
+          <div className="w-full flex flex-col items-center">
+            <div ref={officialGsiContainerRef} className="w-full flex justify-center min-h-[44px]" />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleButtonClick}
+            disabled={loading}
+            className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl font-semibold text-xs sm:text-sm bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 shadow-sm transition-all active:scale-[0.99] ${className}`}
+          >
+            <GoogleIcon className="w-5 h-5 flex-shrink-0" />
+            <span>{loading ? 'Connecting Google...' : label}</span>
+          </button>
+        )}
+      </div>
 
-      {/* Main Google Sign-In Action Button */}
-      <button
-        type="button"
-        onClick={handleMainButtonClick}
-        disabled={loading}
-        className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl font-semibold text-xs sm:text-sm transition-all active:scale-[0.99] ${getButtonStyles()} ${className}`}
-      >
-        <GoogleIcon className="w-5 h-5 flex-shrink-0" />
-        <span>{loading ? 'Authenticating with Google...' : label}</span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPicker(true);
-          }}
-          title="Account options & configuration"
-          className="ml-auto text-[10px] text-gray-400 hover:text-forest-800 underline hidden sm:inline"
-        >
-          Options
-        </button>
-      </button>
+      {statusAlert && (
+        <div className="mt-2 p-2.5 rounded-xl bg-forest-50 border border-forest-200 text-xs text-forest-900 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-forest-700" />
+          <span>{statusAlert}</span>
+        </div>
+      )}
 
-      {/* Real-time Google Authentication & Profile Modal */}
-      {showPicker && (
+      {/* Connect Real Google Client ID Modal */}
+      {showConfigModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
             className="fixed inset-0 bg-forest-950/60 backdrop-blur-sm"
-            onClick={() => setShowPicker(false)}
+            onClick={() => setShowConfigModal(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 border border-cream-300 space-y-4">
+            <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-cream-300 space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <GoogleIcon className="w-5 h-5" />
-                  <h3 className="font-serif font-bold text-base text-forest-950">
-                    Sign in with Google
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-forest-50 border border-forest-200 flex items-center justify-center">
+                    <GoogleIcon className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-serif font-black text-lg text-forest-950">
+                    Connect Real-Time Google Sign-In
                   </h3>
                 </div>
                 <button
-                  onClick={() => setShowPicker(false)}
+                  onClick={() => setShowConfigModal(false)}
                   className="p-1 rounded-lg text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Status Alert */}
-              {statusAlert && (
-                <div className="p-3 rounded-xl bg-forest-50 border border-forest-200 text-xs text-forest-900 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-forest-700" />
-                  <span>{statusAlert}</span>
+              <div className="p-3.5 rounded-2xl bg-green-50 border border-green-200 space-y-1">
+                <div className="flex items-center gap-2 text-green-900 font-bold text-xs">
+                  <ShieldCheck className="w-4 h-4 text-green-700" />
+                  <span>Google Client Secret Connected</span>
                 </div>
-              )}
-
-              {/* Mode Tabs */}
-              <div className="flex rounded-xl bg-gray-100 p-1 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('account')}
-                  className={`flex-1 py-1.5 rounded-lg transition-all ${
-                    activeTab === 'account' ? 'bg-white shadow-sm text-forest-950 font-bold' : 'text-gray-600'
-                  }`}
-                >
-                  Choose Google Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('configure')}
-                  className={`flex-1 py-1.5 rounded-lg transition-all ${
-                    activeTab === 'configure' ? 'bg-white shadow-sm text-forest-950 font-bold' : 'text-gray-600'
-                  }`}
-                >
-                  Setup Real Client ID
-                </button>
+                <p className="text-[11px] text-green-800 font-mono truncate">
+                  Key: Client secret active in platform environment
+                </p>
               </div>
 
-              {activeTab === 'account' ? (
-                <>
-                  <p className="text-xs text-gray-500">
-                    Select a Google customer profile to browse fresh farm produce, track Farm Passports, and place orders:
-                  </p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                To enable live Google authentication on your app, paste your <strong>Google Client ID</strong> (from the line right above your secret in Google Cloud Console):
+              </p>
 
-                  {/* Fast Account 1 */}
-                  <button
-                    type="button"
-                    onClick={() => executeInteractiveGoogleLogin('arjun.sharma@gmail.com', 'Arjun Sharma')}
-                    className="w-full p-3 rounded-2xl border border-gray-200 hover:border-forest-600 hover:bg-forest-50/50 flex items-center gap-3 text-left transition-colors"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-forest-700 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
-                      AS
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-xs text-forest-950">Arjun Sharma</p>
-                      <p className="text-[11px] text-gray-500 truncate">arjun.sharma@gmail.com</p>
-                    </div>
-                    <CheckCircle2 className="w-4 h-4 text-forest-700" />
-                  </button>
-
-                  {/* Fast Account 2 */}
-                  <button
-                    type="button"
-                    onClick={() => executeInteractiveGoogleLogin('priya.family@gmail.com', 'Priya Sharma (Home)')}
-                    className="w-full p-3 rounded-2xl border border-gray-200 hover:border-forest-600 hover:bg-forest-50/50 flex items-center gap-3 text-left transition-colors"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-harvest-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
-                      PS
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-xs text-forest-950">Priya Sharma (Home)</p>
-                      <p className="text-[11px] text-gray-500 truncate">priya.family@gmail.com</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400" />
-                  </button>
-
-                  {/* Custom Google Account Input */}
-                  <div className="pt-2 border-t border-gray-100 space-y-2">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Or sign in with your own Google email:
-                    </p>
-                    <input
-                      type="text"
-                      placeholder="Your Name (e.g. Srimanth Kumar)"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-forest-600"
-                    />
-                    <input
-                      type="email"
-                      placeholder="your.email@gmail.com"
-                      value={customEmail}
-                      onChange={(e) => setCustomEmail(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-forest-600"
-                    />
-                    <button
-                      type="button"
-                      disabled={!customEmail.trim() || loading}
-                      onClick={() => executeInteractiveGoogleLogin(customEmail, customName || customEmail.split('@')[0])}
-                      className="w-full py-2.5 bg-forest-800 disabled:opacity-50 hover:bg-forest-900 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <span>Continue with this Google Account</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-gray-500">
-                    To enable official Google One-Tap and popup sign-in, provide your Google Cloud OAuth 2.0 Web Client ID:
-                  </p>
+              <form onSubmit={handleSaveClientId} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Google Client ID (ends with .apps.googleusercontent.com):
+                  </label>
                   <input
                     type="text"
-                    placeholder="xxxxxx.apps.googleusercontent.com"
-                    value={quickClientIdInput || googleClientId}
-                    onChange={(e) => setQuickClientIdInput(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-forest-600 font-mono"
+                    required
+                    placeholder="Paste your .apps.googleusercontent.com Client ID"
+                    value={clientIdInput}
+                    onChange={(e) => setClientIdInput(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
                   />
-                  <button
-                    type="button"
-                    disabled={!quickClientIdInput.trim() || loading}
-                    onClick={handleSaveClientId}
-                    className="w-full py-2.5 bg-forest-800 hover:bg-forest-900 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>Save & Activate Google Client ID</span>
-                  </button>
-
-                  <div className="p-3 bg-cream-50 rounded-xl border border-cream-200 text-[11px] text-gray-600 space-y-1">
-                    <p className="font-bold text-forest-900">How to get a Client ID:</p>
-                    <p>1. Open Google Cloud Console &gt; APIs &gt; Credentials</p>
-                    <p>2. Create OAuth 2.0 Client ID (Web application)</p>
-                    <p>3. Add Authorized Javascript Origin: <code className="bg-white px-1 py-0.5 rounded text-[10px] font-mono">http://localhost:3000</code></p>
-                  </div>
                 </div>
-              )}
+
+                <button
+                  type="submit"
+                  disabled={loading || !clientIdInput.trim()}
+                  className="w-full py-3 bg-forest-800 hover:bg-forest-900 disabled:opacity-50 text-white rounded-2xl text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-soft"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>{loading ? 'Activating...' : 'Activate Real Google Sign-In'}</span>
+                </button>
+              </form>
+
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <span>Where to find this?</span>
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-forest-800 hover:underline flex items-center gap-1"
+                >
+                  <span>Open Google Cloud Credentials</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

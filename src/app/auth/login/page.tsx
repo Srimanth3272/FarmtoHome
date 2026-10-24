@@ -63,25 +63,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickDemo = (role: 'CUSTOMER' | 'FARMER' | 'ADMIN') => {
-    if (role === 'ADMIN') {
-      setEmail('admin@farmtohome.in');
-      setPassword('admin@123');
-      switchDemoUser('ADMIN');
-      router.push('/admin/dashboard');
-    } else if (role === 'FARMER') {
-      setEmail('ramesh.patel@farmtohome.in');
-      setPassword('Farm@123');
-      switchDemoUser('FARMER');
-      router.push('/seller/dashboard');
-    } else {
-      setEmail('priya@example.com');
-      setPassword('Customer@123');
-      switchDemoUser('CUSTOMER');
-      router.push('/shop');
-    }
-  };
-
   return (
     <div className="max-w-md mx-auto px-4 py-12 sm:py-16 space-y-8">
       <div className="text-center space-y-2">
@@ -94,40 +75,6 @@ export default function LoginPage() {
         <p className="text-xs text-gray-500">
           Access fresh farm orders, track harvest passports, or manage your agricultural listings.
         </p>
-      </div>
-
-      {/* Quick Demo Selector */}
-      <div className="p-4 rounded-2xl bg-forest-50 border border-forest-200 space-y-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-forest-800 flex items-center gap-1">
-          <Sparkles className="w-3.5 h-3.5 text-harvest-500" />
-          <span>Interactive 1-Click Role Login:</span>
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => handleQuickDemo('CUSTOMER')}
-            className="p-2.5 rounded-xl bg-white border border-forest-200 hover:bg-forest-100 text-center transition-colors shadow-sm"
-          >
-            <p className="font-bold text-xs text-forest-950">Customer</p>
-            <p className="text-[10px] text-gray-400">Priya Sharma</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickDemo('FARMER')}
-            className="p-2.5 rounded-xl bg-white border border-forest-200 hover:bg-forest-100 text-center transition-colors shadow-sm"
-          >
-            <p className="font-bold text-xs text-forest-950">Farmer</p>
-            <p className="text-[10px] text-gray-400">Ramesh Patel</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickDemo('ADMIN')}
-            className="p-2.5 rounded-xl bg-white border border-forest-200 hover:bg-forest-100 text-center transition-colors shadow-sm"
-          >
-            <p className="font-bold text-xs text-forest-950">Admin</p>
-            <p className="text-[10px] text-forest-700 font-semibold">admin@123</p>
-          </button>
-        </div>
       </div>
 
       {/* Email / Password Form */}
