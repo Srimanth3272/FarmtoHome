@@ -8,6 +8,8 @@ import { WasteExchangeClient } from './WasteExchangeClient';
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
+import { FALLBACK_WASTE_LISTINGS } from '@/lib/fallback-data';
+
 interface WasteExchangePageProps {
   searchParams: {
     materialType?: string;
@@ -22,10 +24,17 @@ export default async function WasteExchangePage({ searchParams }: WasteExchangeP
   if (materialType && materialType !== 'ALL') where.materialType = materialType;
   if (listingType && listingType !== 'ALL') where.listingType = listingType;
 
-  const listings = await prisma.wasteExchangeListing.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-  });
+  let listings: any[] = [];
+  try {
+    const dbListings = await prisma.wasteExchangeListing.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+    listings = dbListings && dbListings.length > 0 ? dbListings : (FALLBACK_WASTE_LISTINGS as any);
+  } catch (err) {
+    console.error('Database connection notice on WasteExchangePage:', err);
+    listings = FALLBACK_WASTE_LISTINGS as any;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">

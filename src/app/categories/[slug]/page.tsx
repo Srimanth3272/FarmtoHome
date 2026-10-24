@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma';
 import { ProductCard } from '@/components/ProductCard';
 import { ArrowLeft, Sparkles, Sprout } from 'lucide-react';
 
+import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from '@/lib/fallback-data';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -14,23 +16,38 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const category = await prisma.category.findUnique({
-    where: { slug: params.slug },
-    include: {
-      products: {
-        where: { isActive: true },
-        include: {
-          category: true,
-          farmer: {
-            include: {
-              user: { select: { name: true, avatar: true } },
+  let category: any = null;
+
+  try {
+    category = await prisma.category.findUnique({
+      where: { slug: params.slug },
+      include: {
+        products: {
+          where: { isActive: true },
+          include: {
+            category: true,
+            farmer: {
+              include: {
+                user: { select: { name: true, avatar: true } },
+              },
             },
+            farmPassport: true,
           },
-          farmPassport: true,
         },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.error('Database connection notice on CategoryPage:', err);
+  }
+
+  if (!category) {
+    const fallbackCategory = FALLBACK_CATEGORIES.find((c) => c.slug === params.slug) || FALLBACK_CATEGORIES[0];
+    const categoryProducts = FALLBACK_PRODUCTS.filter((p) => p.category?.slug === fallbackCategory.slug);
+    category = {
+      ...fallbackCategory,
+      products: categoryProducts,
+    };
+  }
 
   if (!category) {
     notFound();

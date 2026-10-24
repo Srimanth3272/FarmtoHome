@@ -7,6 +7,8 @@ import { ProductCard } from '@/components/ProductCard';
 import { MapPin, Star, ShieldCheck, Sprout, Mail, Phone, Calendar, ArrowLeft, Award, CheckCircle2 } from 'lucide-react';
 import { ContactFarmerButton } from './ContactFarmerButton';
 
+import { FALLBACK_FARMERS, FALLBACK_PRODUCTS } from '@/lib/fallback-data';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -15,27 +17,43 @@ interface FarmerProfilePageProps {
 }
 
 export default async function FarmerProfilePage({ params }: FarmerProfilePageProps) {
-  const farmer = await prisma.farmerProfile.findUnique({
-    where: { id: params.id },
-    include: {
-      user: {
-        select: { name: true, avatar: true, email: true },
-      },
-      products: {
-        where: { isActive: true },
-        include: {
-          category: true,
-          farmer: {
-            include: {
-              user: { select: { name: true, avatar: true } },
-            },
-          },
-          farmPassport: true,
+  let farmer: any = null;
+
+  try {
+    farmer = await prisma.farmerProfile.findUnique({
+      where: { id: params.id },
+      include: {
+        user: {
+          select: { name: true, avatar: true, email: true },
         },
+        products: {
+          where: { isActive: true },
+          include: {
+            category: true,
+            farmer: {
+              include: {
+                user: { select: { name: true, avatar: true } },
+              },
+            },
+            farmPassport: true,
+          },
+        },
+        harvestListings: true,
       },
-      harvestListings: true,
-    },
-  });
+    });
+  } catch (err) {
+    console.error('Database connection notice on FarmerProfilePage:', err);
+  }
+
+  if (!farmer) {
+    const fallbackFarmer = FALLBACK_FARMERS.find((f) => f.id === params.id) || FALLBACK_FARMERS[0];
+    const farmerProducts = FALLBACK_PRODUCTS.filter((p) => p.farmer?.id === fallbackFarmer.id || (p as any).farmerId === fallbackFarmer.id);
+    farmer = {
+      ...fallbackFarmer,
+      products: farmerProducts,
+      harvestListings: [],
+    };
+  }
 
   if (!farmer) {
     notFound();

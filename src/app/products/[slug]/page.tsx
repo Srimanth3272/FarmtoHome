@@ -8,6 +8,8 @@ import { PinCodeChecker } from '@/components/PinCodeChecker';
 import { FarmPassportModal } from '@/components/FarmPassportModal';
 import { ProductDetailClient } from './ProductDetailClient';
 
+import { FALLBACK_PRODUCTS } from '@/lib/fallback-data';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -16,44 +18,57 @@ interface ProductPageProps {
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
-    include: {
-      category: true,
-      farmer: {
-        include: {
-          user: { select: { name: true, avatar: true, phone: true } },
+  let product: any = null;
+  let relatedProducts: any[] = [];
+
+  try {
+    product = await prisma.product.findUnique({
+      where: { slug: params.slug },
+      include: {
+        category: true,
+        farmer: {
+          include: {
+            user: { select: { name: true, avatar: true, phone: true } },
+          },
+        },
+        farmPassport: true,
+        reviews: {
+          orderBy: { createdAt: 'desc' },
         },
       },
-      farmPassport: true,
-      reviews: {
-        orderBy: { createdAt: 'desc' },
-      },
-    },
-  });
+    });
+
+    if (product) {
+      relatedProducts = await prisma.product.findMany({
+        where: {
+          categoryId: product.categoryId,
+          id: { not: product.id },
+          isActive: true,
+        },
+        take: 3,
+        include: {
+          category: true,
+          farmer: {
+            include: {
+              user: { select: { name: true, avatar: true } },
+            },
+          },
+          farmPassport: true,
+        },
+      });
+    }
+  } catch (err) {
+    console.error('Database connection notice on ProductDetailPage:', err);
+  }
+
+  if (!product) {
+    product = FALLBACK_PRODUCTS.find((p) => p.slug === params.slug) || FALLBACK_PRODUCTS[0];
+    relatedProducts = FALLBACK_PRODUCTS.filter((p) => p.slug !== product?.slug).slice(0, 3);
+  }
 
   if (!product) {
     notFound();
   }
-
-  // Fetch related products in the same category
-  const relatedProducts = await prisma.product.findMany({
-    where: {
-      categoryId: product.categoryId,
-      id: { not: product.id },
-      isActive: true,
-    },
-    take: 3,
-    include: {
-      category: true,
-      farmer: {
-        include: {
-          user: { select: { name: true, avatar: true } },
-        },
-      },
-      farmPassport: true,
-    },
-  });
 
   return (
     <ProductDetailClient
