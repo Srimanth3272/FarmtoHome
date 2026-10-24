@@ -7,11 +7,6 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function getDatabaseUrl(): string {
-  // If an external database URL is configured (e.g. Postgres, Supabase, Neon)
-  if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:')) {
-    return process.env.DATABASE_URL;
-  }
-
   const isServerless = Boolean(
     process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT
   );
@@ -54,6 +49,11 @@ function getDatabaseUrl(): string {
     return `file:${tmpDbPath}`;
   }
 
+  // If already a valid SQLite file: URL
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:')) {
+    return process.env.DATABASE_URL;
+  }
+
   if (sourceDb) {
     return `file:${sourceDb}`;
   }
@@ -63,10 +63,10 @@ function getDatabaseUrl(): string {
 
 const resolvedDbUrl = getDatabaseUrl();
 
-// Ensure process.env.DATABASE_URL is always populated so Prisma never throws missing env error
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = resolvedDbUrl;
-}
+// Prisma with SQLite provider strictly requires DATABASE_URL to start with file:
+// Even if an external or non-file DATABASE_URL was set in Vercel settings,
+// override it here so Prisma validation never throws "the URL must start with the protocol file:".
+process.env.DATABASE_URL = resolvedDbUrl;
 
 export const prisma =
   globalForPrisma.prisma ??

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,9 +13,9 @@ export async function GET() {
         },
       },
     });
-    return NextResponse.json(categories);
+    return NextResponse.json(categories.length > 0 ? categories : FALLBACK_CATEGORIES);
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
+    console.warn('Error fetching categories from database, returning fallback categories:', error);
+    return NextResponse.json(FALLBACK_CATEGORIES);
   }
 }

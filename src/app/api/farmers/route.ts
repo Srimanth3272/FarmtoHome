@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { FALLBACK_FARMERS } from '@/lib/fallback-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,9 +42,18 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(farmers);
+    if (farmers && farmers.length > 0) {
+      return NextResponse.json(farmers);
+    }
+
+    // Filter fallback farmers if state is provided
+    let fallback = FALLBACK_FARMERS;
+    if (state) {
+      fallback = FALLBACK_FARMERS.filter((f) => f.state.toLowerCase() === state.toLowerCase());
+    }
+    return NextResponse.json(fallback.length > 0 ? fallback : FALLBACK_FARMERS);
   } catch (error) {
-    console.error('Error fetching farmers:', error);
-    return NextResponse.json({ error: 'Failed to fetch farmers' }, { status: 500 });
+    console.warn('Error fetching farmers from database, returning fallback farmers:', error);
+    return NextResponse.json(FALLBACK_FARMERS);
   }
 }

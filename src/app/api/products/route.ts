@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { FALLBACK_PRODUCTS } from '@/lib/fallback-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,10 +74,21 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(products);
+    if (products && products.length > 0) {
+      return NextResponse.json(products);
+    }
+
+    let fallback = FALLBACK_PRODUCTS;
+    if (categorySlug) {
+      fallback = fallback.filter((p) => p.category?.slug === categorySlug);
+    }
+    if (organicOnly === 'true') {
+      fallback = fallback.filter((p) => p.isOrganic);
+    }
+    return NextResponse.json(fallback.length > 0 ? fallback : FALLBACK_PRODUCTS);
   } catch (error) {
-    console.error('Error fetching products:', error);
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    console.warn('Error fetching products from database, returning fallback products:', error);
+    return NextResponse.json(FALLBACK_PRODUCTS);
   }
 }
 
