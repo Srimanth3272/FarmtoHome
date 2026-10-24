@@ -573,7 +573,8 @@ export default async function HomePage() {
                 </span>
               </div>
             </Link>
-          ))}
+          );
+        })}
         </div>
       </section>
 

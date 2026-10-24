@@ -23,7 +23,8 @@ import {
   Mail,
   Filter,
   Key,
-  ExternalLink
+  ExternalLink,
+  X
 } from 'lucide-react';
 import RazorpaySettingsCard from '@/components/RazorpaySettingsCard';
 import { GoogleSettingsCard } from '@/components/GoogleSettingsCard';

@@ -37,6 +37,7 @@ export interface FarmerProfileItem {
   isOrganicCertified: boolean;
   profileImage?: string | null;
   bannerImage?: string | null;
+  commissionPayments?: any[];
   user?: {
     name: string;
     email: string;
@@ -61,6 +62,7 @@ export interface ProductItem {
     farmName: string;
     state: string;
     district: string;
+    experienceYears?: number;
     isOrganicCertified: boolean;
     verificationStatus: string;
     aadharNumber?: string | null;

@@ -30,3 +30,4 @@ dev.db-journal
 # Operating System files
 .DS_Store
 Thumbs.db
+*.tsbuildinfo

@@ -126,11 +126,18 @@ export async function POST(request: Request) {
       where: {
         OR: [{ id: farmerId }, { userId: farmerId }],
       },
+      include: {
+        user: { select: { name: true } },
+      },
     });
 
     if (!farmer) {
       // Find default verified farmer for demo session
-      farmer = await prisma.farmerProfile.findFirst();
+      farmer = await prisma.farmerProfile.findFirst({
+        include: {
+          user: { select: { name: true } },
+        },
+      });
     }
 
     if (farmer && (aadharNumber || phone || email)) {
