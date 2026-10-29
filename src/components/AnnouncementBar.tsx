@@ -6,15 +6,21 @@ import { Sparkles, MapPin, BookOpen, ChevronRight, Truck } from 'lucide-react';
 
 const ANNOUNCEMENTS = [
   {
+    text: '🗺️ Delivering Farm-Fresh Across All 26 Districts of Andhra Pradesh! Same-Day & 24h Express Direct Dispatches.',
+    link: '/delivery-map',
+    linkText: 'View AP Delivery Map',
+    icon: MapPin,
+  },
+  {
     text: '🌱 Fresh Morning Harvest: Naati Country Tomatoes & Desi Greens picked today at dawn!',
     link: '/shop?category=fresh-produce',
     linkText: 'Shop Harvest',
     icon: Sparkles,
   },
   {
-    text: '🚚 Fast Express Delivery available across 10,000+ PIN Codes in India. Free delivery over ₹499!',
-    link: '/faq#delivery',
-    linkText: 'Check PIN Code',
+    text: '🚚 Fast Express Delivery available across Andhra Pradesh & 10,000+ PIN Codes. Free delivery over ₹499!',
+    link: '/delivery-map',
+    linkText: 'Check AP PINs',
     icon: Truck,
   },
   {

@@ -116,6 +116,15 @@ async function runTests() {
     const pinHyd = await prisma.pinCodeDelivery.findUnique({ where: { pincode: '500081' } });
     assert(pinHyd !== null && pinHyd.isDeliverable === true, 'Hyderabad PIN 500081 is deliverable (2 days)');
 
+    const pinVijayawada = await prisma.pinCodeDelivery.findUnique({ where: { pincode: '520001' } });
+    assert(pinVijayawada !== null && pinVijayawada.state === 'Andhra Pradesh' && pinVijayawada.isDeliverable === true, 'Andhra Pradesh NTR/Vijayawada PIN 520001 is deliverable (1 day)');
+
+    const pinVizag = await prisma.pinCodeDelivery.findUnique({ where: { pincode: '530001' } });
+    assert(pinVizag !== null && pinVizag.state === 'Andhra Pradesh' && pinVizag.isDeliverable === true, 'Andhra Pradesh Visakhapatnam PIN 530001 is deliverable (1 day)');
+
+    const pinGuntur = await prisma.pinCodeDelivery.findUnique({ where: { pincode: '522001' } });
+    assert(pinGuntur !== null && pinGuntur.state === 'Andhra Pradesh' && pinGuntur.isDeliverable === true, 'Andhra Pradesh Guntur PIN 522001 is deliverable (1 day)');
+
     // 10. Razorpay Gateway & Self-Configured Credentials Tests
     console.log('\n💳 10. Razorpay Gateway & Self-Configured Credentials Tests:');
     const crypto = require('crypto');

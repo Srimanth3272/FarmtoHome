@@ -128,6 +128,12 @@ export const Footer: React.FC = () => {
             <h4 className="font-serif font-bold text-sm text-white mb-4">Agri Innovations</h4>
             <ul className="space-y-2.5 text-forest-300">
               <li>
+                <Link href="/delivery-map" className="hover:text-white transition-colors flex items-center gap-1.5 font-bold text-harvest-300">
+                  <MapPin className="w-3.5 h-3.5 text-harvest-400" />
+                  <span>🗺️ AP Delivery Map (26 Districts)</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/farm-passport" className="hover:text-white transition-colors flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-harvest-400" />
                   <span>Farm Passport Traceability</span>

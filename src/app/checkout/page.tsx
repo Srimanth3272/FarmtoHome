@@ -25,6 +25,13 @@ import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
 import { initiateRazorpayPayment } from '@/lib/razorpay-client';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
+import { AndhraPradeshDeliveryMap } from '@/components/AndhraPradeshDeliveryMap';
+import {
+  ANDHRA_PRADESH_DISTRICTS,
+  APDistrict,
+  isAndhraPradeshPincode,
+  findDistrictByPincode
+} from '@/lib/andhra-pradesh-data';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -34,15 +41,19 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Address fields
-  const [fullName, setFullName] = useState(user?.name || 'Priya Sharma');
-  const [phone, setPhone] = useState(user?.phone || '+91 99887 66554');
-  const [addressLine1, setAddressLine1] = useState('Flat 402, Green Glen Gardens');
-  const [addressLine2, setAddressLine2] = useState('Bellandur Main Road, Outer Ring Road');
-  const [landmark, setLandmark] = useState('Near Eco World Tech Park');
-  const [city, setCity] = useState('Bengaluru');
-  const [state, setState] = useState('Karnataka');
-  const [pincode, setPincode] = useState('560103');
+  // Address fields - Defaulted to Andhra Pradesh Central Hub
+  const [fullName, setFullName] = useState(user?.name || 'Srimanth Naidu');
+  const [phone, setPhone] = useState(user?.phone || '+91 98480 12345');
+  const [addressLine1, setAddressLine1] = useState('D.No 4-12, Krishna Nagar, Benz Circle');
+  const [addressLine2, setAddressLine2] = useState('MG Road, Near Prakasham Barrage');
+  const [landmark, setLandmark] = useState('Near Siddhartha College');
+  const [city, setCity] = useState('Vijayawada');
+  const [state, setState] = useState('Andhra Pradesh');
+  const [pincode, setPincode] = useState('520001');
+
+  // Andhra Pradesh Map Modal
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedAPDistrictId, setSelectedAPDistrictId] = useState('ntr-vijayawada');
 
   // Delivery slot
   const [slot, setSlot] = useState('Morning Harvest Slot (7:00 AM - 11:00 AM)');
@@ -217,11 +228,60 @@ export default function CheckoutPage() {
         <div className="lg:col-span-8 space-y-6">
           {/* 1. Delivery Address */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-cream-300 shadow-card space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-              <MapPin className="w-5 h-5 text-forest-700" />
-              <h2 className="font-serif font-bold text-base text-forest-950">
-                1. Delivery Location & Recipient
-              </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-forest-700" />
+                <h2 className="font-serif font-bold text-base text-forest-950">
+                  1. Delivery Location & Recipient
+                </h2>
+              </div>
+
+              {/* AP Map Picker Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs shrink-0 self-start sm:self-auto"
+              >
+                <MapPin className="w-3.5 h-3.5 text-harvest-400" />
+                <span>📍 Choose on Andhra Pradesh Map</span>
+              </button>
+            </div>
+
+            {/* In-State Andhra Pradesh Express Banner */}
+            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 p-3 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span className="font-bold text-emerald-950">
+                  ⚡ Andhra Pradesh Statewide Fast Delivery:
+                </span>
+                <span className="text-emerald-800 hidden md:inline">
+                  Covering all 26 districts with cold-chain farm dispatch.
+                </span>
+              </div>
+
+              {/* Quick District Dropdown */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-emerald-900 font-semibold text-[11px]">Quick AP District:</span>
+                <select
+                  value={selectedAPDistrictId}
+                  onChange={(e) => {
+                    const chosen = ANDHRA_PRADESH_DISTRICTS.find((d) => d.id === e.target.value);
+                    if (chosen) {
+                      setSelectedAPDistrictId(chosen.id);
+                      setCity(chosen.headquarters);
+                      setState('Andhra Pradesh');
+                      setPincode(chosen.primaryPin);
+                    }
+                  }}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-emerald-300 bg-white text-emerald-950 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                >
+                  {ANDHRA_PRADESH_DISTRICTS.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.deliveryType === 'SAME_DAY' ? 'Same-Day' : 'Express'})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -322,6 +382,40 @@ export default function CheckoutPage() {
                   onChange={(e) => setPincode(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
                 />
+              </div>
+
+              {/* Verified Andhra Pradesh Delivery Badge */}
+              <div className="sm:col-span-2">
+                {state.toLowerCase().includes('andhra') ? (
+                  <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-start gap-2.5 text-xs text-emerald-950">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-bold">
+                        ⚡ Andhra Pradesh In-State Delivery Confirmed: {city}, {state} ({pincode})
+                      </p>
+                      <p className="text-[11px] text-emerald-800">
+                        Orders are dispatched fresh from Amaravati Central Logistics HQ with temperature-regulated morning delivery vans.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-600 flex items-center justify-between">
+                    <span>Delivering via Regional Surface Logistics (2-3 days).</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaultAP = ANDHRA_PRADESH_DISTRICTS[0];
+                        setSelectedAPDistrictId(defaultAP.id);
+                        setCity(defaultAP.headquarters);
+                        setState('Andhra Pradesh');
+                        setPincode(defaultAP.primaryPin);
+                      }}
+                      className="text-emerald-800 font-bold hover:underline"
+                    >
+                      Switch to Andhra Pradesh →
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -613,6 +707,26 @@ export default function CheckoutPage() {
           keyId={simulatorData.keyId}
           onSuccess={handleSimulatorSuccess}
         />
+      )}
+
+      {/* Andhra Pradesh Delivery Map Picker Modal */}
+      {showMapModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center overflow-y-auto">
+          <div className="w-full max-w-5xl my-auto animate-in fade-in zoom-in-95 duration-150">
+            <AndhraPradeshDeliveryMap
+              isModal={true}
+              selectedDistrictId={selectedAPDistrictId}
+              onClose={() => setShowMapModal(false)}
+              onSelectDistrict={(district) => {
+                setSelectedAPDistrictId(district.id);
+                setCity(district.headquarters);
+                setState('Andhra Pradesh');
+                setPincode(district.primaryPin);
+                setShowMapModal(false);
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

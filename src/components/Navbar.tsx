@@ -21,7 +21,8 @@ import {
   LogOut,
   SlidersHorizontal,
   Bot,
-  Store
+  Store,
+  MapPin
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { GoogleSignInButton } from './GoogleSignInButton';
@@ -130,6 +131,22 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 Shop All
+              </Link>
+
+              {/* AP Delivery Map Link */}
+              <Link
+                href="/delivery-map"
+                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                  pathname === '/delivery-map'
+                    ? 'bg-forest-800 text-white border-forest-900 shadow-soft'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>AP Delivery Map</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-emerald-200 text-[10px] font-extrabold text-emerald-950 leading-none">
+                  26 Districts
+                </span>
               </Link>
 
               {/* Categories Dropdown */}
@@ -512,6 +529,19 @@ export const Navbar: React.FC = () => {
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-amber-200 text-xs font-extrabold text-amber-950">
                     ₹500 Plan
+                  </span>
+                </Link>
+                <Link
+                  href="/delivery-map"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-emerald-950 font-bold bg-emerald-50 border border-emerald-300 p-2.5 rounded-xl shadow-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-emerald-700" />
+                    <span>Andhra Pradesh Delivery Map</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-200 text-[10px] font-extrabold text-emerald-950">
+                    26 Districts
                   </span>
                 </Link>
                 <Link
