@@ -363,6 +363,39 @@ async function main() {
     },
   });
 
+  const catMobile = await prisma.category.create({
+    data: {
+      slug: 'mobile-accessories',
+      name: 'Mobile Accessories',
+      description: 'Fast chargers, durable braided cables, magnetic car holders, wireless earbuds, and screen protectors.',
+      image: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&auto=format&fit=crop&q=80',
+      icon: 'Smartphone',
+      banner: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=1400&auto=format&fit=crop&q=80',
+    },
+  });
+
+  const catClothes = await prisma.category.create({
+    data: {
+      slug: 'clothes',
+      name: 'Clothes & Apparel',
+      description: 'Organic cotton shirts, handspun khadi kurtas, comfortable field work wear, and breathable garments.',
+      image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80',
+      icon: 'Shirt',
+      banner: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1400&auto=format&fit=crop&q=80',
+    },
+  });
+
+  const catOther = await prisma.category.create({
+    data: {
+      slug: 'other-products',
+      name: 'Other Products',
+      description: 'Biodegradable jute bags, copper water bottles, lifestyle essentials, and artisan utility goods.',
+      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600&auto=format&fit=crop&q=80',
+      icon: 'Package',
+      banner: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1400&auto=format&fit=crop&q=80',
+    },
+  });
+
   // 5. Products & Farm Passports
   // Product 1: Desi Tomatoes
   const prodTomato = await prisma.product.create({

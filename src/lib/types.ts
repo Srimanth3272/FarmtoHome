@@ -1,5 +1,16 @@
 export type UserRole = 'CUSTOMER' | 'FARMER' | 'ADMIN' | 'AUTHOR';
 
+export interface SellerSubscription {
+  isSubscribed: boolean;
+  plan: string;
+  amount: number;
+  activatedAt: string;
+  expiresAt: string;
+  paymentId?: string;
+  paymentMethod?: string;
+  status: 'ACTIVE' | 'EXPIRED' | 'PENDING';
+}
+
 export interface UserSession {
   id: string;
   name: string;
@@ -9,6 +20,8 @@ export interface UserSession {
   phone?: string | null;
   isVerified?: boolean;
   provider?: 'google' | 'email';
+  isSubscribed?: boolean;
+  sellerSubscription?: SellerSubscription | null;
 }
 
 export interface FarmerProfileItem {

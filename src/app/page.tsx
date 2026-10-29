@@ -71,8 +71,23 @@ export default async function HomePage() {
       }),
     ]);
 
-    products = results[0] && results[0].length > 0 ? results[0] : (FALLBACK_PRODUCTS as any);
-    categories = results[1] && results[1].length > 0 ? results[1] : (FALLBACK_CATEGORIES as any);
+    const dbProds = results[0] || [];
+    const mergedProds = [...dbProds];
+    for (const fb of FALLBACK_PRODUCTS) {
+      if (!mergedProds.some((p) => p.slug === fb.slug || p.id === fb.id)) {
+        mergedProds.push(fb as any);
+      }
+    }
+    products = mergedProds;
+
+    const dbCats = results[1] || [];
+    const mergedCats = [...dbCats];
+    for (const fc of FALLBACK_CATEGORIES) {
+      if (!mergedCats.some((c) => c.slug === fc.slug)) {
+        mergedCats.push(fc as any);
+      }
+    }
+    categories = mergedCats;
     farmers = results[2] && results[2].length > 0 ? results[2] : (FALLBACK_FARMERS as any);
     blogPosts = results[3] && results[3].length > 0 ? results[3] : (FALLBACK_BLOG_POSTS as any);
   } catch (err) {
@@ -88,7 +103,9 @@ export default async function HomePage() {
   const seedsAndTools = products.filter(
     (p) => p.category?.slug === 'seeds-and-planting' || p.category?.slug === 'gardening-tools'
   );
-  const woodAndMaterials = products.filter((p) => p.category?.slug === 'wood-and-materials');
+  const mobileAccessories = products.filter((p) => p.category?.slug === 'mobile-accessories');
+  const clothesAndApparel = products.filter((p) => p.category?.slug === 'clothes');
+  const otherProductsList = products.filter((p) => p.category?.slug === 'other-products');
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20 overflow-hidden">
@@ -120,21 +137,28 @@ export default async function HomePage() {
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
                 <Link
-                  href="/shop"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-harvest-400 hover:bg-harvest-300 text-forest-950 font-bold text-sm shadow-soft hover:shadow-elevated transition-all flex items-center justify-center gap-2 group"
+                  href="/customer"
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-harvest-400 hover:bg-harvest-300 text-forest-950 font-bold text-sm shadow-soft hover:shadow-elevated transition-all flex items-center justify-center gap-2 group"
                 >
-                  <span>Shop Farm Products</span>
+                  <Sparkles className="w-4 h-4 text-forest-950" />
+                  <span>Customer Storefront</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
 
                 <Link
-                  href="/blog"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 backdrop-blur-md transition-all flex items-center justify-center gap-2"
+                  href="/seller"
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-soft transition-all flex items-center justify-center gap-2"
                 >
-                  <Leaf className="w-4 h-4 text-green-300" />
-                  <span>Explore Organic Farming</span>
+                  <span>🏪 Seller Account (₹500 Plan)</span>
+                </Link>
+
+                <Link
+                  href="/shop"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 backdrop-blur-md transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Shop All</span>
                 </Link>
               </div>
 

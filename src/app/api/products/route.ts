@@ -74,18 +74,28 @@ export async function GET(request: Request) {
       },
     });
 
-    if (products && products.length > 0) {
-      return NextResponse.json(products);
+    const dbProducts = products || [];
+    let combined = [...dbProducts];
+
+    // Merge fallback products that are not already present in DB
+    for (const fb of FALLBACK_PRODUCTS) {
+      if (!combined.some((p) => p.slug === fb.slug || p.id === fb.id)) {
+        if (!categorySlug || fb.category?.slug === categorySlug) {
+          if (organicOnly !== 'true' || fb.isOrganic) {
+            combined.push(fb as any);
+          }
+        }
+      }
     }
 
-    let fallback = FALLBACK_PRODUCTS;
     if (categorySlug) {
-      fallback = fallback.filter((p) => p.category?.slug === categorySlug);
+      combined = combined.filter((p) => p.category?.slug === categorySlug);
     }
     if (organicOnly === 'true') {
-      fallback = fallback.filter((p) => p.isOrganic);
+      combined = combined.filter((p) => p.isOrganic);
     }
-    return NextResponse.json(fallback.length > 0 ? fallback : FALLBACK_PRODUCTS);
+
+    return NextResponse.json(combined);
   } catch (error) {
     console.warn('Error fetching products from database, returning fallback products:', error);
     return NextResponse.json(FALLBACK_PRODUCTS);
@@ -164,36 +174,65 @@ export async function POST(request: Request) {
       });
     }
 
+    // Ensure Category exists or upsert it
+    let resolvedCategoryId = categoryId;
+    try {
+      let existingCategory = await prisma.category.findFirst({
+        where: {
+          OR: [{ id: categoryId }, { slug: categoryId }],
+        },
+      });
+
+      if (!existingCategory) {
+        // Auto-create category if not exists
+        const catName = categoryId.replace('cat-', '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+        const catSlug = categoryId.replace('cat-', '');
+        existingCategory = await prisma.category.create({
+          data: {
+            id: categoryId.startsWith('cat-') ? categoryId : `cat-${categoryId}`,
+            slug: catSlug,
+            name: catName,
+            description: `${catName} collection direct from sellers`,
+            image: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&auto=format&fit=crop&q=80',
+            icon: 'Package',
+          },
+        });
+      }
+      resolvedCategoryId = existingCategory.id;
+    } catch (catErr) {
+      console.warn('Category resolution warning:', catErr);
+    }
+
     const numericPrice = parseFloat(price);
     const basePrice = farmerBasePrice ? parseFloat(farmerBasePrice) : Math.round(numericPrice * 0.95 * 10) / 10;
     const commission = commissionAmount ? parseFloat(commissionAmount) : Math.round(numericPrice * 0.05 * 10) / 10;
 
     const generatedSlug = (slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')) + '-' + Date.now().toString().slice(-4);
 
-    // Create Product with PENDING approval and isActive: false
+    // Create Product: Immediately live so other people see it immediately!
     const newProduct = await prisma.product.create({
       data: {
         name,
         slug: generatedSlug,
-        description: description || 'Naturally cultivated agricultural product from verified regional farm.',
-        categoryId,
+        description: description || 'Verified product listed by seller on the platform.',
+        categoryId: resolvedCategoryId,
         farmerId: farmer ? farmer.id : farmerId,
         price: numericPrice,
         farmerBasePrice: basePrice,
         commissionAmount: commission,
-        approvalStatus: 'PENDING', // Requires Admin Acceptance!
-        isActive: false,           // Inactive until Admin approval!
+        approvalStatus: body.approvalStatus || 'APPROVED', // Immediately approved for sellers!
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true, // Live for everyone!
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
-        unit: unit || '1 kg',
+        unit: unit || '1 Piece',
         stock: parseInt(stock, 10) || 50,
-        images: typeof images === 'string' ? images : JSON.stringify(images || ['https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80']),
+        images: typeof images === 'string' ? images : JSON.stringify(images || ['https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80']),
         originLocation: originLocation || (farmer ? `${farmer.district}, ${farmer.state}` : 'India'),
-        harvestDate: harvestDate || 'Fresh Harvest Cycle',
-        storageInstructions: storageInstructions || 'Store in cool ventilated space away from direct sunlight.',
-        shelfLifeDays: shelfLifeDays ? parseInt(shelfLifeDays, 10) : 14,
+        harvestDate: harvestDate || 'Current Stock',
+        storageInstructions: storageInstructions || 'Store in standard dry room conditions.',
+        shelfLifeDays: shelfLifeDays ? parseInt(shelfLifeDays, 10) : 365,
         isOrganic: Boolean(isOrganic),
         isVerified: true,
-        certificationDetails: certificationDetails || 'PGS-India / Jaivik Bharat Declaration',
+        certificationDetails: certificationDetails || 'Verified Merchant Quality Standard',
       },
     });
 

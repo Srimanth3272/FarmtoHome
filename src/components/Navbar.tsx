@@ -50,6 +50,9 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const categories = [
+    { name: 'Mobile Accessories', slug: 'mobile-accessories', desc: 'Fast chargers, cases, cables, earbuds' },
+    { name: 'Clothes & Apparel', slug: 'clothes', desc: 'Organic cotton, handloom khadi kurtas, linen' },
+    { name: 'Other Products', slug: 'other-products', desc: 'Eco bags, copper bottles, artisan essentials' },
     { name: 'Fresh Produce', slug: 'fresh-produce', desc: 'Naturally grown fruits, vegetables, grains' },
     { name: 'Seeds & Planting', slug: 'seeds-and-planting', desc: 'Heirloom seeds, saplings & nursery' },
     { name: 'Organic Farming', slug: 'organic-farming', desc: 'Vermicompost, cow manure, neem cake' },
@@ -87,6 +90,29 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 Home
+              </Link>
+
+              <Link
+                href="/customer"
+                className={`hover:text-forest-700 transition-colors flex items-center gap-1 font-bold ${
+                  pathname === '/customer' ? 'text-forest-800' : 'text-forest-900'
+                }`}
+              >
+                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full text-xs font-bold border border-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping inline-block" />
+                  Customer Store
+                </span>
+              </Link>
+
+              <Link
+                href="/seller"
+                className={`hover:text-forest-700 transition-colors flex items-center gap-1 font-bold ${
+                  pathname === '/seller' ? 'text-forest-800' : 'text-forest-900'
+                }`}
+              >
+                <span className="flex items-center gap-1 bg-harvest-400 text-forest-950 px-2.5 py-0.5 rounded-full text-xs font-extrabold shadow-sm hover:bg-harvest-500 transition-all">
+                  <span>🏪 Seller Account (₹500)</span>
+                </span>
               </Link>
 
               <Link
@@ -258,11 +284,18 @@ export const Navbar: React.FC = () => {
                             My Profile & Addresses
                           </Link>
                           <Link
-                            href="/orders"
+                            href="/customer"
                             onClick={() => setUserMenuOpen(false)}
-                            className="block px-2 py-1.5 rounded-lg hover:bg-forest-50 text-gray-700 font-medium"
+                            className="block px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-950 font-bold"
                           >
-                            My Orders & Invoices
+                            🛍️ Customer Marketplace
+                          </Link>
+                          <Link
+                            href="/seller"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-2 py-1.5 rounded-lg bg-harvest-50 text-forest-950 font-bold"
+                          >
+                            🏪 Seller Portal & ₹500 Plan
                           </Link>
                           {user.role === 'FARMER' && (
                             <Link
@@ -454,11 +487,25 @@ export const Navbar: React.FC = () => {
                   Home
                 </Link>
                 <Link
+                  href="/customer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-emerald-800 font-bold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200"
+                >
+                  🛍️ Customer Marketplace
+                </Link>
+                <Link
+                  href="/seller"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-forest-950 font-bold bg-harvest-400 p-2.5 rounded-xl"
+                >
+                  🏪 Seller Account (₹500 Plan)
+                </Link>
+                <Link
                   href="/shop"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block hover:text-forest-700"
                 >
-                  Shop Farm Products
+                  Shop All Products
                 </Link>
                 <Link
                   href="/farmers"

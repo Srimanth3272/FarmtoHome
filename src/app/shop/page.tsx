@@ -91,8 +91,25 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         },
       }),
     ]);
-    products = results[0] && results[0].length > 0 ? results[0] : (FALLBACK_PRODUCTS as any);
-    categories = results[1] && results[1].length > 0 ? results[1] : (FALLBACK_CATEGORIES as any);
+    const dbProds = results[0] || [];
+    const mergedProds = [...dbProds];
+    for (const fb of FALLBACK_PRODUCTS) {
+      if (!mergedProds.some((p) => p.slug === fb.slug || p.id === fb.id)) {
+        if (!category || fb.category?.slug === category) {
+          mergedProds.push(fb as any);
+        }
+      }
+    }
+    products = mergedProds;
+
+    const dbCats = results[1] || [];
+    const mergedCats = [...dbCats];
+    for (const fc of FALLBACK_CATEGORIES) {
+      if (!mergedCats.some((c) => c.slug === fc.slug)) {
+        mergedCats.push(fc as any);
+      }
+    }
+    categories = mergedCats;
     farmers = results[2] && results[2].length > 0 ? results[2] : (FALLBACK_FARMERS as any);
   } catch (err) {
     console.error('Database connection notice on ShopPage:', err);

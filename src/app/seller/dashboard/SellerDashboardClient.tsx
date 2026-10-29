@@ -30,6 +30,8 @@ import { ProductItem, HarvestCalendarItem, FarmerProfileItem } from '@/lib/types
 import { useAuth } from '@/lib/auth-context';
 import { initiateRazorpayPayment } from '@/lib/razorpay-client';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
+import { addProductToFirebase } from '@/lib/firebase';
+import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
 
 interface SellerDashboardClientProps {
   initialProducts: ProductItem[];
@@ -153,13 +155,39 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
     setProductSuccessAlert('');
 
     try {
-      const res = await fetch('/api/products', {
+      const selectedCatObj = FALLBACK_CATEGORIES.find((c) => c.id === newProdCategory || c.slug === newProdCategory) || categories.find((c) => c.id === newProdCategory) || FALLBACK_CATEGORIES[0];
+
+      // Save to Firebase Firestore first for real-time visibility across all clients
+      const fbProduct = await addProductToFirebase({
+        name: newProdName,
+        description: newProdDesc,
+        categoryId: selectedCatObj.id,
+        category: {
+          id: selectedCatObj.id,
+          slug: selectedCatObj.slug,
+          name: selectedCatObj.name,
+        },
+        farmerId: farmer.id || 'demo-farmer-id',
+        price: finalCustomerPrice,
+        compareAtPrice: basePriceNum * 1.3,
+        unit: newProdUnit,
+        stock: parseInt(newProdStock, 10),
+        originLocation: newProdOrigin,
+        harvestDate: newProdHarvestDate,
+        shelfLifeDays: parseInt(newProdShelfLife, 10),
+        storageInstructions: newProdStorage,
+        isOrganic: newProdOrganic,
+        images: JSON.stringify([newProdImage]),
+      });
+
+      // Also submit via local API
+      await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newProdName,
           description: newProdDesc,
-          categoryId: newProdCategory,
+          categoryId: selectedCatObj.id,
           farmerId: farmer.id || 'demo-farmer-id',
           price: finalCustomerPrice,
           farmerBasePrice: basePriceNum,
@@ -171,29 +199,21 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
           shelfLifeDays: parseInt(newProdShelfLife, 10),
           storageInstructions: newProdStorage,
           isOrganic: newProdOrganic,
-          certificationDetails: 'PGS-India Green Farm Verified',
+          isActive: true,
+          approvalStatus: 'APPROVED',
+          certificationDetails: 'Verified Merchant Standard',
           images: JSON.stringify([newProdImage]),
-          // Farmer identity verification attributes
           aadharNumber: farmerAadhaar,
           phone: farmerPhone,
           email: farmerEmail,
-          // Digital Farm Passport attributes
-          declaredPractices: newProdPractices,
-          soilType: newProdSoil,
-          waterSource: newProdWater,
-          chemicalFreeYears: parseInt(newProdChemFreeYears, 10),
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to list product');
-
-      // Add to local state (marked as PENDING)
-      const created = data.product || data;
-      setProducts([created, ...products]);
+      // Add to local state (marked as live)
+      setProducts([fbProduct, ...products]);
       setShowAddProductModal(false);
       setProductSuccessAlert(
-        `Product "${newProdName}" successfully submitted! It is currently PENDING Admin Acceptance. Once accepted by Admin, it will automatically go live for sale.`
+        `Product "${newProdName}" successfully stored in Firebase Firestore and published live! All customers can now view and purchase it immediately.`
       );
       setNewProdName('');
       setNewProdDesc('');
@@ -1001,7 +1021,7 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
                       onChange={(e) => setNewProdCategory(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-gray-300"
                     >
-                      {categories.map((c) => (
+                      {FALLBACK_CATEGORIES.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>

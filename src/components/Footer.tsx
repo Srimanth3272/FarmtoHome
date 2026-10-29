@@ -91,33 +91,33 @@ export const Footer: React.FC = () => {
             <h4 className="font-serif font-bold text-sm text-white mb-4">Shop Products</h4>
             <ul className="space-y-2.5 text-forest-300">
               <li>
+                <Link href="/customer" className="hover:text-white transition-colors font-bold text-harvest-300">
+                  🛍️ Customer Marketplace
+                </Link>
+              </li>
+              <li>
+                <Link href="/categories/mobile-accessories" className="hover:text-white transition-colors">
+                  📱 Mobile Accessories
+                </Link>
+              </li>
+              <li>
+                <Link href="/categories/clothes" className="hover:text-white transition-colors">
+                  👕 Clothes & Handlooms
+                </Link>
+              </li>
+              <li>
+                <Link href="/categories/other-products" className="hover:text-white transition-colors">
+                  📦 Other Lifestyle Products
+                </Link>
+              </li>
+              <li>
                 <Link href="/categories/fresh-produce" className="hover:text-white transition-colors">
                   Fresh Produce & Fruits
                 </Link>
               </li>
               <li>
-                <Link href="/categories/seeds-and-planting" className="hover:text-white transition-colors">
-                  Native Heirloom Seeds
-                </Link>
-              </li>
-              <li>
                 <Link href="/categories/organic-farming" className="hover:text-white transition-colors">
-                  Pure Vermicompost & Manures
-                </Link>
-              </li>
-              <li>
-                <Link href="/categories/wood-and-materials" className="hover:text-white transition-colors">
-                  Cocopeat & Farm Wood
-                </Link>
-              </li>
-              <li>
-                <Link href="/categories/gardening-tools" className="hover:text-white transition-colors">
-                  UV Grow Bags & Terrace Kits
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop" className="hover:text-white transition-colors font-semibold text-harvest-300">
-                  Browse All 100+ Products →
+                  Vermicompost & Bio-Inputs
                 </Link>
               </li>
             </ul>
@@ -166,8 +166,13 @@ export const Footer: React.FC = () => {
             <h4 className="font-serif font-bold text-sm text-white mb-4">Trust & Seller Access</h4>
             <ul className="space-y-2.5 text-forest-300">
               <li>
-                <Link href="/seller/register" className="text-harvest-400 font-bold hover:underline">
-                  Join as Farmer / Seller
+                <Link href="/seller" className="text-harvest-400 font-bold hover:underline flex items-center gap-1">
+                  <span>🏪 Seller Account & ₹500 Plan</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/seller/register" className="text-emerald-400 hover:underline">
+                  Farmer / Seller Verification
                 </Link>
               </li>
               <li>

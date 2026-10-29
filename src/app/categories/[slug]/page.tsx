@@ -41,16 +41,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   if (!category) {
-    const fallbackCategory = FALLBACK_CATEGORIES.find((c) => c.slug === params.slug) || FALLBACK_CATEGORIES[0];
+    const fallbackCategory = FALLBACK_CATEGORIES.find((c) => c.slug === params.slug);
+    if (!fallbackCategory) {
+      notFound();
+    }
     const categoryProducts = FALLBACK_PRODUCTS.filter((p) => p.category?.slug === fallbackCategory.slug);
     category = {
       ...fallbackCategory,
       products: categoryProducts,
     };
-  }
-
-  if (!category) {
-    notFound();
+  } else if (!category.products || category.products.length === 0) {
+    const categoryProducts = FALLBACK_PRODUCTS.filter((p) => p.category?.slug === category.slug);
+    category.products = categoryProducts;
   }
 
   return (
