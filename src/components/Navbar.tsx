@@ -20,7 +20,8 @@ import {
   Users,
   LogOut,
   SlidersHorizontal,
-  Bot
+  Bot,
+  Store
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { GoogleSignInButton } from './GoogleSignInButton';
@@ -79,45 +80,52 @@ export const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
             {/* Logo */}
-            <Logo />
+            <Logo className="shrink-0" />
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-forest-950">
+            <nav className="hidden lg:flex items-center gap-2 xl:gap-3.5 text-xs font-semibold text-forest-950">
               <Link
                 href="/"
-                className={`hover:text-forest-700 transition-colors ${
+                className={`hover:text-forest-700 transition-colors px-1 py-1 shrink-0 ${
                   pathname === '/' ? 'text-forest-800 font-bold' : ''
                 }`}
               >
                 Home
               </Link>
 
+              {/* Customer Store */}
               <Link
                 href="/customer"
-                className={`hover:text-forest-700 transition-colors flex items-center gap-1 font-bold ${
-                  pathname === '/customer' ? 'text-forest-800' : 'text-forest-900'
+                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                  pathname === '/customer'
+                    ? 'bg-emerald-800 text-white border-emerald-900 shadow-soft'
+                    : 'bg-emerald-50 hover:bg-emerald-100/90 text-emerald-950 border-emerald-300'
                 }`}
               >
-                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full text-xs font-bold border border-emerald-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping inline-block" />
-                  Customer Store
-                </span>
+                <ShoppingBag className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>Customer Store</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </Link>
 
+              {/* Seller Portal (Modern Rectangular Badge - NOT a circle!) */}
               <Link
                 href="/seller"
-                className={`hover:text-forest-700 transition-colors flex items-center gap-1 font-bold ${
-                  pathname === '/seller' ? 'text-forest-800' : 'text-forest-900'
+                className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                  pathname.startsWith('/seller')
+                    ? 'bg-amber-600 text-white border-amber-700 shadow-soft'
+                    : 'bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-950 border-amber-300'
                 }`}
               >
-                <span className="flex items-center gap-1 bg-harvest-400 text-forest-950 px-2.5 py-0.5 rounded-full text-xs font-extrabold shadow-sm hover:bg-harvest-500 transition-all">
-                  <span>🏪 Seller Account (₹500)</span>
+                <Store className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                <span>Seller Portal</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-amber-200 text-[10px] font-extrabold text-amber-950 border border-amber-300/80 leading-none">
+                  ₹500 Plan
                 </span>
               </Link>
 
               <Link
                 href="/shop"
-                className={`hover:text-forest-700 transition-colors ${
+                className={`hover:text-forest-700 transition-colors px-1 py-1 shrink-0 ${
                   pathname === '/shop' ? 'text-forest-800 font-bold' : ''
                 }`}
               >
@@ -496,9 +504,15 @@ export const Navbar: React.FC = () => {
                 <Link
                   href="/seller"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-forest-950 font-bold bg-harvest-400 p-2.5 rounded-xl"
+                  className="flex items-center justify-between text-amber-950 font-bold bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 p-2.5 rounded-xl shadow-xs"
                 >
-                  🏪 Seller Account (₹500 Plan)
+                  <span className="flex items-center gap-2">
+                    <Store className="w-4 h-4 text-amber-700" />
+                    <span>Seller Portal</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-200 text-xs font-extrabold text-amber-950">
+                    ₹500 Plan
+                  </span>
                 </Link>
                 <Link
                   href="/shop"
