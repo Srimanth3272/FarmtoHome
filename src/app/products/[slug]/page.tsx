@@ -10,6 +10,8 @@ import { ProductDetailClient } from './ProductDetailClient';
 
 import { FALLBACK_PRODUCTS } from '@/lib/fallback-data';
 
+import { getServerProducts } from '@/lib/server-products';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +61,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     }
   } catch (err) {
     console.error('Database connection notice on ProductDetailPage:', err);
+  }
+
+  // Check persistent server store / Firestore cache
+  if (!product) {
+    try {
+      const serverProds = await getServerProducts();
+      product = serverProds.find((p) => p.slug === params.slug || p.id === params.slug);
+      if (product) {
+        relatedProducts = serverProds.filter((p) => p.id !== product?.id).slice(0, 3);
+      }
+    } catch {}
   }
 
   if (!product) {

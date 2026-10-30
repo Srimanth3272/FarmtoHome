@@ -31,6 +31,7 @@ import {
   FALLBACK_FARMERS,
   FALLBACK_BLOG_POSTS,
 } from '@/lib/fallback-data';
+import { getServerProducts } from '@/lib/server-products';
 
 export const revalidate = 0; // Dynamic server rendering
 
@@ -42,7 +43,7 @@ export default async function HomePage() {
   let blogPosts: any[] = [];
 
   try {
-    const results = await Promise.all([
+    const [dbProdsRaw, dbCatsRaw, dbFarmersRaw, dbBlogsRaw, serverProdsRaw] = await Promise.all([
       prisma.product.findMany({
         where: { isActive: true },
         include: {
@@ -55,24 +56,33 @@ export default async function HomePage() {
           farmPassport: true,
         },
         orderBy: { createdAt: 'desc' },
-      }),
-      prisma.category.findMany(),
+      }).catch(() => []),
+      prisma.category.findMany().catch(() => []),
       prisma.farmerProfile.findMany({
         include: {
           user: { select: { name: true, avatar: true } },
           products: { take: 3 },
         },
         take: 4,
-      }),
+      }).catch(() => []),
       prisma.blogPost.findMany({
         where: { isPublished: true },
         take: 3,
         orderBy: { viewsCount: 'desc' },
-      }),
+      }).catch(() => []),
+      getServerProducts().catch(() => []),
     ]);
 
-    const dbProds = results[0] || [];
-    const mergedProds = [...dbProds];
+    const dbProds = dbProdsRaw || [];
+    const serverProds = serverProdsRaw || [];
+    const mergedProds: any[] = [...serverProds];
+
+    for (const dp of dbProds) {
+      if (!mergedProds.some((p) => p.id === dp.id || p.slug === dp.slug)) {
+        mergedProds.push(dp);
+      }
+    }
+
     for (const fb of FALLBACK_PRODUCTS) {
       if (!mergedProds.some((p) => p.slug === fb.slug || p.id === fb.id)) {
         mergedProds.push(fb as any);
@@ -80,7 +90,7 @@ export default async function HomePage() {
     }
     products = mergedProds;
 
-    const dbCats = results[1] || [];
+    const dbCats = dbCatsRaw || [];
     const mergedCats = [...dbCats];
     for (const fc of FALLBACK_CATEGORIES) {
       if (!mergedCats.some((c) => c.slug === fc.slug)) {
@@ -88,8 +98,8 @@ export default async function HomePage() {
       }
     }
     categories = mergedCats;
-    farmers = results[2] && results[2].length > 0 ? results[2] : (FALLBACK_FARMERS as any);
-    blogPosts = results[3] && results[3].length > 0 ? results[3] : (FALLBACK_BLOG_POSTS as any);
+    farmers = dbFarmersRaw && dbFarmersRaw.length > 0 ? dbFarmersRaw : (FALLBACK_FARMERS as any);
+    blogPosts = dbBlogsRaw && dbBlogsRaw.length > 0 ? dbBlogsRaw : (FALLBACK_BLOG_POSTS as any);
   } catch (err) {
     console.error('Database connection notice (using resilient fallback catalog):', err);
     products = FALLBACK_PRODUCTS as any;

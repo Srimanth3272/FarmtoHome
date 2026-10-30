@@ -110,6 +110,19 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
 
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [productSuccessAlert, setProductSuccessAlert] = useState('');
+  const [firestoreStatus, setFirestoreStatus] = useState<{
+    enabled: boolean;
+    status: string;
+    message: string;
+    fixUrl: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/firestore/status')
+      .then((r) => r.json())
+      .then((d) => setFirestoreStatus(d))
+      .catch(() => {});
+  }, []);
 
   // Commission Payment Modal State
   const [showPayCommissionModal, setShowPayCommissionModal] = useState(false);
@@ -157,8 +170,8 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
     try {
       const selectedCatObj = FALLBACK_CATEGORIES.find((c) => c.id === newProdCategory || c.slug === newProdCategory) || categories.find((c) => c.id === newProdCategory) || FALLBACK_CATEGORIES[0];
 
-      // Save to Firebase Firestore first for real-time visibility across all clients
-      const fbProduct = await addProductToFirebase({
+      // Save to Firebase Firestore & Server Store for real-time visibility across all clients
+      const result = await addProductToFirebase({
         name: newProdName,
         description: newProdDesc,
         categoryId: selectedCatObj.id,
@@ -180,41 +193,21 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
         images: JSON.stringify([newProdImage]),
       });
 
-      // Also submit via local API
-      await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newProdName,
-          description: newProdDesc,
-          categoryId: selectedCatObj.id,
-          farmerId: farmer.id || 'demo-farmer-id',
-          price: finalCustomerPrice,
-          farmerBasePrice: basePriceNum,
-          commissionAmount: commissionCalculated,
-          unit: newProdUnit,
-          stock: parseInt(newProdStock, 10),
-          originLocation: newProdOrigin,
-          harvestDate: newProdHarvestDate,
-          shelfLifeDays: parseInt(newProdShelfLife, 10),
-          storageInstructions: newProdStorage,
-          isOrganic: newProdOrganic,
-          isActive: true,
-          approvalStatus: 'APPROVED',
-          certificationDetails: 'Verified Merchant Standard',
-          images: JSON.stringify([newProdImage]),
-          aadharNumber: farmerAadhaar,
-          phone: farmerPhone,
-          email: farmerEmail,
-        }),
-      });
+      const fbProduct = result.product || result;
 
       // Add to local state (marked as live)
       setProducts([fbProduct, ...products]);
       setShowAddProductModal(false);
-      setProductSuccessAlert(
-        `Product "${newProdName}" successfully stored in Firebase Firestore and published live! All customers can now view and purchase it immediately.`
-      );
+
+      if (result.firestoreSuccess) {
+        setProductSuccessAlert(
+          `🎉 Product "${newProdName}" successfully stored in Firebase Firestore and published live! Customers across India can view and purchase it immediately.`
+        );
+      } else {
+        setProductSuccessAlert(
+          `✅ Product "${newProdName}" published LIVE on the storefront catalog! (Note: Cloud Firestore database needs 1-click creation in Firebase console for cloud backup).`
+        );
+      }
       setNewProdName('');
       setNewProdDesc('');
     } catch (err: any) {
@@ -421,24 +414,63 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Product Submission Success Banner */}
-      {productSuccessAlert && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start justify-between gap-3 animate-in fade-in">
-          <div className="flex items-start gap-2.5">
-            <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      {/* Firebase Cloud Firestore Status Diagnostic Banner */}
+      {firestoreStatus && !firestoreStatus.enabled && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-xs sm:text-sm">{productSuccessAlert}</p>
-              <p className="text-[11px] text-amber-700 mt-0.5">
-                Admin agronomists verify purity declarations, batch codes, and fair pricing before activating products on the public catalog.
+              <p className="font-bold text-xs sm:text-sm text-amber-950">
+                Firebase Cloud Firestore: 1-Click Database Creation Needed
+              </p>
+              <p className="text-[11px] text-amber-800 mt-0.5">
+                Your products are currently live via the Storefront API catalog. To also enable Cloud Firestore in project <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900 font-bold">farm-to-home-9ff91</code>, click below to create the database in 30 seconds.
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setProductSuccessAlert('')}
-            className="p-1 text-amber-600 hover:text-amber-800"
+          <a
+            href={firestoreStatus.fixUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-soft transition-all shrink-0"
           >
-            <X className="w-4 h-4" />
-          </button>
+            <span>Create Firestore Database →</span>
+          </a>
+        </div>
+      )}
+
+      {/* Product Submission Success Banner */}
+      {productSuccessAlert && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in shadow-sm">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-xs sm:text-sm">{productSuccessAlert}</p>
+              <p className="text-[11px] text-emerald-800 mt-1">
+                Your product is published live and visible for customers right now across India!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/shop"
+              className="px-3 py-1.5 rounded-xl bg-forest-800 text-white font-bold text-xs hover:bg-forest-900 transition-colors shadow-xs"
+            >
+              View in Shop
+            </Link>
+            <Link
+              href="/customer"
+              className="px-3 py-1.5 rounded-xl bg-harvest-500 text-forest-950 font-bold text-xs hover:bg-harvest-600 transition-colors shadow-xs"
+            >
+              Customer Market
+            </Link>
+            <button
+              onClick={() => setProductSuccessAlert('')}
+              className="p-1 text-gray-500 hover:text-gray-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

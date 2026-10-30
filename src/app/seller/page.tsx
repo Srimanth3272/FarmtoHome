@@ -69,7 +69,13 @@ export default function SellerAccountPage() {
   );
   const [storeName, setStoreName] = useState(user?.name ? `${user.name}'s Official Store` : 'My Super Store');
   const [submittingProduct, setSubmittingProduct] = useState(false);
-  const [productCreatedAlert, setProductCreatedAlert] = useState<ProductItem | null>(null);
+  const [productCreatedAlert, setProductCreatedAlert] = useState<any | null>(null);
+  const [firestoreStatus, setFirestoreStatus] = useState<{
+    enabled: boolean;
+    status: string;
+    message: string;
+    fixUrl: string;
+  } | null>(null);
 
   // Preset images helper for fast product listing
   const sampleImages = [
@@ -113,6 +119,11 @@ export default function SellerAccountPage() {
       setSubscription(sub);
     }
     loadSub();
+
+    fetch('/api/firestore/status')
+      .then((r) => r.json())
+      .then((d) => setFirestoreStatus(d))
+      .catch(() => {});
 
     const unsubscribe = subscribeToProducts((live) => {
       setAllProducts(live);
@@ -184,7 +195,7 @@ export default function SellerAccountPage() {
     try {
       const selectedCatObj = FALLBACK_CATEGORIES.find((c) => c.id === prodCategory || c.slug === prodCategory) || FALLBACK_CATEGORIES[0];
 
-      const newProduct = await addProductToFirebase({
+      const result = await addProductToFirebase({
         name: prodName,
         categoryId: selectedCatObj.id,
         category: {
@@ -216,7 +227,12 @@ export default function SellerAccountPage() {
         isOrganic: selectedCatObj.slug === 'fresh-produce' || selectedCatObj.slug === 'organic-farming',
       });
 
-      setProductCreatedAlert(newProduct);
+      const newProduct = result.product || result;
+      setProductCreatedAlert({
+        product: newProduct,
+        firestoreSuccess: result.firestoreSuccess,
+        firestoreError: result.firestoreError,
+      });
       setSellerProducts([newProduct, ...sellerProducts]);
       setProdName('');
       setProdDesc('');
@@ -280,6 +296,31 @@ export default function SellerAccountPage() {
           </div>
         </div>
       </div>
+
+      {/* Firebase Cloud Firestore Status Diagnostic Banner */}
+      {firestoreStatus && !firestoreStatus.enabled && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-xs sm:text-sm text-amber-950">
+                Firebase Cloud Firestore: 1-Click Database Creation Needed
+              </p>
+              <p className="text-[11px] text-amber-800 mt-0.5">
+                Your listings are published live to all customers via the Storefront API catalog. To also enable Cloud Firestore in project <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900 font-bold">farm-to-home-9ff91</code>, click below to create the database in 30 seconds.
+              </p>
+            </div>
+          </div>
+          <a
+            href={firestoreStatus.fixUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-soft transition-all shrink-0"
+          >
+            <span>Create Firestore Database →</span>
+          </a>
+        </div>
+      )}
 
       {/* 2. Top Navigation Tabs */}
       <div className="flex border-b border-cream-300 gap-2 sm:gap-4 overflow-x-auto pb-1 text-xs sm:text-sm font-bold">
@@ -349,22 +390,47 @@ export default function SellerAccountPage() {
               {/* Alert when product is created */}
               {productCreatedAlert && (
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 space-y-2 animate-in fade-in">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <p className="font-bold text-xs sm:text-sm flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                      <span>🎉 Product "{productCreatedAlert.name}" is now LIVE on Firebase!</span>
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <span>🎉 Product "{productCreatedAlert.product?.name || productCreatedAlert.name}" is now LIVE!</span>
                     </p>
-                    <Link
-                      href="/customer"
-                      className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 flex items-center gap-1 shadow-sm"
-                    >
-                      <span>View on Customer Page</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href="/shop"
+                        className="px-3 py-1.5 rounded-xl bg-forest-800 text-white font-bold text-xs hover:bg-forest-900 flex items-center gap-1 shadow-sm"
+                      >
+                        <span>View in Shop</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+                      <Link
+                        href="/customer"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 flex items-center gap-1 shadow-sm"
+                      >
+                        <span>Customer Market</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
                   </div>
-                  <p className="text-xs text-emerald-800">
-                    Your product has been saved to Firebase Firestore and synchronized in real-time. Any customer visiting the platform can now see and buy it immediately!
-                  </p>
+                  {productCreatedAlert.firestoreSuccess ? (
+                    <p className="text-xs text-emerald-800">
+                      Product stored in Firebase Firestore (<code className="bg-emerald-100 px-1 py-0.5 rounded font-mono font-bold">farm-to-home-9ff91</code>) and synchronized live for all customers!
+                    </p>
+                  ) : (
+                    <div className="mt-1 p-2 rounded-xl bg-amber-100/70 border border-amber-300 text-amber-900 text-[11px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <span>
+                        ℹ️ Product published live to storefront catalog for all customers. To also sync directly into your Firebase project, click below:
+                      </span>
+                      <a
+                        href="https://console.firebase.google.com/project/farm-to-home-9ff91/firestore"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-amber-700 text-white font-bold text-[10px] shrink-0 hover:bg-amber-800"
+                      >
+                        Create Database in Firebase →
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 

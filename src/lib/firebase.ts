@@ -177,7 +177,7 @@ export function subscribeToProducts(
 }
 
 function setupLocalSync(onUpdate: (products: ProductItem[]) => void): () => void {
-  const notifyCurrent = () => {
+  const notifyCurrent = async () => {
     const local = getLocalCommunityProducts();
     const merged = [...local];
     for (const item of FALLBACK_PRODUCTS) {
@@ -186,9 +186,37 @@ function setupLocalSync(onUpdate: (products: ProductItem[]) => void): () => void
       }
     }
     onUpdate(merged);
+
+    // Also fetch from server persistent catalog so customers on other devices get items immediately
+    try {
+      const res = await fetch('/api/products', { cache: 'no-store' });
+      if (res.ok) {
+        const serverProds = await res.json();
+        const fullMerged = [...serverProds];
+        for (const lp of local) {
+          if (!fullMerged.some((m) => m.id === lp.id || m.slug === lp.slug)) {
+            fullMerged.push(lp);
+          }
+        }
+        for (const fb of FALLBACK_PRODUCTS) {
+          if (!fullMerged.some((m) => m.id === fb.id || m.slug === fb.slug)) {
+            fullMerged.push(fb as any);
+          }
+        }
+        onUpdate(fullMerged);
+      }
+    } catch {}
   };
 
   notifyCurrent();
+
+  // Periodic polling so customers on any browser/phone automatically receive updates
+  let intervalId: any = null;
+  if (typeof window !== 'undefined') {
+    intervalId = setInterval(() => {
+      notifyCurrent();
+    }, 12000);
+  }
 
   let channel: BroadcastChannel | null = null;
   if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
@@ -206,23 +234,51 @@ function setupLocalSync(onUpdate: (products: ProductItem[]) => void): () => void
 
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', notifyCurrent);
   }
 
   return () => {
+    if (intervalId) clearInterval(intervalId);
     if (channel) channel.close();
     if (typeof window !== 'undefined') {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', notifyCurrent);
     }
   };
 }
 
-// Add a Product to Firebase Firestore
-export async function addProductToFirebase(productData: Partial<ProductItem>): Promise<ProductItem> {
-  const newId = `prod-${Date.now()}`;
+// Client helper to check Cloud Firestore API status
+export async function checkFirestoreStatusClient(): Promise<{
+  enabled: boolean;
+  status: string;
+  message: string;
+  fixUrl: string;
+  projectId: string;
+}> {
+  try {
+    const res = await fetch('/api/firestore/status', { cache: 'no-store' });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {}
+  return {
+    enabled: false,
+    status: 'NEEDS_CREATION',
+    message: 'Could not connect to Firestore status check.',
+    fixUrl: 'https://console.firebase.google.com/project/farm-to-home-9ff91/firestore',
+    projectId: 'farm-to-home-9ff91',
+  };
+}
+
+// Add a Product to Firebase Firestore & Server Store
+export async function addProductToFirebase(
+  productData: Partial<ProductItem>
+): Promise<ProductItem & { product: ProductItem; firestoreSuccess: boolean; firestoreError?: string; apiSuccess: boolean }> {
+  const newId = productData.id || `prod-${Date.now()}`;
   const now = new Date().toISOString();
 
   const product: ProductItem = {
-    id: productData.id || newId,
+    id: newId,
     slug:
       productData.slug ||
       (productData.name || 'product')
@@ -289,6 +345,9 @@ export async function addProductToFirebase(productData: Partial<ProductItem>): P
   saveLocalCommunityProduct(product);
 
   // 2. If Firebase Firestore is active, save to Firestore collection 'products'
+  let firestoreSuccess = false;
+  let firestoreError: string | undefined;
+
   const firestore = getFirebaseDb();
   if (firestore) {
     try {
@@ -296,24 +355,37 @@ export async function addProductToFirebase(productData: Partial<ProductItem>): P
         ...product,
         updatedAt: serverTimestamp(),
       });
+      firestoreSuccess = true;
       console.log('Product successfully stored in Firebase Firestore:', product.id);
-    } catch (err) {
-      console.error('Failed writing product to Firebase Firestore:', err);
+    } catch (err: any) {
+      firestoreSuccess = false;
+      firestoreError = err?.message || 'Cloud Firestore database has not been enabled yet';
+      console.warn('Notice writing product to Firebase Firestore:', err?.message || err);
     }
   }
 
-  // 3. Post to local API as well for backend persistence
+  // 3. Post to server API for persistent backend persistence across devices
+  let apiSuccess = false;
   try {
-    await fetch('/api/products', {
+    const apiRes = await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(product),
     });
+    if (apiRes.ok) {
+      apiSuccess = true;
+    }
   } catch (apiErr) {
     console.warn('API sync warning:', apiErr);
   }
 
-  return product;
+  return {
+    ...product,
+    product,
+    firestoreSuccess,
+    firestoreError,
+    apiSuccess,
+  };
 }
 
 // Seller ₹500 Subscription Management in Firebase

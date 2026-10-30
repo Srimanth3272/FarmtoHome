@@ -9,6 +9,8 @@ import {
   FALLBACK_PRODUCTS,
   FALLBACK_FARMERS,
 } from '@/lib/fallback-data';
+import { getServerProducts } from '@/lib/server-products';
+import { ShopProductsGrid } from '@/components/ShopProductsGrid';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -66,7 +68,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   let farmers: any[] = [];
 
   try {
-    const results = await Promise.all([
+    const [dbProdsRaw, dbCatsRaw, dbFarmersRaw, serverProdsRaw] = await Promise.all([
       prisma.product.findMany({
         where,
         orderBy,
@@ -79,20 +81,30 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           },
           farmPassport: true,
         },
-      }),
+      }).catch(() => []),
       prisma.category.findMany({
         include: {
           _count: { select: { products: true } },
         },
-      }),
+      }).catch(() => []),
       prisma.farmerProfile.findMany({
         include: {
           user: { select: { name: true } },
         },
-      }),
+      }).catch(() => []),
+      getServerProducts().catch(() => []),
     ]);
-    const dbProds = results[0] || [];
-    const mergedProds = [...dbProds];
+
+    const dbProds = dbProdsRaw || [];
+    const serverProds = serverProdsRaw || [];
+    const mergedProds: any[] = [...serverProds];
+
+    for (const dp of dbProds) {
+      if (!mergedProds.some((p) => p.id === dp.id || p.slug === dp.slug)) {
+        mergedProds.push(dp);
+      }
+    }
+
     for (const fb of FALLBACK_PRODUCTS) {
       if (!mergedProds.some((p) => p.slug === fb.slug || p.id === fb.id)) {
         if (!category || fb.category?.slug === category) {
@@ -102,7 +114,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     }
     products = mergedProds;
 
-    const dbCats = results[1] || [];
+    const dbCats = dbCatsRaw || [];
     const mergedCats = [...dbCats];
     for (const fc of FALLBACK_CATEGORIES) {
       if (!mergedCats.some((c) => c.slug === fc.slug)) {
@@ -110,7 +122,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       }
     }
     categories = mergedCats;
-    farmers = results[2] && results[2].length > 0 ? results[2] : (FALLBACK_FARMERS as any);
+    farmers = dbFarmersRaw && dbFarmersRaw.length > 0 ? dbFarmersRaw : (FALLBACK_FARMERS as any);
   } catch (err) {
     console.error('Database connection notice on ShopPage:', err);
     products = FALLBACK_PRODUCTS as any;
@@ -266,69 +278,17 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         </aside>
 
         {/* Right Product Grid */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Sorting and Active Count Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-cream-300 shadow-card flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500 font-medium">
-              Showing <strong className="text-gray-900">{products.length}</strong> farm-verified products
-            </p>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-gray-400 font-semibold">Sort by:</span>
-              <div className="flex flex-wrap gap-1">
-                {[
-                  { label: 'Featured', value: '' },
-                  { label: 'Price: Low to High', value: 'price-asc' },
-                  { label: 'Price: High to Low', value: 'price-desc' },
-                  { label: 'Rating', value: 'rating' },
-                ].map((s) => (
-                  <Link
-                    key={s.value}
-                    href={`/shop?${new URLSearchParams({
-                      ...(category ? { category } : {}),
-                      ...(search ? { search } : {}),
-                      ...(organic ? { organic } : {}),
-                      ...(s.value ? { sort: s.value } : {}),
-                    }).toString()}`}
-                    className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                      sort === s.value || (!sort && s.value === '')
-                        ? 'bg-forest-900 text-white font-bold'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {s.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Product Cards Grid */}
-          {products.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-cream-300 p-12 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-forest-50 flex items-center justify-center text-forest-700 mx-auto">
-                <Sparkles className="w-8 h-8" />
-              </div>
-              <h3 className="font-serif font-bold text-xl text-forest-950">
-                No matching products found
-              </h3>
-              <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                Try clearing selected filters or searching for terms like "Tomatoes", "Vermicompost", or "Seeds".
-              </p>
-              <Link
-                href="/shop"
-                className="inline-block px-6 py-2.5 rounded-xl bg-forest-800 text-white text-xs font-bold shadow-soft hover:bg-forest-900 transition-colors"
-              >
-                Reset All Filters
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p as any} />
-              ))}
-            </div>
-          )}
+        <div className="lg:col-span-3">
+          <ShopProductsGrid
+            initialProducts={products}
+            category={category}
+            farmer={farmer}
+            search={search}
+            sort={sort}
+            organic={organic}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+          />
         </div>
       </div>
     </div>
