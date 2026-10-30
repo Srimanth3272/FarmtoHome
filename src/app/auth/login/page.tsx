@@ -23,6 +23,38 @@ export default function LoginPage() {
 
     try {
       const cleanEmail = email.trim().toLowerCase();
+
+      // Free Seller Founder Account for sreemanthnagalakunta@gmail.com
+      if (cleanEmail === 'sreemanthnagalakunta@gmail.com') {
+        if (password.trim() !== 'Srimanth@3272') {
+          throw new Error('Invalid password for Sreemanth Nagalakunta. Please use Srimanth@3272');
+        }
+
+        const founderUser = DEMO_USERS.SREEMANTH;
+        login(founderUser);
+
+        if (typeof window !== 'undefined') {
+          const freeSubRecord = {
+            sellerId: founderUser.id,
+            sellerName: founderUser.name,
+            sellerEmail: founderUser.email,
+            isSubscribed: true,
+            planName: 'Founder VIP Seller Plan (100% Free Lifetime)',
+            amount: 0,
+            activatedAt: new Date().toISOString(),
+            expiresAt: '2099-12-31T23:59:59.000Z',
+            paymentMethod: 'FREE_FOUNDER_PASS',
+            paymentId: 'F2H-FREE-VIP-SREEMANTH',
+            status: 'ACTIVE',
+          };
+          localStorage.setItem(`f2h_seller_sub_${founderUser.id}`, JSON.stringify(freeSubRecord));
+          localStorage.setItem('f2h_seller_active_sub', JSON.stringify(freeSubRecord));
+        }
+
+        router.push('/seller');
+        return;
+      }
+
       const isRoleAdmin = cleanEmail.includes('admin') || cleanEmail === 'admin@farmtohome.in';
 
       if (isRoleAdmin) {

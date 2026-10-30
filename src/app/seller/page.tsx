@@ -88,6 +88,27 @@ export default function SellerAccountPage() {
   // Load subscription and real-time products
   useEffect(() => {
     async function loadSub() {
+      // Automatic 100% Free VIP Seller Plan for Sreemanth Nagalakunta
+      const isSreemanth = user?.email?.toLowerCase() === 'sreemanthnagalakunta@gmail.com';
+      if (isSreemanth) {
+        const freeSub: SellerSubscriptionRecord = {
+          sellerId: user?.id || 'user-sreemanth-founder',
+          sellerName: user?.name || 'Sreemanth Nagalakunta',
+          sellerEmail: 'sreemanthnagalakunta@gmail.com',
+          isSubscribed: true,
+          planName: 'Founder VIP Seller Plan (100% Free Lifetime)',
+          amount: 0,
+          activatedAt: new Date().toISOString(),
+          expiresAt: '2099-12-31T23:59:59.000Z',
+          paymentMethod: 'FREE_FOUNDER_PASS',
+          paymentId: 'F2H-FREE-VIP-SREEMANTH',
+          status: 'ACTIVE',
+        };
+        setSubscription(freeSub);
+        await saveSellerSubscriptionToFirebase(freeSub);
+        return;
+      }
+
       const sub = await getSellerSubscriptionFromFirebase(sellerId);
       setSubscription(sub);
     }
@@ -108,7 +129,7 @@ export default function SellerAccountPage() {
     return () => {
       unsubscribe();
     };
-  }, [sellerId, user?.name]);
+  }, [sellerId, user?.name, user?.email]);
 
   // Handle ₹500 Subscription Activation
   const handleActivateSubscription = async (method: string, payId?: string) => {
@@ -150,7 +171,8 @@ export default function SellerAccountPage() {
   // Add Product Submit
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subscription?.isSubscribed) {
+    const isSreemanth = user?.email?.toLowerCase() === 'sreemanthnagalakunta@gmail.com';
+    if (!subscription?.isSubscribed && !isSreemanth) {
       alert('You must pay the ₹500 Seller Subscription fee to list and sell products.');
       setActiveTab('subscription');
       return;

@@ -29,8 +29,21 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('Farm@123', 10);
   const adminHashedPassword = await bcrypt.hash('admin@123', 10);
+  const founderHashedPassword = await bcrypt.hash('Srimanth@3272', 10);
 
   // 1. Users
+  const founderSreemanth = await prisma.user.create({
+    data: {
+      name: 'Sreemanth Nagalakunta',
+      email: 'sreemanthnagalakunta@gmail.com',
+      password: founderHashedPassword,
+      phone: '+91 98480 12345',
+      role: 'FARMER',
+      isVerified: true,
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+    },
+  });
+
   const admin = await prisma.user.create({
     data: {
       name: 'Dr. Anand Swaminathan',
@@ -129,6 +142,35 @@ async function main() {
   });
 
   // 2. Farmer Profiles
+  const profileSreemanth = await prisma.farmerProfile.create({
+    data: {
+      userId: founderSreemanth.id,
+      farmName: "Sreemanth's Certified Organic Farm & Store",
+      story: 'Pioneering organic cultivation, sustainable desi seed preservation, and direct farm-to-table supply across Andhra Pradesh.',
+      experienceYears: 10,
+      state: 'Andhra Pradesh',
+      district: 'NTR (Vijayawada)',
+      village: 'Benz Circle Hub',
+      pincode: '520001',
+      farmSizeAcres: 12.5,
+      farmingMethods: 'Natural Farming, ZBNF, Desi Cow Jivamrutha, Neemastra Pest Management',
+      certifications: 'PGS-India Green Certified, AP Organic Mission Verified',
+      verificationStatus: 'VERIFIED',
+      aadharNumber: '9848-1234-5678',
+      phone: '+91 98480 12345',
+      email: 'sreemanthnagalakunta@gmail.com',
+      idProofDoc: 'aadhaar_sreemanth.pdf',
+      commissionRate: 0.0,
+      totalCommissionPaid: 0.0,
+      totalCommissionDue: 0.0,
+      rating: 5.0,
+      reviewsCount: 24,
+      isOrganicCertified: true,
+      profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+      bannerImage: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&auto=format&fit=crop&q=80',
+    },
+  });
+
   const profileRamesh = await prisma.farmerProfile.create({
     data: {
       userId: farmerRamesh.id,

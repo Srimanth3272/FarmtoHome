@@ -43,12 +43,25 @@ export const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const categories = [
@@ -60,6 +73,51 @@ export const Navbar: React.FC = () => {
     { name: 'Organic Farming', slug: 'organic-farming', desc: 'Vermicompost, cow manure, neem cake' },
     { name: 'Wood & Farm Materials', slug: 'wood-and-materials', desc: 'Cocopeat, mulch, farm timber' },
     { name: 'Gardening Tools', slug: 'gardening-tools', desc: 'UV grow bags, drip kits, tools' },
+  ];
+
+  const moreFeatures = [
+    {
+      name: 'Meet Farmers',
+      href: '/farmers',
+      icon: Users,
+      desc: 'Direct connect with verified local growers',
+      badge: 'Verified',
+    },
+    {
+      name: 'Harvest Calendar',
+      href: '/harvest-calendar',
+      icon: Calendar,
+      desc: 'Seasonal crop availability & GI pre-orders',
+      badge: 'Pre-Order',
+    },
+    {
+      name: 'Farm Passport',
+      href: '/farm-passport',
+      icon: ShieldCheck,
+      desc: 'Traceable harvest origin, soil & purity record',
+      badge: 'Traceable',
+    },
+    {
+      name: 'Waste Exchange',
+      href: '/waste-exchange',
+      icon: Recycle,
+      desc: 'Bio-waste circular economy & husk trade',
+      badge: 'Eco',
+    },
+    {
+      name: 'Knowledge Hub',
+      href: '/blog',
+      icon: BookOpen,
+      desc: 'Natural farming tips & organic pest guides',
+      badge: 'Guides',
+    },
+    {
+      name: 'Agri AI Assistant',
+      href: '/assistant',
+      icon: Bot,
+      desc: '24/7 crop advisor in Telugu & English',
+      badge: 'AI',
+    },
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -75,19 +133,19 @@ export const Navbar: React.FC = () => {
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           isScrolled
             ? 'bg-white/95 backdrop-blur-md shadow-card border-b border-cream-200'
-            : 'bg-cream-50/90 backdrop-blur-sm border-b border-cream-200'
+            : 'bg-cream-50/95 backdrop-blur-sm border-b border-cream-200'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-3 xl:gap-4">
             {/* Logo */}
             <Logo className="shrink-0" />
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-2 xl:gap-3.5 text-xs font-semibold text-forest-950">
+            {/* Desktop Navigation Links (Clean, Compact & Overflow-Proof) */}
+            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-3 text-xs font-semibold text-forest-950">
               <Link
                 href="/"
-                className={`hover:text-forest-700 transition-colors px-1 py-1 shrink-0 ${
+                className={`hover:text-forest-700 transition-colors px-1.5 py-1 shrink-0 ${
                   pathname === '/' ? 'text-forest-800 font-bold' : ''
                 }`}
               >
@@ -97,7 +155,7 @@ export const Navbar: React.FC = () => {
               {/* Customer Store */}
               <Link
                 href="/customer"
-                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
                   pathname === '/customer'
                     ? 'bg-emerald-800 text-white border-emerald-900 shadow-soft'
                     : 'bg-emerald-50 hover:bg-emerald-100/90 text-emerald-950 border-emerald-300'
@@ -108,10 +166,10 @@ export const Navbar: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </Link>
 
-              {/* Seller Portal (Modern Rectangular Badge - NOT a circle!) */}
+              {/* Seller Portal */}
               <Link
                 href="/seller"
-                className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
                   pathname.startsWith('/seller')
                     ? 'bg-amber-600 text-white border-amber-700 shadow-soft'
                     : 'bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-950 border-amber-300'
@@ -126,27 +184,11 @@ export const Navbar: React.FC = () => {
 
               <Link
                 href="/shop"
-                className={`hover:text-forest-700 transition-colors px-1 py-1 shrink-0 ${
+                className={`hover:text-forest-700 transition-colors px-1.5 py-1 shrink-0 ${
                   pathname === '/shop' ? 'text-forest-800 font-bold' : ''
                 }`}
               >
                 Shop All
-              </Link>
-
-              {/* AP Delivery Map Link */}
-              <Link
-                href="/delivery-map"
-                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
-                  pathname === '/delivery-map'
-                    ? 'bg-forest-800 text-white border-forest-900 shadow-soft'
-                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span>AP Delivery Map</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-emerald-200 text-[10px] font-extrabold text-emerald-950 leading-none">
-                  26 Districts
-                </span>
               </Link>
 
               {/* Categories Dropdown */}
@@ -155,13 +197,13 @@ export const Navbar: React.FC = () => {
                 onMouseEnter={() => setCategoriesOpen(true)}
                 onMouseLeave={() => setCategoriesOpen(false)}
               >
-                <button className="flex items-center gap-1 hover:text-forest-700 transition-colors py-2">
+                <button className="flex items-center gap-1 hover:text-forest-700 transition-colors py-2 px-1">
                   <span>Categories</span>
                   <ChevronDown className="w-3.5 h-3.5 text-forest-600" />
                 </button>
 
                 {categoriesOpen && (
-                  <div className="absolute top-full -left-4 w-72 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute top-full -left-4 w-72 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                     {categories.map((cat) => (
                       <Link
                         key={cat.slug}
@@ -177,115 +219,160 @@ export const Navbar: React.FC = () => {
                 )}
               </div>
 
+              {/* AP Delivery Map Link (Full on xl, compact on lg) */}
               <Link
-                href="/farmers"
-                className={`hover:text-forest-700 transition-colors flex items-center gap-1 ${
-                  pathname.startsWith('/farmers') ? 'text-forest-800 font-bold' : ''
+                href="/delivery-map"
+                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                  pathname === '/delivery-map'
+                    ? 'bg-forest-800 text-white border-forest-900 shadow-soft'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300'
                 }`}
               >
-                <span>Meet Farmers</span>
+                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>AP Delivery Map</span>
+                <span className="hidden xl:inline px-1.5 py-0.5 rounded-md bg-emerald-200 text-[10px] font-extrabold text-emerald-950 leading-none">
+                  26 Districts
+                </span>
               </Link>
 
-              <Link
-                href="/harvest-calendar"
-                className={`hover:text-forest-700 transition-colors flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-harvest-100 text-harvest-900 border border-harvest-200 ${
-                  pathname === '/harvest-calendar' ? 'ring-2 ring-harvest-400' : ''
-                }`}
+              {/* More Features Dropdown (Meet Farmers, Calendar, Passport, Waste, Knowledge, AI) */}
+              <div
+                className="relative"
+                onMouseEnter={() => setMoreFeaturesOpen(true)}
+                onMouseLeave={() => setMoreFeaturesOpen(false)}
               >
-                <Calendar className="w-3.5 h-3.5 text-harvest-600" />
-                <span>Harvest Calendar</span>
-              </Link>
+                <button
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-transparent hover:border-cream-300 hover:bg-cream-100/70 transition-all text-xs font-semibold ${
+                    moreFeaturesOpen || ['/farmers', '/harvest-calendar', '/farm-passport', '/waste-exchange', '/blog', '/assistant'].some(p => pathname.startsWith(p))
+                      ? 'text-forest-900 font-bold bg-cream-100 border-cream-300'
+                      : 'text-forest-800'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-harvest-600" />
+                  <span>More Features</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-forest-600" />
+                </button>
 
-              <Link
-                href="/farm-passport"
-                className={`hover:text-forest-700 transition-colors flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-forest-100 text-forest-900 border border-forest-200 ${
-                  pathname === '/farm-passport' ? 'ring-2 ring-forest-500' : ''
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-forest-700" />
-                <span>Farm Passport</span>
-              </Link>
-
-              <Link
-                href="/waste-exchange"
-                className={`hover:text-forest-700 transition-colors ${
-                  pathname === '/waste-exchange' ? 'text-forest-800 font-bold' : ''
-                }`}
-              >
-                Waste Exchange
-              </Link>
-
-              <Link
-                href="/blog"
-                className={`hover:text-forest-700 transition-colors ${
-                  pathname.startsWith('/blog') ? 'text-forest-800 font-bold' : ''
-                }`}
-              >
-                Knowledge Hub
-              </Link>
+                {moreFeaturesOpen && (
+                  <div className="absolute top-full -right-4 xl:left-0 w-80 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    <div className="px-3 py-1.5 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Agricultural Tools & Community
+                    </div>
+                    {moreFeatures.map((feat) => {
+                      const Icon = feat.icon;
+                      const isActive = pathname.startsWith(feat.href);
+                      return (
+                        <Link
+                          key={feat.href}
+                          href={feat.href}
+                          onClick={() => setMoreFeaturesOpen(false)}
+                          className={`flex items-start gap-2.5 p-2 rounded-xl transition-colors ${
+                            isActive ? 'bg-forest-50 border border-forest-200/60' : 'hover:bg-cream-50'
+                          }`}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-forest-100 flex items-center justify-center text-forest-800 shrink-0 mt-0.5">
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-bold text-xs text-forest-950 truncate">{feat.name}</p>
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-harvest-100 text-harvest-900 border border-harvest-200">
+                                {feat.badge}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 truncate">{feat.desc}</p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </nav>
 
-            {/* Right Action Icons */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Search Trigger */}
+            {/* Right Action Cluster: Search, Wishlist, Cart, Sign In (Guaranteed Visible & shrink-0) */}
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 ml-auto z-10">
+              {/* 1. SEARCH OPTION */}
               <button
                 onClick={() => setSearchOpen(true)}
-                aria-label="Search"
-                className="p-2 rounded-xl text-forest-800 hover:bg-forest-100/70 transition-colors"
+                aria-label="Search Catalog"
+                title="Search farm catalog (Ctrl+K)"
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-xl border border-cream-300 bg-white/95 hover:bg-forest-50/80 text-forest-800 text-xs font-semibold shadow-xs transition-all shrink-0 hover:border-forest-400 group"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4 text-forest-700 shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="hidden md:inline text-forest-900 font-bold">Search</span>
+                <span className="hidden 2xl:inline text-gray-400 text-[11px] font-normal">produce, seeds...</span>
+                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded bg-cream-100 text-[10px] font-mono text-gray-500 border border-cream-200">
+                  ⌘K
+                </kbd>
               </button>
 
-              {/* Wishlist Link */}
+              {/* Wishlist Link (Tablet & Desktop) */}
               <Link
                 href="/account?tab=wishlist"
                 aria-label="Wishlist"
-                className="relative p-2 rounded-xl text-forest-800 hover:bg-forest-100/70 transition-colors hidden sm:block"
+                title="Saved Wishlist"
+                className="relative p-2 rounded-xl text-forest-800 hover:bg-forest-100/70 transition-colors hidden sm:flex items-center justify-center shrink-0"
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="w-5 h-5 text-forest-800" />
                 {wishlistIds.length > 0 && (
-                  <span className="absolute 1 top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
                     {wishlistIds.length}
                   </span>
                 )}
               </Link>
 
-              {/* Shopping Cart Button */}
+              {/* 2. CART OPTION (Prominent with Item Count Badge) */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                aria-label="Cart"
-                className="relative p-2 rounded-xl text-forest-800 hover:bg-forest-100/70 transition-colors"
+                aria-label="View Shopping Cart"
+                title="View your farm basket"
+                className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold shadow-soft transition-all shrink-0 group border border-forest-900/60"
               >
-                <ShoppingBag className="w-5 h-5" />
-                {itemCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-forest-800 text-white text-[10px] font-bold flex items-center justify-center animate-bounce">
-                    {itemCount}
-                  </span>
-                )}
+                <ShoppingBag className="w-4 h-4 text-harvest-300 shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline font-bold tracking-tight">Cart</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-harvest-400 text-forest-950 text-[10px] font-black min-w-[20px] text-center shadow-xs">
+                  {itemCount}
+                </span>
               </button>
 
-              {/* User Account Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-forest-900 text-white hover:bg-forest-950 transition-colors text-xs font-semibold shadow-soft"
-                >
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-5 h-5 rounded-full object-cover border border-harvest-400"
-                    />
-                  ) : (
-                    <User className="w-4 h-4 text-harvest-300" />
-                  )}
-                  <span className="truncate max-w-[120px]">
-                    {user ? 'My Account' : 'Sign In'}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-forest-300 hidden sm:inline" />
-                </button>
+              {/* 3. SIGN IN / MY ACCOUNT OPTION */}
+              <div className="relative shrink-0">
+                {user ? (
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-forest-900 text-white hover:bg-forest-950 transition-colors text-xs font-bold shadow-soft border border-forest-800"
+                  >
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-5 h-5 rounded-full object-cover border border-harvest-400 shrink-0"
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-harvest-300 shrink-0" />
+                    )}
+                    <span className="truncate max-w-[100px] hidden sm:inline">
+                      {user.name.split(' ')[0]}
+                    </span>
+                    <span className="sm:hidden text-[11px] font-bold">Account</span>
+                    <ChevronDown className="w-3 h-3 text-forest-300 shrink-0" />
+                  </button>
+                ) : (
+                  <div className="flex items-center">
+                    <Link
+                      href="/auth/login"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-forest-900 hover:bg-forest-950 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-800 hover:border-harvest-400 group"
+                      title="Sign In to Farm to Home"
+                    >
+                      <User className="w-4 h-4 text-harvest-300 shrink-0 group-hover:scale-110 transition-transform" />
+                      <span className="font-bold">Sign In</span>
+                    </Link>
+                  </div>
+                )}
 
-                {userMenuOpen && (
+                {/* User Dropdown Menu when signed in */}
+                {user && userMenuOpen && (
                   <div
                     className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-elevated border border-cream-300 p-3 space-y-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                     onMouseLeave={() => setUserMenuOpen(false)}
@@ -493,7 +580,7 @@ export const Navbar: React.FC = () => {
           />
           <div className="fixed inset-y-0 left-0 w-4/5 max-w-sm bg-white p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
             <div>
-              <div className="flex items-center justify-between pb-6 border-b border-gray-100">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <Logo />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
@@ -503,7 +590,37 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              <div className="py-6 space-y-4 text-sm font-semibold text-forest-950">
+              {/* Quick Mobile Utility Actions (Search & Cart) */}
+              <div className="pt-4 pb-2 space-y-2 border-b border-gray-100">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setSearchOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-cream-300 bg-cream-50 text-gray-600 text-xs font-semibold hover:bg-forest-50 hover:text-forest-900 transition-colors"
+                >
+                  <Search className="w-4 h-4 text-forest-700" />
+                  <span>Search catalog, crops, seeds...</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsCartOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold shadow-soft transition-all"
+                >
+                  <span className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-harvest-300" />
+                    <span>View Farm Cart</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-harvest-400 text-forest-950 text-xs font-extrabold">
+                    {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                  </span>
+                </button>
+              </div>
+
+              <div className="py-4 space-y-3.5 text-sm font-semibold text-forest-950">
                 <Link
                   href="/"
                   onClick={() => setMobileMenuOpen(false)}

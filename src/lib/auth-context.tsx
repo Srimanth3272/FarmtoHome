@@ -62,6 +62,27 @@ export const DEMO_USERS: Record<string, UserSession> = {
     isVerified: true,
     provider: 'email',
   },
+  SREEMANTH: {
+    id: 'user-sreemanth-founder',
+    name: 'Sreemanth Nagalakunta',
+    email: 'sreemanthnagalakunta@gmail.com',
+    role: 'FARMER',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+    phone: '+91 98480 12345',
+    isVerified: true,
+    provider: 'email',
+    isSubscribed: true,
+    sellerSubscription: {
+      isSubscribed: true,
+      plan: 'Founder VIP Seller Plan (100% Free Lifetime)',
+      amount: 0,
+      activatedAt: new Date().toISOString(),
+      expiresAt: '2099-12-31T23:59:59.000Z',
+      paymentId: 'F2H-FREE-VIP-SREEMANTH',
+      paymentMethod: 'FREE_FOUNDER_PASS',
+      status: 'ACTIVE',
+    },
+  },
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
