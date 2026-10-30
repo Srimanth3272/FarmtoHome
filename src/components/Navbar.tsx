@@ -136,178 +136,44 @@ export const Navbar: React.FC = () => {
             : 'bg-cream-50/95 backdrop-blur-sm border-b border-cream-200'
         }`}
       >
+        {/* ROW 1: BRAND, SEARCH BAR, AND CORE UTILITY ACTIONS (Sign In, Cart) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-3 xl:gap-4">
-            {/* Logo */}
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4 xl:gap-6">
+            {/* 1. Official Logo */}
             <Logo className="shrink-0" />
 
-            {/* Desktop Navigation Links (Clean, Compact & Overflow-Proof) */}
-            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-3 text-xs font-semibold text-forest-950">
-              <Link
-                href="/"
-                className={`hover:text-forest-700 transition-colors px-1.5 py-1 shrink-0 ${
-                  pathname === '/' ? 'text-forest-800 font-bold' : ''
-                }`}
-              >
-                Home
-              </Link>
-
-              {/* Customer Store */}
-              <Link
-                href="/customer"
-                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
-                  pathname === '/customer'
-                    ? 'bg-emerald-800 text-white border-emerald-900 shadow-soft'
-                    : 'bg-emerald-50 hover:bg-emerald-100/90 text-emerald-950 border-emerald-300'
-                }`}
-              >
-                <ShoppingBag className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span>Customer Store</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              </Link>
-
-              {/* Seller Portal */}
-              <Link
-                href="/seller"
-                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
-                  pathname.startsWith('/seller')
-                    ? 'bg-amber-600 text-white border-amber-700 shadow-soft'
-                    : 'bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-950 border-amber-300'
-                }`}
-              >
-                <Store className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                <span>Seller Portal</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-amber-200 text-[10px] font-extrabold text-amber-950 border border-amber-300/80 leading-none">
-                  ₹500 Plan
-                </span>
-              </Link>
-
-              <Link
-                href="/shop"
-                className={`hover:text-forest-700 transition-colors px-1.5 py-1 shrink-0 ${
-                  pathname === '/shop' ? 'text-forest-800 font-bold' : ''
-                }`}
-              >
-                Shop All
-              </Link>
-
-              {/* Categories Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setCategoriesOpen(true)}
-                onMouseLeave={() => setCategoriesOpen(false)}
-              >
-                <button className="flex items-center gap-1 hover:text-forest-700 transition-colors py-2 px-1">
-                  <span>Categories</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-forest-600" />
-                </button>
-
-                {categoriesOpen && (
-                  <div className="absolute top-full -left-4 w-72 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                    {categories.map((cat) => (
-                      <Link
-                        key={cat.slug}
-                        href={`/categories/${cat.slug}`}
-                        onClick={() => setCategoriesOpen(false)}
-                        className="block p-2.5 rounded-xl hover:bg-forest-50 transition-colors"
-                      >
-                        <p className="font-semibold text-xs text-forest-950">{cat.name}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{cat.desc}</p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* AP Delivery Map Link (Full on xl, compact on lg) */}
-              <Link
-                href="/delivery-map"
-                className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
-                  pathname === '/delivery-map'
-                    ? 'bg-forest-800 text-white border-forest-900 shadow-soft'
-                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span>AP Delivery Map</span>
-                <span className="hidden xl:inline px-1.5 py-0.5 rounded-md bg-emerald-200 text-[10px] font-extrabold text-emerald-950 leading-none">
-                  26 Districts
-                </span>
-              </Link>
-
-              {/* More Features Dropdown (Meet Farmers, Calendar, Passport, Waste, Knowledge, AI) */}
-              <div
-                className="relative"
-                onMouseEnter={() => setMoreFeaturesOpen(true)}
-                onMouseLeave={() => setMoreFeaturesOpen(false)}
-              >
+            {/* 2. Central Search Bar (Directly Interactive on Desktop & Tablet) */}
+            <div className="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-2 lg:mx-4">
+              <form onSubmit={handleSearchSubmit} className="w-full relative">
+                <input
+                  type="text"
+                  placeholder="Search fresh produce, desi seeds, vermicompost, clothes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-20 py-2 sm:py-2.5 rounded-2xl border border-cream-300 bg-white hover:border-forest-400 focus:bg-white text-xs sm:text-sm text-forest-950 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-forest-600 transition-all shadow-inner"
+                />
+                <Search className="w-4 h-4 text-forest-600 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <button
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-transparent hover:border-cream-300 hover:bg-cream-100/70 transition-all text-xs font-semibold ${
-                    moreFeaturesOpen || ['/farmers', '/harvest-calendar', '/farm-passport', '/waste-exchange', '/blog', '/assistant'].some(p => pathname.startsWith(p))
-                      ? 'text-forest-900 font-bold bg-cream-100 border-cream-300'
-                      : 'text-forest-800'
-                  }`}
+                  type="submit"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold transition-colors shadow-xs"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-harvest-600" />
-                  <span>More Features</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-forest-600" />
+                  Search
                 </button>
+              </form>
+            </div>
 
-                {moreFeaturesOpen && (
-                  <div className="absolute top-full -right-4 xl:left-0 w-80 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                    <div className="px-3 py-1.5 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Agricultural Tools & Community
-                    </div>
-                    {moreFeatures.map((feat) => {
-                      const Icon = feat.icon;
-                      const isActive = pathname.startsWith(feat.href);
-                      return (
-                        <Link
-                          key={feat.href}
-                          href={feat.href}
-                          onClick={() => setMoreFeaturesOpen(false)}
-                          className={`flex items-start gap-2.5 p-2 rounded-xl transition-colors ${
-                            isActive ? 'bg-forest-50 border border-forest-200/60' : 'hover:bg-cream-50'
-                          }`}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-forest-100 flex items-center justify-center text-forest-800 shrink-0 mt-0.5">
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className="font-bold text-xs text-forest-950 truncate">{feat.name}</p>
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-harvest-100 text-harvest-900 border border-harvest-200">
-                                {feat.badge}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-gray-500 truncate">{feat.desc}</p>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </nav>
-
-            {/* Right Action Cluster: Search, Wishlist, Cart, Sign In (Guaranteed Visible & shrink-0) */}
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 ml-auto z-10">
-              {/* 1. SEARCH OPTION */}
+            {/* 3. Right Action Cluster: ALWAYS VISIBLE, NEVER CUT OFF */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto z-10">
+              {/* Mobile Search Icon Trigger (< md) */}
               <button
                 onClick={() => setSearchOpen(true)}
                 aria-label="Search Catalog"
-                title="Search farm catalog (Ctrl+K)"
-                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-xl border border-cream-300 bg-white/95 hover:bg-forest-50/80 text-forest-800 text-xs font-semibold shadow-xs transition-all shrink-0 hover:border-forest-400 group"
+                className="md:hidden p-2 rounded-xl text-forest-800 hover:bg-forest-100 transition-colors"
               >
-                <Search className="w-4 h-4 text-forest-700 shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="hidden md:inline text-forest-900 font-bold">Search</span>
-                <span className="hidden 2xl:inline text-gray-400 text-[11px] font-normal">produce, seeds...</span>
-                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded bg-cream-100 text-[10px] font-mono text-gray-500 border border-cream-200">
-                  ⌘K
-                </kbd>
+                <Search className="w-5 h-5" />
               </button>
 
-              {/* Wishlist Link (Tablet & Desktop) */}
+              {/* Wishlist Link */}
               <Link
                 href="/account?tab=wishlist"
                 aria-label="Wishlist"
@@ -316,27 +182,27 @@ export const Navbar: React.FC = () => {
               >
                 <Heart className="w-5 h-5 text-forest-800" />
                 {wishlistIds.length > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                  <span className="absolute 1 top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
                     {wishlistIds.length}
                   </span>
                 )}
               </Link>
 
-              {/* 2. CART OPTION (Prominent with Item Count Badge) */}
+              {/* Shopping Cart Button - ALWAYS VISIBLE */}
               <button
                 onClick={() => setIsCartOpen(true)}
                 aria-label="View Shopping Cart"
                 title="View your farm basket"
-                className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold shadow-soft transition-all shrink-0 group border border-forest-900/60"
+                className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-900"
               >
-                <ShoppingBag className="w-4 h-4 text-harvest-300 shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline font-bold tracking-tight">Cart</span>
+                <ShoppingBag className="w-4 h-4 text-harvest-300 shrink-0" />
+                <span className="font-bold">Cart</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-harvest-400 text-forest-950 text-[10px] font-black min-w-[20px] text-center shadow-xs">
                   {itemCount}
                 </span>
               </button>
 
-              {/* 3. SIGN IN / MY ACCOUNT OPTION */}
+              {/* Sign In / My Account Button - PROMINENT & IMPOSSIBLE TO MISS */}
               <div className="relative shrink-0">
                 {user ? (
                   <button
@@ -359,16 +225,14 @@ export const Navbar: React.FC = () => {
                     <ChevronDown className="w-3 h-3 text-forest-300 shrink-0" />
                   </button>
                 ) : (
-                  <div className="flex items-center">
-                    <Link
-                      href="/auth/login"
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-forest-900 hover:bg-forest-950 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-800 hover:border-harvest-400 group"
-                      title="Sign In to Farm to Home"
-                    >
-                      <User className="w-4 h-4 text-harvest-300 shrink-0 group-hover:scale-110 transition-transform" />
-                      <span className="font-bold">Sign In</span>
-                    </Link>
-                  </div>
+                  <Link
+                    href="/auth/login"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-forest-900 hover:bg-forest-950 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-700 hover:border-harvest-400 group"
+                    title="Sign In to Farm to Home"
+                  >
+                    <User className="w-4 h-4 text-harvest-300 shrink-0 group-hover:scale-110 transition-transform" />
+                    <span className="font-bold">Sign In</span>
+                  </Link>
                 )}
 
                 {/* User Dropdown Menu when signed in */}
@@ -494,6 +358,162 @@ export const Navbar: React.FC = () => {
               >
                 <Menu className="w-6 h-6" />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 2: CATEGORY & QUICK NAVIGATION STRIP (Desktop / Laptop) */}
+        <div className="hidden lg:block border-t border-cream-200/90 bg-cream-100/70 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-10 py-1 text-xs font-semibold text-forest-950 overflow-x-auto no-scrollbar gap-2 xl:gap-3">
+              <div className="flex items-center gap-1.5 xl:gap-2.5 shrink-0">
+                <Link
+                  href="/"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg ${
+                    pathname === '/' ? 'text-forest-900 font-bold bg-white/80 shadow-xs' : ''
+                  }`}
+                >
+                  Home
+                </Link>
+
+                {/* Categories Dropdown */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => setCategoriesOpen(true)}
+                  onMouseLeave={() => setCategoriesOpen(false)}
+                >
+                  <button className="flex items-center gap-1 hover:text-forest-700 transition-colors px-2 py-1 rounded-lg">
+                    <span>Categories</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-forest-600" />
+                  </button>
+
+                  {categoriesOpen && (
+                    <div className="absolute top-full left-0 w-72 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                      {categories.map((cat) => (
+                        <Link
+                          key={cat.slug}
+                          href={`/categories/${cat.slug}`}
+                          onClick={() => setCategoriesOpen(false)}
+                          className="block p-2.5 rounded-xl hover:bg-forest-50 transition-colors"
+                        >
+                          <p className="font-semibold text-xs text-forest-950">{cat.name}</p>
+                          <p className="text-[11px] text-gray-500 truncate">{cat.desc}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  href="/shop"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg ${
+                    pathname === '/shop' ? 'text-forest-900 font-bold bg-white/80 shadow-xs' : ''
+                  }`}
+                >
+                  Shop All Products
+                </Link>
+
+                {/* Customer Store */}
+                <Link
+                  href="/customer"
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
+                    pathname === '/customer'
+                      ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300'
+                  }`}
+                >
+                  <ShoppingBag className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span>Customer Store</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                </Link>
+
+                {/* Seller Portal */}
+                <Link
+                  href="/seller"
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
+                    pathname.startsWith('/seller')
+                      ? 'bg-amber-600 text-white border-amber-700 shadow-xs'
+                      : 'bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 text-amber-950 border-amber-300'
+                  }`}
+                >
+                  <Store className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>Seller Portal</span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-amber-200 text-[10px] font-extrabold text-amber-950 leading-none">
+                    ₹500 Plan
+                  </span>
+                </Link>
+
+                {/* AP Delivery Map */}
+                <Link
+                  href="/delivery-map"
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
+                    pathname === '/delivery-map'
+                      ? 'bg-forest-800 text-white border-forest-900 shadow-xs'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span>AP Delivery Map</span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-emerald-200 text-[10px] font-extrabold text-emerald-950 leading-none">
+                    26 Districts
+                  </span>
+                </Link>
+
+                <Link
+                  href="/farmers"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg ${
+                    pathname.startsWith('/farmers') ? 'text-forest-900 font-bold bg-white/80' : ''
+                  }`}
+                >
+                  Meet Farmers
+                </Link>
+
+                <Link
+                  href="/harvest-calendar"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg flex items-center gap-1 ${
+                    pathname === '/harvest-calendar' ? 'text-harvest-950 font-bold bg-harvest-100 ring-1 ring-harvest-300' : ''
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5 text-harvest-600" />
+                  <span>Harvest Calendar</span>
+                </Link>
+
+                <Link
+                  href="/farm-passport"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg flex items-center gap-1 ${
+                    pathname === '/farm-passport' ? 'text-forest-950 font-bold bg-forest-100 ring-1 ring-forest-300' : ''
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-forest-700" />
+                  <span>Farm Passport</span>
+                </Link>
+
+                <Link
+                  href="/waste-exchange"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg ${
+                    pathname === '/waste-exchange' ? 'text-forest-900 font-bold bg-white/80' : ''
+                  }`}
+                >
+                  Waste Exchange
+                </Link>
+
+                <Link
+                  href="/blog"
+                  className={`hover:text-forest-700 transition-colors px-2 py-1 rounded-lg ${
+                    pathname.startsWith('/blog') ? 'text-forest-900 font-bold bg-white/80' : ''
+                  }`}
+                >
+                  Knowledge Hub
+                </Link>
+
+                <Link
+                  href="/assistant"
+                  className="hover:text-forest-700 transition-colors px-2.5 py-1 rounded-xl bg-forest-50 text-forest-900 font-bold border border-forest-200 flex items-center gap-1 shadow-xs"
+                >
+                  <Bot className="w-3.5 h-3.5 text-forest-700" />
+                  <span>AI Assistant</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
