@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage } from '@/lib/image-utils';
 import { initiateRazorpayPayment } from '@/lib/razorpay-client';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
 import { AndhraPradeshDeliveryMap } from '@/components/AndhraPradeshDeliveryMap';
@@ -606,31 +607,38 @@ export default function CheckoutPage() {
 
             {/* Items list */}
             <div className="space-y-3 max-h-60 overflow-y-auto pr-1 text-xs divide-y divide-gray-100">
-              {items.map((item) => (
-                <div key={item.id} className="pt-2 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden relative bg-gray-100 shrink-0">
-                      <Image
-                        src={item.product?.images ? JSON.parse(item.product.images)[0] : 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=150&q=80'}
-                        alt={item.product?.name || 'Produce'}
-                        fill
-                        className="object-cover"
-                      />
+              {items.map((item) => {
+                const cleanImg = extractProductMainImage(item.product?.images, item.product?.name, item.product?.category?.slug);
+                const fallbackImg = getProductFallbackImage(item.product?.name, item.product?.category?.slug);
+
+                return (
+                  <div key={item.id} className="pt-2 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden relative bg-gray-100 shrink-0">
+                        <img
+                          src={cleanImg}
+                          alt={item.product?.name || 'Produce'}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = fallbackImg;
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-bold text-forest-950 truncate max-w-[140px]">
+                          {item.product?.name}
+                        </p>
+                        <p className="text-[10px] text-gray-500">
+                          {item.quantity} × ₹{item.product?.price}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-forest-950 truncate max-w-[140px]">
-                        {item.product?.name}
-                      </p>
-                      <p className="text-[10px] text-gray-500">
-                        {item.quantity} × ₹{item.product?.price}
-                      </p>
-                    </div>
+                    <span className="font-bold text-forest-900">
+                      ₹{(item.product?.price || 0) * item.quantity}
+                    </span>
                   </div>
-                  <span className="font-bold text-forest-900">
-                    ₹{(item.product?.price || 0) * item.quantity}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Totals */}

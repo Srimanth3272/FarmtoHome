@@ -28,8 +28,11 @@ import { useWishlist } from '@/lib/wishlist-context';
 import { PinCodeChecker } from '@/components/PinCodeChecker';
 import { FarmPassportModal } from '@/components/FarmPassportModal';
 import { ProductCard } from '@/components/ProductCard';
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductImages } from '@/lib/image-utils';
+import { getLocalCommunityProducts } from '@/lib/firebase';
 
 interface ProductDetailClientProps {
+  slug?: string;
   product: ProductItem & {
     reviews: Array<{
       id: string;
@@ -44,34 +47,42 @@ interface ProductDetailClientProps {
 }
 
 export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
-  product,
+  slug,
+  product: initialProduct,
   relatedProducts,
 }) => {
   const router = useRouter();
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
-  const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&auto=format&fit=crop&q=80';
-  let images: string[] = [];
-  try {
-    const parsed = JSON.parse(product.images);
-    images = (Array.isArray(parsed) ? parsed : [product.images]).map((img) =>
-      typeof img === 'string' && img.includes('1592417817098') ? FALLBACK_PRODUCT_IMAGE : img
-    );
-  } catch {
-    images = [
-      product.images
-        ? product.images.includes('1592417817098')
-          ? FALLBACK_PRODUCT_IMAGE
-          : product.images
-        : FALLBACK_PRODUCT_IMAGE,
-    ];
-  }
-  if (images.length === 0) {
-    images = [FALLBACK_PRODUCT_IMAGE];
-  }
+  const [product, setProduct] = useState(initialProduct);
 
-  const [selectedImage, setSelectedImage] = useState(images[0] || FALLBACK_PRODUCT_IMAGE);
+  // Sync with local storage or server catalog if user just created this product
+  React.useEffect(() => {
+    const targetSlug = slug || initialProduct.slug || initialProduct.id;
+    const local = getLocalCommunityProducts();
+    const found = local.find(
+      (p) =>
+        p.slug === targetSlug ||
+        p.id === targetSlug ||
+        p.name?.toLowerCase().includes(targetSlug.toLowerCase())
+    );
+    if (found) {
+      setProduct((prev) => ({ ...prev, ...found }));
+    }
+  }, [slug, initialProduct]);
+
+  const fallbackImg = getProductFallbackImage(product.name, product.category?.slug);
+  const images = extractProductImages(product.images, product.name, product.category?.slug);
+
+  const [selectedImage, setSelectedImage] = useState(images[0] || fallbackImg);
+
+  React.useEffect(() => {
+    const freshImages = extractProductImages(product.images, product.name, product.category?.slug);
+    if (freshImages.length > 0) {
+      setSelectedImage(freshImages[0]);
+    }
+  }, [product]);
   const [quantity, setQuantity] = useState(1);
   const [showPassport, setShowPassport] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -134,8 +145,9 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
               alt={product.name}
               fill
               priority
+              unoptimized
               className="object-cover"
-              onError={() => setSelectedImage(FALLBACK_PRODUCT_IMAGE)}
+              onError={() => setSelectedImage(fallbackImg)}
             />
             {product.isOrganic && (
               <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-forest-900/90 text-harvest-300 backdrop-blur-md shadow-sm">
@@ -166,7 +178,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
                       : 'border-cream-300 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" />
+                  <Image src={img} alt={`Thumbnail ${idx + 1}`} fill unoptimized className="object-cover" />
                 </button>
               ))}
             </div>

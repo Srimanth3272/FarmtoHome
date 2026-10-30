@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { ProductItem } from './types';
 import { FALLBACK_PRODUCTS } from './fallback-data';
+import { extractProductImages } from './image-utils';
 
 // Default config or environment-supplied Firebase configuration
 export interface FirebaseConfigParams {
@@ -152,14 +153,48 @@ export function subscribeToProducts(
             });
           });
 
-          // Combine with base fallback catalog so users have complete product selection
+          // Combine Firestore documents + Local community products + Base catalog
+          const local = getLocalCommunityProducts();
           const merged = [...fbProducts];
+
+          for (const lp of local) {
+            if (!merged.some((m) => m.id === lp.id || m.slug === lp.slug)) {
+              merged.push(lp);
+            }
+          }
+
           for (const item of FALLBACK_PRODUCTS) {
             if (!merged.some((m) => m.id === item.id || m.slug === item.slug)) {
               merged.push(item as any);
             }
           }
           onUpdate(merged);
+
+          // Also merge server catalog so customer products persist across all tabs & refreshes
+          fetch('/api/products', { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : []))
+            .then((serverProds) => {
+              if (Array.isArray(serverProds) && serverProds.length > 0) {
+                const fullMerged = [...fbProducts];
+                for (const sp of serverProds) {
+                  if (!fullMerged.some((m) => m.id === sp.id || m.slug === sp.slug)) {
+                    fullMerged.push(sp);
+                  }
+                }
+                for (const lp of local) {
+                  if (!fullMerged.some((m) => m.id === lp.id || m.slug === lp.slug)) {
+                    fullMerged.push(lp);
+                  }
+                }
+                for (const fb of FALLBACK_PRODUCTS) {
+                  if (!fullMerged.some((m) => m.id === fb.id || m.slug === fb.slug)) {
+                    fullMerged.push(fb as any);
+                  }
+                }
+                onUpdate(fullMerged);
+              }
+            })
+            .catch(() => {});
         },
         (err) => {
           console.warn('Firestore live listener error, falling back to local sync:', err);
@@ -310,10 +345,13 @@ export async function addProductToFirebase(
     compareAtPrice: productData.compareAtPrice ? Number(productData.compareAtPrice) : null,
     unit: productData.unit || '1 Piece',
     stock: Number(productData.stock) || 50,
-    images:
-      typeof productData.images === 'string'
-        ? productData.images
-        : JSON.stringify(productData.images || ['https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80']),
+    images: JSON.stringify(
+      extractProductImages(
+        productData.images,
+        productData.name,
+        (productData as any).category?.slug || productData.categoryId
+      )
+    ),
     originLocation: productData.originLocation || 'India',
     harvestDate: productData.harvestDate || 'Fresh Stock',
     storageInstructions: productData.storageInstructions || 'Store in standard safe room conditions.',

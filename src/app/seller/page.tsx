@@ -37,6 +37,7 @@ import {
   SellerSubscriptionRecord,
   isFirebaseConfigured
 } from '@/lib/firebase';
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage } from '@/lib/image-utils';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
 
 export default function SellerAccountPage() {
@@ -79,14 +80,19 @@ export default function SellerAccountPage() {
 
   // Preset images helper for fast product listing
   const sampleImages = [
-    { label: 'Mobile Case', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fast Charger', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Earbuds', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Cotton Shirt', category: 'cat-clothes', url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Khadi Kurta', category: 'cat-clothes', url: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fresh Tomatoes', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Jute Bags', category: 'cat-other-products', url: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Copper Bottle', category: 'cat-other-products', url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Fresh Mangoes 🥭', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Fresh Tomatoes 🍅', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Organic Apples 🍎', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Fresh Bananas 🍌', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Organic Potatoes 🥔', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Fresh Onions 🧅', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Sweet Carrots 🥕', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Pure Honey 🍯', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Desi Cow Ghee 🧈', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Vermicompost 🪴', category: 'cat-organic-farming', url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Fast Charger ⚡', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Mobile Case 📱', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Cotton Shirt 👕', category: 'cat-clothes', url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&auto=format&fit=crop&q=80' },
   ];
 
   const sellerId = user?.id || 'guest-seller-01';
@@ -195,6 +201,8 @@ export default function SellerAccountPage() {
     try {
       const selectedCatObj = FALLBACK_CATEGORIES.find((c) => c.id === prodCategory || c.slug === prodCategory) || FALLBACK_CATEGORIES[0];
 
+      const cleanImg = sanitizeProductImageUrl(prodImageUrl, prodName, selectedCatObj.slug);
+
       const result = await addProductToFirebase({
         name: prodName,
         categoryId: selectedCatObj.id,
@@ -221,7 +229,7 @@ export default function SellerAccountPage() {
         compareAtPrice: prodComparePrice ? parseFloat(prodComparePrice) : null,
         unit: prodUnit,
         stock: parseInt(prodStock, 10),
-        images: JSON.stringify([prodImageUrl]),
+        images: JSON.stringify([cleanImg]),
         originLocation: prodOrigin,
         description: prodDesc || `Premium ${selectedCatObj.name} listed by ${storeName} on Farm to Home. Quality checked and verified.`,
         isOrganic: selectedCatObj.slug === 'fresh-produce' || selectedCatObj.slug === 'organic-farming',
@@ -233,7 +241,8 @@ export default function SellerAccountPage() {
         firestoreSuccess: result.firestoreSuccess,
         firestoreError: result.firestoreError,
       });
-      setSellerProducts([newProduct, ...sellerProducts]);
+      setSellerProducts([newProduct, ...sellerProducts.filter((p) => p.id !== newProduct.id)]);
+      setAllProducts([newProduct, ...allProducts.filter((p) => p.id !== newProduct.id)]);
       setProdName('');
       setProdDesc('');
     } catch (err: any) {
@@ -573,17 +582,78 @@ export default function SellerAccountPage() {
 
                 {/* Image URL & Quick Picker */}
                 <div className="space-y-2">
-                  <label className="block font-bold text-gray-700">
-                    Product Image URL *
-                  </label>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="block font-bold text-gray-700">
+                      Product Image URL *
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const match = getProductFallbackImage(prodName || 'Fresh Produce', prodCategory);
+                          setProdImageUrl(match);
+                        }}
+                        className="text-[11px] font-bold text-forest-800 hover:text-forest-950 bg-harvest-100 hover:bg-harvest-200 px-2.5 py-1 rounded-lg border border-harvest-300 flex items-center gap-1 transition-colors shadow-xs"
+                      >
+                        <Sparkles className="w-3 h-3 text-forest-700" />
+                        <span>✨ Auto-Match Photo</span>
+                      </button>
+
+                      <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors">
+                        <span>📁 Upload from Device</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                if (typeof reader.result === 'string') {
+                                  setProdImageUrl(reader.result);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                   <input
-                    type="url"
+                    type="text"
                     required
                     value={prodImageUrl}
                     onChange={(e) => setProdImageUrl(e.target.value)}
-                    placeholder="https://..."
+                    placeholder="Paste image link, or click Auto-Match / Upload"
                     className="w-full p-3 bg-gray-50 border border-cream-300 rounded-xl focus:ring-2 focus:ring-forest-600 focus:outline-none text-xs font-mono"
                   />
+
+                  {/* Live Photo Preview */}
+                  {prodImageUrl && (
+                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-forest-50/70 border border-forest-200">
+                      <img
+                        src={sanitizeProductImageUrl(prodImageUrl, prodName, prodCategory)}
+                        alt="Photo Preview"
+                        className="w-14 h-14 rounded-lg object-cover border border-forest-300 shrink-0 bg-white"
+                        onError={(e) => {
+                          e.currentTarget.src = getProductFallbackImage(prodName, prodCategory);
+                        }}
+                      />
+                      <div className="text-[11px] text-forest-900">
+                        <p className="font-bold flex items-center gap-1 text-emerald-800">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          Photo Preview Ready
+                        </p>
+                        <p className="text-gray-500 text-[10px]">
+                          {prodImageUrl.includes('/products/')
+                            ? 'Webpage link detected: Auto-converted to high-res photo'
+                            : 'Verified image source for store listing'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <span className="text-[11px] text-gray-500 font-semibold">
@@ -697,17 +767,8 @@ export default function SellerAccountPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {allProducts.slice(0, 12).map((item) => {
-              const images =
-                typeof item.images === 'string'
-                  ? (() => {
-                      try {
-                        return JSON.parse(item.images);
-                      } catch {
-                        return [item.images];
-                      }
-                    })()
-                  : item.images || [];
-              const imgUrl = images[0] || 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80';
+              const cleanImg = extractProductMainImage(item.images, item.name, item.category?.slug);
+              const fallback = getProductFallbackImage(item.name, item.category?.slug);
 
               return (
                 <div
@@ -715,12 +776,14 @@ export default function SellerAccountPage() {
                   className="bg-white rounded-2xl border border-cream-300 shadow-card overflow-hidden flex flex-col justify-between"
                 >
                   <div>
-                    <div className="relative aspect-square w-full bg-cream-100">
-                      <Image
-                        src={imgUrl}
+                    <div className="relative aspect-square w-full bg-cream-100 overflow-hidden">
+                      <img
+                        src={cleanImg}
                         alt={item.name}
-                        fill
-                        className="object-cover"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = fallback;
+                        }}
                       />
                       <div className="absolute top-2.5 left-2.5">
                         <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold shadow-sm">

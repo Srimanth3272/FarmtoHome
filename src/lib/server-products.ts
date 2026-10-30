@@ -3,6 +3,7 @@ import path from 'path';
 import os from 'os';
 import { ProductItem } from './types';
 import { prisma } from './prisma';
+import { extractProductImages } from './image-utils';
 
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'farm-to-home-9ff91';
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -276,14 +277,13 @@ export async function saveServerProduct(
     compareAtPrice: productData.compareAtPrice ? Number(productData.compareAtPrice) : null,
     unit: productData.unit || '1 Piece',
     stock: Number(productData.stock) || 50,
-    images:
-      typeof productData.images === 'string'
-        ? productData.images
-        : JSON.stringify(
-            productData.images || [
-              'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80',
-            ]
-          ),
+    images: JSON.stringify(
+      extractProductImages(
+        productData.images,
+        productData.name,
+        (productData as any).category?.slug || productData.categoryId
+      )
+    ),
     originLocation: productData.originLocation || 'India',
     harvestDate: productData.harvestDate || 'Current Stock',
     storageInstructions:

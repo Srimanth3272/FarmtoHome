@@ -85,6 +85,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   return (
     <ProductDetailClient
+      slug={params.slug}
       product={product as any}
       relatedProducts={relatedProducts as any}
     />

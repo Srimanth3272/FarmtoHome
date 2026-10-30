@@ -35,6 +35,7 @@ import { useCart } from '@/lib/cart-context';
 import { useWishlist } from '@/lib/wishlist-context';
 import { subscribeToProducts, isFirebaseConfigured, getActiveFirebaseConfig } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage } from '@/lib/image-utils';
 
 export default function CustomerMarketplacePage() {
   const router = useRouter();
@@ -348,19 +349,8 @@ export default function CustomerMarketplacePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {sortedProducts.map((product) => {
-              const images =
-                typeof product.images === 'string'
-                  ? (() => {
-                      try {
-                        return JSON.parse(product.images);
-                      } catch {
-                        return [product.images];
-                      }
-                    })()
-                  : product.images || [];
-              const mainImage =
-                images[0] ||
-                'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80';
+              const cleanImg = extractProductMainImage(product.images, product.name, product.category?.slug);
+              const fallbackImg = getProductFallbackImage(product.name, product.category?.slug);
 
               const discount =
                 product.compareAtPrice && product.compareAtPrice > product.price
@@ -382,11 +372,13 @@ export default function CustomerMarketplacePage() {
                   {/* Top Image Box */}
                   <div>
                     <div className="relative aspect-square w-full overflow-hidden bg-cream-100">
-                      <Image
-                        src={mainImage}
+                      <img
+                        src={cleanImg}
                         alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = fallbackImg;
+                        }}
                       />
 
                       {/* Badges */}

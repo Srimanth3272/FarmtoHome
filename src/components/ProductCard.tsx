@@ -9,6 +9,8 @@ import { useCart } from '@/lib/cart-context';
 import { useWishlist } from '@/lib/wishlist-context';
 import { FarmPassportModal } from './FarmPassportModal';
 
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage } from '@/lib/image-utils';
+
 interface ProductCardProps {
   product: ProductItem;
   featured?: boolean;
@@ -22,16 +24,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, featured = fa
 
   const isFavorited = isInWishlist(product.id);
 
-  const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&auto=format&fit=crop&q=80';
-  let imageList: string[] = [];
-  try {
-    const parsed = JSON.parse(product.images);
-    imageList = Array.isArray(parsed) ? parsed : [product.images];
-  } catch {
-    imageList = [product.images || FALLBACK_PRODUCT_IMAGE];
-  }
-  const rawMainImage = imageList[0] || FALLBACK_PRODUCT_IMAGE;
-  const initialImage = rawMainImage.includes('1592417817098') ? FALLBACK_PRODUCT_IMAGE : rawMainImage;
+  const fallbackImg = getProductFallbackImage(product.name, product.category?.slug);
+  const initialImage = extractProductMainImage(product.images, product.name, product.category?.slug);
   const [imgSrc, setImgSrc] = useState(initialImage);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -58,9 +52,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, featured = fa
               src={imgSrc}
               alt={product.name}
               fill
+              unoptimized
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover group-hover:scale-105 transition-transform duration-500"
-              onError={() => setImgSrc(FALLBACK_PRODUCT_IMAGE)}
+              onError={() => setImgSrc(fallbackImg)}
             />
           </Link>
 

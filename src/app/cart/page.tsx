@@ -16,6 +16,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useCart } from '@/lib/cart-context';
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage } from '@/lib/image-utils';
 
 export default function CartPage() {
   const {
@@ -126,19 +127,21 @@ export default function CartPage() {
           {/* Items */}
           <div className="bg-white rounded-3xl border border-cream-300 shadow-card divide-y divide-gray-100 overflow-hidden">
             {items.map((item) => {
-              let image = 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=200&auto=format&fit=crop&q=80';
-              try {
-                const parsed = JSON.parse(item.product.images);
-                if (Array.isArray(parsed) && parsed.length > 0) image = parsed[0];
-              } catch {
-                // use fallback
-              }
+              const cleanImg = extractProductMainImage(item.product.images, item.product.name, item.product.category?.slug);
+              const fallbackImg = getProductFallbackImage(item.product.name, item.product.category?.slug);
 
               return (
                 <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
                   <div className="flex gap-4 items-center">
                     <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-cream-100 border border-cream-200 shrink-0">
-                      <Image src={image} alt={item.product.name} fill className="object-cover" />
+                      <img
+                        src={cleanImg}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = fallbackImg;
+                        }}
+                      />
                     </div>
                     <div>
                       <Link
