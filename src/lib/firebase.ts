@@ -344,27 +344,7 @@ export async function addProductToFirebase(
   // 1. Always save locally and notify open browser tabs
   saveLocalCommunityProduct(product);
 
-  // 2. If Firebase Firestore is active, save to Firestore collection 'products'
-  let firestoreSuccess = false;
-  let firestoreError: string | undefined;
-
-  const firestore = getFirebaseDb();
-  if (firestore) {
-    try {
-      await setDoc(doc(firestore, 'products', product.id), {
-        ...product,
-        updatedAt: serverTimestamp(),
-      });
-      firestoreSuccess = true;
-      console.log('Product successfully stored in Firebase Firestore:', product.id);
-    } catch (err: any) {
-      firestoreSuccess = false;
-      firestoreError = err?.message || 'Cloud Firestore database has not been enabled yet';
-      console.warn('Notice writing product to Firebase Firestore:', err?.message || err);
-    }
-  }
-
-  // 3. Post to server API for persistent backend persistence across devices
+  // 2. Post to server API immediately so product is published live to all customers without delay
   let apiSuccess = false;
   try {
     const apiRes = await fetch('/api/products', {
@@ -377,6 +357,39 @@ export async function addProductToFirebase(
     }
   } catch (apiErr) {
     console.warn('API sync warning:', apiErr);
+  }
+
+  // 3. Attempt write to Firebase Firestore with a 1.5s timeout so the UI never hangs
+  let firestoreSuccess = false;
+  let firestoreError: string | undefined;
+
+  const firestore = getFirebaseDb();
+  if (firestore) {
+    try {
+      const writePromise = setDoc(doc(firestore, 'products', product.id), {
+        ...product,
+        updatedAt: serverTimestamp(),
+      })
+        .then(() => true)
+        .catch((err: any) => {
+          firestoreError = err?.message;
+          return false;
+        });
+
+      const timeoutPromise = new Promise<boolean>((resolve) =>
+        setTimeout(() => {
+          resolve(false);
+        }, 1500)
+      );
+
+      firestoreSuccess = await Promise.race([writePromise, timeoutPromise]);
+      if (firestoreSuccess) {
+        console.log('Product successfully stored in Firebase Firestore:', product.id);
+      }
+    } catch (err: any) {
+      firestoreSuccess = false;
+      firestoreError = err?.message || 'Could not write to Cloud Firestore';
+    }
   }
 
   return {
