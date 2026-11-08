@@ -57,6 +57,80 @@ export function getProductFallbackImage(name?: string, categorySlug?: string): s
     return 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=800&auto=format&fit=crop&q=80';
   }
 
+  // Food Delivery, Dhaba & Hot Meals
+  if (
+    c.includes('food') ||
+    c.includes('dhaba') ||
+    n.includes('dhaba') ||
+    n.includes('biryani') ||
+    n.includes('curry') ||
+    n.includes('tadka') ||
+    n.includes('meal') ||
+    n.includes('thali') ||
+    n.includes('lassi') ||
+    n.includes('chaas') ||
+    n.includes('buttermilk')
+  ) {
+    return 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // Dosas, Pesarattu & Parathas
+  if (
+    c.includes('dosa') ||
+    c.includes('paratha') ||
+    c.includes('parotta') ||
+    n.includes('dosa') ||
+    n.includes('pesarattu') ||
+    n.includes('paratha') ||
+    n.includes('parotta') ||
+    n.includes('roti') ||
+    n.includes('naan')
+  ) {
+    return 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // Pickles & Pachallu
+  if (
+    c.includes('pickle') ||
+    c.includes('pachadi') ||
+    n.includes('pickle') ||
+    n.includes('pachadi') ||
+    n.includes('avakaya') ||
+    n.includes('gongura')
+  ) {
+    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // Sweets & Desserts
+  if (
+    c.includes('sweet') ||
+    c.includes('mithai') ||
+    n.includes('laddu') ||
+    n.includes('mysore pak') ||
+    n.includes('bobbatlu') ||
+    n.includes('gulab jamun') ||
+    n.includes('kaja') ||
+    n.includes('halwa') ||
+    n.includes('peda')
+  ) {
+    return 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // Hots, Savories & Desi Namkeen
+  if (
+    c.includes('hot') ||
+    c.includes('namkeen') ||
+    c.includes('snack') ||
+    n.includes('mixture') ||
+    n.includes('murukku') ||
+    n.includes('janthikalu') ||
+    n.includes('chekodilu') ||
+    n.includes('boondi') ||
+    n.includes('sev')
+  ) {
+    return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80';
+  }
+
   // Dairy & Honey
   if (n.includes('milk') || n.includes('doodh') || n.includes('paneer') || n.includes('ghee') || n.includes('butter') || n.includes('curd')) {
     return 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&auto=format&fit=crop&q=80';

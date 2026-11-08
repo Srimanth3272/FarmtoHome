@@ -209,7 +209,7 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Header */}
-      <div className="border-b border-gray-200 pb-4 flex items-center justify-between">
+      <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="font-serif font-black text-2xl sm:text-3xl text-forest-950">
             Secure Agricultural Checkout
@@ -218,7 +218,7 @@ export default function CheckoutPage() {
             Direct farmer settlement • Verifiable harvest origin • Official Indian Payment Gateway
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-xl border border-green-200">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-xl border border-green-200 self-start sm:self-auto shrink-0">
           <Lock className="w-3.5 h-3.5" />
           <span>256-Bit SSL Encrypted</span>
         </div>

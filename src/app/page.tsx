@@ -19,7 +19,9 @@ import {
   Flame,
   TreePine,
   HelpCircle,
-  Quote
+  Quote,
+  CookingPot,
+  UtensilsCrossed
 } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { ProductCard } from '@/components/ProductCard';
@@ -115,6 +117,14 @@ export default async function HomePage() {
     blogPosts = FALLBACK_BLOG_POSTS as any;
   }
 
+  const foodDeliveryItems = products.filter(
+    (p) =>
+      p.category?.slug === 'food-delivery' ||
+      p.category?.slug === 'dosas-parothas' ||
+      p.category?.slug === 'pickles' ||
+      p.category?.slug === 'sweets' ||
+      p.category?.slug === 'hots'
+  );
   const freshHarvest = products.filter((p) => p.category?.slug === 'fresh-produce');
   const organicManures = products.filter((p) => p.category?.slug === 'organic-farming');
   const seedsAndTools = products.filter(
@@ -307,6 +317,68 @@ export default async function HomePage() {
               </span>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* 3.5 EXPRESS FOOD DELIVERY & DHABA KITCHEN */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="bg-gradient-to-r from-stone-950 via-amber-950 to-stone-900 text-white p-6 sm:p-10 rounded-3xl shadow-elevated border border-amber-800/40 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8 relative z-10">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-stone-950 text-xs font-bold uppercase tracking-wider">
+                <CookingPot className="w-3.5 h-3.5" />
+                <span>Express Food Delivery</span>
+              </div>
+              <h2 className="font-serif font-black text-2xl sm:text-4xl text-white mt-2">
+                🍲 Dhaba Kitchen, Hot Dosas, Pickles & Sweets
+              </h2>
+              <p className="text-xs sm:text-sm text-amber-200/90 max-w-2xl">
+                Slow-simmered clay pot dhaba curries, crispy ghee roast dosas, stuffed parothas, traditional Andhra avakaya pickles, pure ghee laddus, and crunchy hots delivered fresh to your door.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Link
+                href="/categories/food-delivery"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs font-bold transition-all shadow-soft flex items-center gap-1.5"
+              >
+                <span>Dhaba Meals</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <Link
+                href="/categories/dosas-parothas"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all"
+              >
+                <span>Dosas & Parothas</span>
+              </Link>
+              <Link
+                href="/categories/pickles"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all"
+              >
+                <span>Pickles</span>
+              </Link>
+              <Link
+                href="/categories/sweets"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all"
+              >
+                <span>Sweets</span>
+              </Link>
+              <Link
+                href="/categories/hots"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all"
+              >
+                <span>Hots</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+            {foodDeliveryItems.slice(0, 8).map((product) => (
+              <ProductCard key={product.id} product={product as any} featured />
+            ))}
+          </div>
         </div>
       </section>
 

@@ -58,15 +58,15 @@ export default function SellerAccountPage() {
 
   // Add Product Form State
   const [prodName, setProdName] = useState('');
-  const [prodCategory, setProdCategory] = useState('cat-mobile-accessories');
-  const [prodPrice, setProdPrice] = useState('499');
-  const [prodComparePrice, setProdComparePrice] = useState('799');
-  const [prodUnit, setProdUnit] = useState('1 Piece');
+  const [prodCategory, setProdCategory] = useState('cat-food-delivery');
+  const [prodPrice, setProdPrice] = useState('180');
+  const [prodComparePrice, setProdComparePrice] = useState('220');
+  const [prodUnit, setProdUnit] = useState('1 Thali Combo');
   const [prodStock, setProdStock] = useState('50');
-  const [prodOrigin, setProdOrigin] = useState('Bengaluru, Karnataka');
+  const [prodOrigin, setProdOrigin] = useState('Vijayawada, Andhra Pradesh');
   const [prodDesc, setProdDesc] = useState('');
   const [prodImageUrl, setProdImageUrl] = useState(
-    'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80'
+    'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop&q=80'
   );
   const [storeName, setStoreName] = useState(user?.name ? `${user.name}'s Official Store` : 'My Super Store');
   const [submittingProduct, setSubmittingProduct] = useState(false);
@@ -80,19 +80,18 @@ export default function SellerAccountPage() {
 
   // Preset images helper for fast product listing
   const sampleImages = [
+    { label: 'Dhaba Dal Tadka 🍲', category: 'cat-food-delivery', url: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Ghee Karam Dosa 🥞', category: 'cat-dosas-parothas', url: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Aloo Paratha 🫓', category: 'cat-dosas-parothas', url: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Avakaya Pickle 🏺', category: 'cat-pickles', url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Tirupati Laddu 🍯', category: 'cat-sweets', url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Rice Murukku 🥨', category: 'cat-hots', url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80' },
     { label: 'Fresh Mangoes 🥭', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop&q=80' },
     { label: 'Fresh Tomatoes 🍅', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Organic Apples 🍎', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fresh Bananas 🍌', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Organic Potatoes 🥔', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fresh Onions 🧅', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Sweet Carrots 🥕', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Pure Honey 🍯', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?w=800&auto=format&fit=crop&q=80' },
     { label: 'Desi Cow Ghee 🧈', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&auto=format&fit=crop&q=80' },
     { label: 'Vermicompost 🪴', category: 'cat-organic-farming', url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fast Charger ⚡', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Mobile Case 📱', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80' },
     { label: 'Cotton Shirt 👕', category: 'cat-clothes', url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&auto=format&fit=crop&q=80' },
+    { label: 'Mobile Case 📱', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80' },
   ];
 
   const sellerId = user?.id || 'guest-seller-01';

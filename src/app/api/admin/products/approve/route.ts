@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { updateServerProductApproval } from '@/lib/server-products';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,33 +12,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
     }
 
-    const isApproved = action !== 'REJECT';
-    const approvalStatus = isApproved ? 'APPROVED' : 'REJECTED';
+    const updated = await updateServerProductApproval(
+      productId,
+      action === 'REJECT' ? 'REJECT' : action === 'DEACTIVATE' ? 'DEACTIVATE' : 'APPROVE',
+      remarks
+    );
 
-    const product = await prisma.product.update({
-      where: { id: productId },
-      data: {
-        approvalStatus,
-        isActive: isApproved, // Only active if approved!
-        adminRemarks: remarks || (isApproved ? 'Approved by Admin Agronomist' : 'Rejected due to compliance review'),
-      },
-      include: {
-        farmer: true,
-        farmPassport: true,
-      },
-    });
+    const isApproved = action !== 'REJECT' && action !== 'DEACTIVATE';
 
     return NextResponse.json({
       success: true,
-      message: `Product ${product.name} has been ${approvalStatus.toLowerCase()} by Admin. ${
-        isApproved
-          ? 'It is now active and immediately available for sale in the public catalog.'
-          : 'It has been deactivated from public sales.'
-      }`,
-      product,
+      message: `Product has been ${isApproved ? 'APPROVED & activated for sale' : 'REJECTED/DEACTIVATED'} by Admin.`,
+      product: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error approving product:', error);
-    return NextResponse.json({ error: 'Failed to update product approval status' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to update product approval status' }, { status: 500 });
   }
 }

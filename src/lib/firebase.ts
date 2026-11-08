@@ -7,6 +7,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  deleteDoc,
   serverTimestamp,
   Firestore,
 } from 'firebase/firestore';
@@ -145,6 +146,50 @@ export function saveLocalCommunityProduct(product: ProductItem): void {
   } catch (e) {
     console.error('Error saving local community product', e);
   }
+}
+
+export function removeLocalCommunityProduct(productId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getLocalCommunityProducts();
+    const updated = current.filter((p) => p.id !== productId && p.slug !== productId);
+    localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
+
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+      channel.postMessage({ type: 'PRODUCT_DELETED', productId });
+      channel.close();
+    }
+  } catch (e) {
+    console.error('Error removing local community product', e);
+  }
+}
+
+export async function deleteProductFromFirebase(productId: string): Promise<boolean> {
+  removeLocalCommunityProduct(productId);
+
+  // 1. Delete on server API
+  try {
+    await fetch('/api/admin/products/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId }),
+    });
+  } catch (e) {
+    console.warn('Server delete call notice:', e);
+  }
+
+  // 2. Delete on Firestore
+  try {
+    const firestore = getFirebaseDb();
+    if (firestore) {
+      await deleteDoc(doc(firestore, 'products', productId));
+    }
+  } catch (e) {
+    console.warn('Firestore direct delete notice:', e);
+  }
+
+  return true;
 }
 
 // Real-time listener for Products across all clients & devices
@@ -351,8 +396,8 @@ export async function addProductToFirebase(
     shelfLifeDays: productData.shelfLifeDays || 365,
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
-    approvalStatus: 'APPROVED',
-    isActive: true,
+    approvalStatus: productData.approvalStatus || 'APPROVED',
+    isActive: productData.isActive !== undefined ? productData.isActive : true,
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,

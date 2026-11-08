@@ -1,1 +1,743 @@
-[]
+[
+  {
+    "id": "prod-dhaba-dal-tadka",
+    "slug": "dhaba-dal-tadka-jeera-rice",
+    "name": "Grand Dhaba Clay Pot Dal Tadka & Jeera Rice Meal",
+    "description": "Authentic highway dhaba style slow-simmered yellow arhar dal with smoky ghee tadka, jeera basmati rice, papad, and fresh mint chutney.",
+    "categoryId": "cat-food-delivery",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 180,
+    "compareAtPrice": 220,
+    "unit": "1 Thali Combo",
+    "stock": 50,
+    "images": "[\"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Vijayawada Highway Dhaba Kitchen, NTR District",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 38,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-food-delivery",
+      "slug": "food-delivery",
+      "name": "Dhaba Food & Village Kitchen"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-dhaba-paneer-butter-masala",
+    "slug": "dhaba-paneer-butter-masala",
+    "name": "Dhaba Shahi Paneer Butter Masala with Tandoori Roti",
+    "description": "Fresh country cottage cheese cubes in rich tomato, butter, and cashew gravy served with 3 soft clay-oven tandoori rotis and spiced onion salad.",
+    "categoryId": "cat-food-delivery",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 220,
+    "compareAtPrice": 260,
+    "unit": "Curry + 3 Rotis",
+    "stock": 45,
+    "images": "[\"https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Village Desi Kitchen, NTR District",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.8,
+    "reviewCount": 42,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-food-delivery",
+      "slug": "food-delivery",
+      "name": "Dhaba Food & Village Kitchen"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-village-natukodi-gravy",
+    "slug": "village-natukodi-gravy-bagara-rice",
+    "name": "Village Style Natukodi (Country Chicken) Gravy with Bagara Rice",
+    "description": "Free-range country chicken cooked in stone-ground spices and spicy village gravy, paired with fragrant aromatic bagara rice.",
+    "categoryId": "cat-food-delivery",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 280,
+    "compareAtPrice": 340,
+    "unit": "1 Special Meal",
+    "stock": 30,
+    "images": "[\"https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Krishna Delta Country Kitchen, Andhra Pradesh",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 5,
+    "reviewCount": 56,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-food-delivery",
+      "slug": "food-delivery",
+      "name": "Dhaba Food & Village Kitchen"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-punjabi-dhaba-lassi",
+    "slug": "punjabi-dhaba-malai-lassi",
+    "name": "Punjabi Dhaba Thick Sweet Malai Lassi in Clay Kulhad",
+    "description": "Traditional thick curd churned with cardamom, topped with thick malai, crushed pistachios, and saffron in an authentic clay cup.",
+    "categoryId": "cat-food-delivery",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 70,
+    "compareAtPrice": 90,
+    "unit": "350 ml Clay Cup",
+    "stock": 60,
+    "images": "[\"https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Dairy Heritage Hub, Vijayawada",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": false,
+    "rating": 4.9,
+    "reviewCount": 29,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-food-delivery",
+      "slug": "food-delivery",
+      "name": "Dhaba Food & Village Kitchen"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-ghee-karam-dosa",
+    "slug": "ghee-karam-podi-dosa",
+    "name": "Crisp Desi Ghee Karam Podi Dosa with 3 Chutneys & Sambar",
+    "description": "Golden fermented rice-urad batter crepe roasted crisp in pure desi ghee, smeared with spicy garlic red chilli karam and gun powder podi.",
+    "categoryId": "cat-dosas-parothas",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 110,
+    "compareAtPrice": 140,
+    "unit": "2 Crispy Dosas",
+    "stock": 60,
+    "images": "[\"https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Tiffin Center Hub, Vijayawada",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 5,
+    "reviewCount": 64,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-dosas-parothas",
+      "slug": "dosas-parothas",
+      "name": "Dosas & Parothas Express"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-mla-pesarattu-upma",
+    "slug": "mla-pesarattu-upma",
+    "name": "Andhra Special MLA Pesarattu Upma with Allam Chutney",
+    "description": "Authentic green gram (moong dal) crepe stuffed with seasoned roasted suji upma, served with sweet-tangy ginger (allam) pachadi and coconut chutney.",
+    "categoryId": "cat-dosas-parothas",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 130,
+    "compareAtPrice": 160,
+    "unit": "2 Pesarattu + Upma",
+    "stock": 50,
+    "images": "[\"https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Krishna Delta Tiffins, NTR District",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 45,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-dosas-parothas",
+      "slug": "dosas-parothas",
+      "name": "Dosas & Parothas Express"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-dhaba-aloo-paratha",
+    "slug": "dhaba-stuffed-aloo-paratha",
+    "name": "Dhaba Stuffed Aloo Paratha with White Makkhan & Curd",
+    "description": "Wholesome whole wheat flatbread stuffed with spiced mashed potatoes, fresh green coriander, and roasted cumin. Served with farm butter and creamy curd.",
+    "categoryId": "cat-dosas-parothas",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 140,
+    "compareAtPrice": 170,
+    "unit": "2 Stuffed Parathas + Butter",
+    "stock": 45,
+    "images": "[\"https://images.unsplash.com/photo-1626074353765-517a681e40be?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Punjab-Andhra Kitchen Hub, Vijayawada",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 37,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-dosas-parothas",
+      "slug": "dosas-parothas",
+      "name": "Dosas & Parothas Express"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-malabar-parotta-kurma",
+    "slug": "malabar-parotta-veg-kurma",
+    "name": "Layered Malabar Parotta with Rich Veg Kurma",
+    "description": "Multi-layered flaky, soft parotta beaten to perfection, accompanied by aromatic coconut and vegetable kurma cooked in mild coastal spices.",
+    "categoryId": "cat-dosas-parothas",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 120,
+    "compareAtPrice": 150,
+    "unit": "3 Flaky Parottas + Kurma",
+    "stock": 40,
+    "images": "[\"https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Coastal Kitchen, Visakhapatnam",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": false,
+    "rating": 4.7,
+    "reviewCount": 22,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-dosas-parothas",
+      "slug": "dosas-parothas",
+      "name": "Dosas & Parothas Express"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-andhra-avakaya-pickle",
+    "slug": "andhra-avakaya-mango-pickle",
+    "name": "Authentic Andhra Avakaya (Raw Mango) Pickle in Cold-Pressed Sesame Oil",
+    "description": "Handmade heritage recipe using firm green mango pieces, fiery Guntur red chilli powder, mustard powder, garlic cloves, and pure cold-pressed gingelly oil.",
+    "categoryId": "cat-pickles",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 190,
+    "compareAtPrice": 240,
+    "unit": "500g Glass Jar",
+    "stock": 75,
+    "images": "[\"https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Mylavaram Groves, NTR District, Andhra Pradesh",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 5,
+    "reviewCount": 88,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-pickles",
+      "slug": "pickles",
+      "name": "Traditional Andhra Pickles & Pachallu"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-andhra-gongura-pachadi",
+    "slug": "andhra-gongura-pachadi",
+    "name": "Traditional Andhra Gongura Pachadi (Guntur Sorrel Leaves)",
+    "description": "Signature tang of freshly plucked red-stem Gongura leaves sautéed with green chillies, fenugreek, garlic, and seasoned in cold-pressed oil.",
+    "categoryId": "cat-pickles",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 170,
+    "compareAtPrice": 210,
+    "unit": "500g Jar",
+    "stock": 65,
+    "images": "[\"https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Guntur Rural Farms, Andhra Pradesh",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 52,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-pickles",
+      "slug": "pickles",
+      "name": "Traditional Andhra Pickles & Pachallu"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-tirupati-ghee-laddu",
+    "slug": "tirupati-ghee-laddu",
+    "name": "Tirupati Style Desi Cow Ghee Laddu (Dry Fruits Infused)",
+    "description": "Golden gram flour pearls cooked in aromatic A2 desi cow ghee, seasoned with cardamom, green camphor, cashews, raisins, and pure mishri sugar crystals.",
+    "categoryId": "cat-sweets",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 260,
+    "compareAtPrice": 320,
+    "unit": "500g Box (8 Pcs)",
+    "stock": 70,
+    "images": "[\"https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Tirupati Temple Foothills Sweet Guild, Tirupati",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 5,
+    "reviewCount": 112,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-sweets",
+      "slug": "sweets",
+      "name": "Desi Ghee Sweets & Mithai"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-pure-ghee-mysore-pak",
+    "slug": "pure-ghee-mysore-pak",
+    "name": "Traditional Melt-in-Mouth Pure Ghee Mysore Pak",
+    "description": "Silky, honeycomb-textured confection crafted by slow roasting roasted besan in piping hot pure desi ghee until it dissolves softly on the tongue.",
+    "categoryId": "cat-sweets",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 240,
+    "compareAtPrice": 290,
+    "unit": "500g Box",
+    "stock": 55,
+    "images": "[\"https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Krishna Confectionery Guild, Vijayawada",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 48,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-sweets",
+      "slug": "sweets",
+      "name": "Desi Ghee Sweets & Mithai"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-traditional-rice-janthikalu",
+    "slug": "traditional-rice-janthikalu",
+    "name": "Traditional Crunchy Rice Janthikalu / Murukku (Cold-Pressed Oil)",
+    "description": "Crispy spiral savory snacks made from freshly ground raw rice flour, roasted urad dal, ajwain seeds, and sesame, fried in cold-pressed peanut oil.",
+    "categoryId": "cat-hots",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 130,
+    "compareAtPrice": 160,
+    "unit": "400g Pack",
+    "stock": 80,
+    "images": "[\"https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "NTR District Cottage Snacks, Andhra Pradesh",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 42,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-hots",
+      "slug": "hots",
+      "name": "Hot Savories & Desi Namkeen"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-andhra-royal-mixture",
+    "slug": "andhra-royal-mixture",
+    "name": "Spicy Andhra Royal Mixture with Fried Cashews & Curry Leaves",
+    "description": "Crispy sev, roasted cashews, fried groundnuts, boondi, and crunchy poha tossed in fiery red chilli and garlic seasoning.",
+    "categoryId": "cat-hots",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 150,
+    "compareAtPrice": 190,
+    "unit": "400g Pack",
+    "stock": 75,
+    "images": "[\"https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Guntur Snacking Guild, Andhra Pradesh",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.8,
+    "reviewCount": 39,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-hots",
+      "slug": "hots",
+      "name": "Hot Savories & Desi Namkeen"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-gi-banganapalli-mangoes",
+    "slug": "gi-banganapalli-sweet-mangoes",
+    "name": "Farm Fresh GI Banganapalli Sweet Mangoes (Naturally Tree Ripened)",
+    "description": "Authentic Geographical Indication certified sweet Banganapalli mangoes. Naturally tree-ripened without harmful calcium carbide. Fiberless golden yellow pulp with rich fragrance.",
+    "categoryId": "cat-fresh-produce",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 180,
+    "compareAtPrice": 220,
+    "unit": "1 kg (approx 3 fruits)",
+    "stock": 120,
+    "images": "[\"https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Nuzvid Organic Mango Orchards, Eluru / Krishna Delta",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 5,
+    "reviewCount": 94,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-fresh-produce",
+      "slug": "fresh-produce",
+      "name": "Fresh Farm Produce"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-sona-masoori-rice",
+    "slug": "krishna-delta-sona-masoori-rice",
+    "name": "Krishna Delta Sona Masoori Raw Rice (Aged 1 Year)",
+    "description": "Naturally aged non-hybrid pesticide-free Sona Masoori grain from the nutrient-rich alluvial soils of the Krishna River basin. Light, aromatic, and easy on digestion.",
+    "categoryId": "cat-fresh-produce",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 85,
+    "compareAtPrice": 110,
+    "unit": "1 kg",
+    "stock": 200,
+    "images": "[\"https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Avanigadda Alluvial Paddy Belt, Krishna District",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 4.9,
+    "reviewCount": 58,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-fresh-produce",
+      "slug": "fresh-produce",
+      "name": "Fresh Farm Produce"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-desi-gir-cow-ghee",
+    "slug": "desi-gir-cow-a2-bilona-ghee",
+    "name": "Handcrafted Desi Gir Cow A2 Vedic Bilona Ghee",
+    "description": "Prepared using traditional ancient wooden churn bilona process from the whole curd of grass-fed native Gir cows. Golden, granular texture with therapeutic aroma.",
+    "categoryId": "cat-fresh-produce",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 850,
+    "compareAtPrice": 1050,
+    "unit": "500 ml Glass Jar",
+    "stock": 45,
+    "images": "[\"https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Chittoor Desi Cow Goshala, Andhra Pradesh",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": true,
+    "rating": 5,
+    "reviewCount": 72,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-fresh-produce",
+      "slug": "fresh-produce",
+      "name": "Fresh Farm Produce"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-earthworm-vermicompost",
+    "slug": "earthworm-vermicompost-black-gold",
+    "name": "Enriched Desi Earthworm Vermicompost (Black Gold)",
+    "description": "100% pure organic compost converted by Eisenia fetida earthworms from cow dung and farm crop residue. High organic carbon and humic acid for soil revival.",
+    "categoryId": "cat-organic-farming",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 320,
+    "compareAtPrice": 400,
+    "unit": "10 kg Eco Bag",
+    "stock": 90,
+    "images": "[\"https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Gannavaram Vermicompost Hub, NTR District",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": false,
+    "rating": 4.9,
+    "reviewCount": 34,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-organic-farming",
+      "slug": "organic-farming",
+      "name": "Organic Manures & Bio-Inputs"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  },
+  {
+    "id": "prod-native-seed-kit",
+    "slug": "native-seed-starter-kit",
+    "name": "Native Desi Vegetable Seed Starter Kit (12 Heirloom Varieties)",
+    "description": "Heirloom open-pollinated non-GMO seeds including country tomato, bhendi, ridge gourd, brinjal, palak, and coriander. Conserved by traditional seed savers.",
+    "categoryId": "cat-seeds-and-planting",
+    "farmerId": "farmer-sreemanth-founder",
+    "price": 199,
+    "compareAtPrice": 280,
+    "unit": "1 Kit (12 Packs)",
+    "stock": 110,
+    "images": "[\"https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&auto=format&fit=crop&q=80\"]",
+    "originLocation": "Andhra Desi Seed Bank, Amaravati",
+    "isOrganic": true,
+    "isVerified": true,
+    "featured": false,
+    "rating": 4.8,
+    "reviewCount": 41,
+    "approvalStatus": "APPROVED",
+    "isActive": true,
+    "category": {
+      "id": "cat-seeds-and-planting",
+      "slug": "seeds-and-planting",
+      "name": "Desi Seeds & Saplings"
+    },
+    "farmer": {
+      "id": "farmer-sreemanth-founder",
+      "farmName": "Sreemanth's Certified Organic Farm & Store",
+      "state": "Andhra Pradesh",
+      "district": "NTR (Vijayawada)",
+      "isOrganicCertified": true,
+      "verificationStatus": "VERIFIED",
+      "rating": 5,
+      "user": {
+        "name": "Srimanth Nagalakunta",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+      }
+    }
+  }
+]

@@ -8,7 +8,7 @@ import { Logo } from '@/components/Logo';
 export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, login } = useAuth();
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('admin@farmtohome.in');
+  const [username, setUsername] = useState('Srimanth3272');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,8 +17,9 @@ export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ childr
     return <>{children}</>;
   }
 
-  const handleAdminUnlock = async (e?: React.FormEvent, overridePwd?: string) => {
+  const handleAdminUnlock = async (e?: React.FormEvent, overrideUser?: string, overridePwd?: string) => {
     if (e) e.preventDefault();
+    const userToTest = overrideUser || username;
     const pwdToTest = overridePwd || password;
     setSubmitting(true);
     setError(null);
@@ -27,18 +28,18 @@ export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ childr
       const res = await fetch('/api/auth/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pwdToTest }),
+        body: JSON.stringify({ email: userToTest, username: userToTest, password: pwdToTest }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed. Please verify admin password.');
+        throw new Error(data.error || 'Authentication failed. Please verify admin credentials.');
       }
 
       // Login session updated
       login(data.user || DEMO_USERS.ADMIN);
     } catch (err: any) {
-      setError(err.message || 'Invalid administrator password.');
+      setError(err.message || 'Invalid administrator credentials.');
     } finally {
       setSubmitting(false);
     }
@@ -64,11 +65,29 @@ export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ childr
             <span>Admin Gateway Authorization</span>
           </div>
           <h2 className="font-serif font-black text-2xl text-forest-950">
-            Platform Administration Gate
+            Super Admin Portal
           </h2>
           <p className="text-xs text-gray-500 leading-relaxed">
-            Enter the administrator credentials to manage verified farmers, approve organic products, review harvest passports, and configure payments.
+            Enter the authorized Super Administrator credentials to accept or remove farmer products, manage live storefront orders, and monitor platform operations.
           </p>
+        </div>
+
+        {/* Credentials Notice Box */}
+        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-amber-900">
+            <Sparkles className="w-4 h-4 text-amber-600" />
+            <span>Official Admin Credentials:</span>
+          </div>
+          <div className="font-mono text-[11px] grid grid-cols-2 gap-2 pt-1">
+            <div className="bg-white/80 p-1.5 rounded-lg border border-amber-200">
+              <span className="text-gray-500 block text-[9px] uppercase font-bold">Username</span>
+              <strong className="text-forest-950 font-black">Srimanth3272</strong>
+            </div>
+            <div className="bg-white/80 p-1.5 rounded-lg border border-amber-200">
+              <span className="text-gray-500 block text-[9px] uppercase font-bold">Password</span>
+              <strong className="text-forest-950 font-black">Srimanth@3272</strong>
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -81,14 +100,15 @@ export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ childr
         <form onSubmit={(e) => handleAdminUnlock(e)} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">
-              Administrator Email:
+              Administrator Username:
             </label>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600 bg-gray-50"
+              placeholder="Srimanth3272"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600 bg-gray-50 font-semibold text-gray-900"
             />
           </div>
 
@@ -97,16 +117,13 @@ export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ childr
               <label className="block text-xs font-bold text-gray-700">
                 Administrator Password:
               </label>
-              <span className="text-[10px] font-bold text-forest-800 bg-forest-50 px-2 py-0.5 rounded-full border border-forest-200">
-                admin@123
-              </span>
             </div>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="password"
                 required
-                placeholder="Enter admin@123"
+                placeholder="Enter Srimanth@3272"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600"
@@ -120,19 +137,19 @@ export const AdminAuthGuard: React.FC<{ children: React.ReactNode }> = ({ childr
             className="w-full py-3 rounded-2xl bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs shadow-soft transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <KeyRound className="w-4 h-4" />
-            <span>{submitting ? 'Verifying Password...' : 'Unlock Admin Dashboard'}</span>
+            <span>{submitting ? 'Verifying Super Admin...' : 'Unlock Super Admin Portal'}</span>
           </button>
         </form>
 
-        <div className="pt-4 border-t border-gray-100">
+        <div className="pt-2 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => handleAdminUnlock(undefined, 'admin@123')}
+            onClick={() => handleAdminUnlock(undefined, 'Srimanth3272', 'Srimanth@3272')}
             disabled={submitting}
             className="w-full py-2.5 px-3 rounded-xl bg-forest-50 hover:bg-forest-100 border border-forest-200 text-forest-900 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
           >
             <Sparkles className="w-3.5 h-3.5 text-harvest-500" />
-            <span>1-Click Auto Unlock (admin@123)</span>
+            <span>1-Click Auto Unlock (Srimanth3272 / Srimanth@3272)</span>
           </button>
         </div>
       </div>

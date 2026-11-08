@@ -51,11 +51,11 @@ export const AnnouncementBar: React.FC = () => {
   const Icon = current.icon;
 
   return (
-    <div className="bg-forest-900 text-forest-50 py-2 px-4 text-xs font-medium border-b border-forest-800 transition-colors">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2 overflow-hidden mx-auto sm:mx-0">
+    <div className="w-full max-w-full overflow-hidden bg-forest-900 text-forest-50 py-2 px-3 sm:px-4 text-xs font-medium border-b border-forest-800 transition-colors">
+      <div className="max-w-7xl mx-auto flex items-center justify-between w-full overflow-hidden">
+        <div className="flex items-center gap-2 overflow-hidden w-full sm:w-auto">
           <Icon className="w-3.5 h-3.5 text-harvest-400 shrink-0 animate-pulse" />
-          <p className="truncate text-center sm:text-left text-forest-100">{current.text}</p>
+          <p className="truncate text-left text-forest-100 text-[11px] sm:text-xs">{current.text}</p>
         </div>
 
         <div className="hidden sm:flex items-center gap-4 shrink-0">

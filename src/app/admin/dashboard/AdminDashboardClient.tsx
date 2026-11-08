@@ -24,6 +24,7 @@ import {
   Filter,
   Key,
   ExternalLink,
+  Trash2,
   X
 } from 'lucide-react';
 import RazorpaySettingsCard from '@/components/RazorpaySettingsCard';
@@ -129,6 +130,44 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       });
     } catch (err: any) {
       setActionAlert({ type: 'error', message: err.message || 'Error updating product status.' });
+    }
+  };
+
+  // Permanently Remove / Delete Product from Store and Database
+  const handleProductDelete = async (productId: string, productName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${productName}" from the storefront, catalog, and database?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/products/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove product');
+
+      // Also clean up local community products in localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('f2h_community_products');
+          if (raw) {
+            const list = JSON.parse(raw);
+            const filtered = list.filter((p: any) => p.id !== productId && p.slug !== productId);
+            localStorage.setItem('f2h_community_products', JSON.stringify(filtered));
+          }
+        } catch {}
+      }
+
+      setProductList((prev) => prev.filter((p) => p.id !== productId));
+      setActionAlert({
+        type: 'success',
+        message: `Product "${productName}" has been permanently removed from the storefront.`,
+      });
+    } catch (err: any) {
+      setActionAlert({ type: 'error', message: err.message || 'Error removing product.' });
     }
   };
 
@@ -630,34 +669,47 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        {isPending ? (
-                          <div className="flex justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          {isPending ? (
+                            <>
+                              <button
+                                onClick={() => handleProductApproval(p.id, 'APPROVE')}
+                                className="px-3 py-1.5 bg-forest-800 hover:bg-forest-900 text-white rounded-xl text-xs font-bold transition-colors shadow-soft flex items-center gap-1"
+                                title="Accept farmer product for storefront"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Accept for Sale</span>
+                              </button>
+                              <button
+                                onClick={() => handleProductApproval(p.id, 'REJECT')}
+                                className="px-2.5 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-xl text-xs font-bold transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          ) : (
                             <button
-                              onClick={() => handleProductApproval(p.id, 'APPROVE')}
-                              className="px-3 py-1.5 bg-forest-800 hover:bg-forest-900 text-white rounded-xl text-xs font-bold transition-colors shadow-soft flex items-center gap-1"
+                              onClick={() => handleProductApproval(p.id, isApproved ? 'REJECT' : 'APPROVE')}
+                              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold ${
+                                isApproved
+                                  ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200'
+                                  : 'text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 font-bold'
+                              }`}
                             >
-                              <Check className="w-3.5 h-3.5" />
-                              <span>Accept for Sale</span>
+                              {isApproved ? 'Deactivate' : 'Reactivate'}
                             </button>
-                            <button
-                              onClick={() => handleProductApproval(p.id, 'REJECT')}
-                              className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 rounded-xl text-xs font-bold transition-colors"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
+                          )}
+
+                          {/* Always Available: Delete / Remove Product Button */}
                           <button
-                            onClick={() => handleProductApproval(p.id, isApproved ? 'REJECT' : 'APPROVE')}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                              isApproved
-                                ? 'text-red-600 hover:bg-red-50'
-                                : 'text-green-700 hover:bg-green-50'
-                            }`}
+                            onClick={() => handleProductDelete(p.id, p.name)}
+                            className="p-1.5 px-2 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-900 border border-red-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1"
+                            title="Permanently remove product from store and database"
                           >
-                            {isApproved ? 'Deactivate' : 'Reactivate for Sale'}
+                            <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                            <span>Remove</span>
                           </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   );

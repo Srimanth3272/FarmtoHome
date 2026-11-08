@@ -65,14 +65,18 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const categories = [
-    { name: 'Mobile Accessories', slug: 'mobile-accessories', desc: 'Fast chargers, cases, cables, earbuds' },
-    { name: 'Clothes & Apparel', slug: 'clothes', desc: 'Organic cotton, handloom khadi kurtas, linen' },
-    { name: 'Other Products', slug: 'other-products', desc: 'Eco bags, copper bottles, artisan essentials' },
-    { name: 'Fresh Produce', slug: 'fresh-produce', desc: 'Naturally grown fruits, vegetables, grains' },
-    { name: 'Seeds & Planting', slug: 'seeds-and-planting', desc: 'Heirloom seeds, saplings & nursery' },
-    { name: 'Organic Farming', slug: 'organic-farming', desc: 'Vermicompost, cow manure, neem cake' },
-    { name: 'Wood & Farm Materials', slug: 'wood-and-materials', desc: 'Cocopeat, mulch, farm timber' },
-    { name: 'Gardening Tools', slug: 'gardening-tools', desc: 'UV grow bags, drip kits, tools' },
+    { name: '🍲 Dhaba Food Delivery', slug: 'food-delivery', desc: 'Hot thalis, dal tadka, curries & village kitchen meals' },
+    { name: '🥞 Dosas & Parothas', slug: 'dosas-parothas', desc: 'Crispy ghee karam dosas, aloo parathas & kurma' },
+    { name: '🥭 Pickles & Pachallu', slug: 'pickles', desc: 'Avakaya mango, gongura, amla & fresh country pachadi' },
+    { name: '🍯 Pure Ghee Sweets', slug: 'sweets', desc: 'Tirupati laddus, Mysore pak, bellam bobbatlu' },
+    { name: '🌶️ Hot Savories & Namkeen', slug: 'hots', desc: 'Village janthikalu, chekodilu, spicy mixture & murukku' },
+    { name: '🌱 Fresh Farm Produce', slug: 'fresh-produce', desc: 'Naturally grown fruits, vegetables, grains' },
+    { name: '🌿 Organic Manures & Soil', slug: 'organic-farming', desc: 'Vermicompost, cow manure, neem cake' },
+    { name: '🌾 Desi Seeds & Saplings', slug: 'seeds-and-planting', desc: 'Heirloom non-GMO seeds, saplings & nursery' },
+    { name: '🪴 Gardening & Farm Tools', slug: 'gardening-tools', desc: 'UV grow bags, drip kits, tools' },
+    { name: '🪵 Wood & Farm Materials', slug: 'wood-and-materials', desc: 'Cocopeat, mulch, farm timber' },
+    { name: '👕 Clothes & Apparel', slug: 'clothes', desc: 'Organic cotton, handloom khadi kurtas, linen' },
+    { name: '📱 Mobile Accessories', slug: 'mobile-accessories', desc: 'Fast chargers, cases, cables, earbuds' },
   ];
 
   const moreFeatures = [
@@ -163,15 +167,26 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* 3. Right Action Cluster: ALWAYS VISIBLE, NEVER CUT OFF */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto z-10">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto z-10">
               {/* Mobile Search Icon Trigger (< md) */}
               <button
                 onClick={() => setSearchOpen(true)}
                 aria-label="Search Catalog"
-                className="md:hidden p-2 rounded-xl text-forest-800 hover:bg-forest-100 transition-colors"
+                className="md:hidden p-1.5 rounded-xl text-forest-800 hover:bg-forest-100 transition-colors"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4 text-forest-800" />
               </button>
+
+              {/* Admin Portal Gateway Trigger Button */}
+              <Link
+                href="/admin"
+                aria-label="Admin Portal"
+                title="Super Admin Portal (Username: Srimanth3272)"
+                className="p-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-forest-900 text-harvest-300 hover:bg-forest-950 border border-harvest-400/40 text-xs font-bold transition-all flex items-center gap-1 shrink-0 shadow-xs"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-harvest-400 shrink-0" />
+                <span className="hidden sm:inline text-[11px]">Admin</span>
+              </Link>
 
               {/* Wishlist Link */}
               <Link
@@ -193,11 +208,11 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsCartOpen(true)}
                 aria-label="View Shopping Cart"
                 title="View your farm basket"
-                className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-900"
+                className="relative flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-900"
               >
                 <ShoppingBag className="w-4 h-4 text-harvest-300 shrink-0" />
-                <span className="font-bold">Cart</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-harvest-400 text-forest-950 text-[10px] font-black min-w-[20px] text-center shadow-xs">
+                <span className="font-bold hidden sm:inline">Cart</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-harvest-400 text-forest-950 text-[10px] font-black min-w-[18px] text-center shadow-xs">
                   {itemCount}
                 </span>
               </button>
@@ -207,7 +222,7 @@ export const Navbar: React.FC = () => {
                 {user ? (
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-forest-900 text-white hover:bg-forest-950 transition-colors text-xs font-bold shadow-soft border border-forest-800"
+                    className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-forest-900 text-white hover:bg-forest-950 transition-colors text-xs font-bold shadow-soft border border-forest-800"
                   >
                     {user.avatar ? (
                       <img
@@ -221,17 +236,16 @@ export const Navbar: React.FC = () => {
                     <span className="truncate max-w-[100px] hidden sm:inline">
                       {user.name.split(' ')[0]}
                     </span>
-                    <span className="sm:hidden text-[11px] font-bold">Account</span>
                     <ChevronDown className="w-3 h-3 text-forest-300 shrink-0" />
                   </button>
                 ) : (
                   <Link
                     href="/auth/login"
-                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-forest-900 hover:bg-forest-950 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-700 hover:border-harvest-400 group"
+                    className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-xl bg-forest-900 hover:bg-forest-950 text-white text-xs font-bold shadow-soft transition-all shrink-0 border border-forest-700 hover:border-harvest-400 group"
                     title="Sign In to Farm to Home"
                   >
                     <User className="w-4 h-4 text-harvest-300 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="font-bold">Sign In</span>
+                    <span className="font-bold hidden sm:inline">Sign In</span>
                   </Link>
                 )}
 
@@ -413,6 +427,22 @@ export const Navbar: React.FC = () => {
                   Shop All Products
                 </Link>
 
+                {/* Food Delivery */}
+                <Link
+                  href="/categories/food-delivery"
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
+                    pathname.startsWith('/categories/food-delivery') || pathname.startsWith('/categories/dosas')
+                      ? 'bg-amber-600 text-white border-amber-700 shadow-xs'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300'
+                  }`}
+                >
+                  <span className="text-sm">🍲</span>
+                  <span>Food Delivery</span>
+                  <span className="px-1.5 py-0.2 rounded-md bg-amber-300 text-[10px] font-black text-forest-950 leading-none">
+                    Dhaba & Sweets
+                  </span>
+                </Link>
+
                 {/* Customer Store */}
                 <Link
                   href="/customer"
@@ -441,6 +471,19 @@ export const Navbar: React.FC = () => {
                   <span className="px-1.5 py-0.5 rounded-md bg-amber-200 text-[10px] font-extrabold text-amber-950 leading-none">
                     ₹500 Plan
                   </span>
+                </Link>
+
+                {/* Admin Portal Gateway */}
+                <Link
+                  href="/admin"
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
+                    pathname.startsWith('/admin')
+                      ? 'bg-forest-900 text-white border-forest-950 shadow-xs ring-1 ring-harvest-400'
+                      : 'bg-cream-100 hover:bg-cream-200 text-forest-900 border-cream-300'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-harvest-500 shrink-0" />
+                  <span>Admin Portal</span>
                 </Link>
 
                 {/* AP Delivery Map */}
@@ -640,13 +683,39 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              <div className="py-4 space-y-3.5 text-sm font-semibold text-forest-950">
+              <div className="py-4 space-y-3 text-sm font-semibold text-forest-950">
                 <Link
                   href="/"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block hover:text-forest-700"
                 >
                   Home
+                </Link>
+                <Link
+                  href="/categories/food-delivery"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-amber-950 font-bold bg-amber-50 border border-amber-300 p-2.5 rounded-xl shadow-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-base">🍲</span>
+                    <span>Food Delivery & Dhaba</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-300 text-[10px] font-extrabold text-amber-950">
+                    Dosas & Sweets
+                  </span>
+                </Link>
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-harvest-950 font-bold bg-harvest-100 border border-harvest-400 p-2.5 rounded-xl shadow-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-forest-800" />
+                    <span>Admin Portal</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-forest-900 text-[10px] font-extrabold text-white">
+                    Srimanth3272
+                  </span>
                 </Link>
                 <Link
                   href="/customer"

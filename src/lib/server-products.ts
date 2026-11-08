@@ -5,7 +5,7 @@ import { ProductItem } from './types';
 import { prisma } from './prisma';
 import { extractProductImages } from './image-utils';
 import { getFirebaseDb } from './firebase';
-import { collection, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 const FIREBASE_PROJECT_ID =
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
@@ -348,8 +348,8 @@ export async function saveServerProduct(
     shelfLifeDays: Number(productData.shelfLifeDays) || 365,
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
-    approvalStatus: 'APPROVED',
-    isActive: true,
+    approvalStatus: productData.approvalStatus || 'APPROVED',
+    isActive: productData.isActive !== undefined ? productData.isActive : true,
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,
@@ -457,8 +457,8 @@ export async function saveServerProduct(
           shelfLifeDays: product.shelfLifeDays,
           storageInstructions: product.storageInstructions,
           isOrganic: product.isOrganic,
-          approvalStatus: 'APPROVED',
-          isActive: true,
+          approvalStatus: product.approvalStatus || 'APPROVED',
+          isActive: product.isActive !== undefined ? product.isActive : true,
         },
         create: {
           id: product.id,
@@ -477,8 +477,8 @@ export async function saveServerProduct(
           shelfLifeDays: product.shelfLifeDays,
           storageInstructions: product.storageInstructions,
           isOrganic: product.isOrganic,
-          approvalStatus: 'APPROVED',
-          isActive: true,
+          approvalStatus: product.approvalStatus || 'APPROVED',
+          isActive: product.isActive !== undefined ? product.isActive : true,
         },
       });
 
@@ -553,3 +553,137 @@ export async function saveServerProduct(
     firestoreError,
   };
 }
+
+// 8. Delete a product across SQLite, local JSON file, memory cache, and Firestore
+export async function deleteServerProduct(productId: string): Promise<boolean> {
+  let deleted = false;
+
+  // A. Delete from SQLite (Prisma)
+  try {
+    await prisma.farmPassport.deleteMany({ where: { productId } }).catch(() => {});
+    await prisma.cartItem.deleteMany({ where: { productId } }).catch(() => {});
+    await prisma.wishlistItem.deleteMany({ where: { productId } }).catch(() => {});
+    await prisma.review.deleteMany({ where: { productId } }).catch(() => {});
+    await prisma.orderItem.deleteMany({ where: { productId } }).catch(() => {});
+    await prisma.product.deleteMany({ where: { id: productId } }).catch(() => {});
+    deleted = true;
+  } catch (e) {
+    console.warn('Prisma delete notice:', e);
+  }
+
+  // B. Delete from memory cache & local file
+  try {
+    const fileProducts = readLocalFile();
+    const filtered = fileProducts.filter((p) => p.id !== productId && p.slug !== productId);
+    writeLocalFile(filtered);
+
+    if (globalThis.__f2h_products_cache) {
+      globalThis.__f2h_products_cache = globalThis.__f2h_products_cache.filter(
+        (p) => p.id !== productId && p.slug !== productId
+      );
+    }
+    deleted = true;
+  } catch (e) {
+    console.warn('File delete notice:', e);
+  }
+
+  // C. Delete from Cloud Firestore
+  try {
+    const firestore = getFirebaseDb();
+    if (firestore) {
+      await deleteDoc(doc(firestore, 'products', productId));
+      console.log('Successfully deleted product from Firestore:', productId);
+      deleted = true;
+    }
+  } catch (e) {
+    console.warn('Firestore delete notice:', e);
+  }
+
+  return deleted;
+}
+
+// 9. Update approval status of a product across SQLite, local JSON, memory cache, and Firestore
+export async function updateServerProductApproval(
+  productId: string,
+  action: 'APPROVE' | 'REJECT' | 'DEACTIVATE' | 'REACTIVATE',
+  remarks?: string
+): Promise<ProductItem | null> {
+  const isApproved = action === 'APPROVE' || action === 'REACTIVATE';
+  const approvalStatus: 'APPROVED' | 'REJECTED' = isApproved ? 'APPROVED' : 'REJECTED';
+  const isActive = isApproved;
+
+  let updatedProduct: ProductItem | null = null;
+
+  // A. Update in SQLite (Prisma)
+  try {
+    const p = await prisma.product.update({
+      where: { id: productId },
+      data: {
+        approvalStatus,
+        isActive,
+        adminRemarks:
+          remarks ||
+          (action === 'APPROVE'
+            ? 'Approved by Admin for public sale'
+            : action === 'REJECT'
+            ? 'Rejected by Admin'
+            : action === 'DEACTIVATE'
+            ? 'Deactivated by Admin'
+            : 'Reactivated by Admin'),
+      },
+      include: {
+        category: true,
+        farmer: {
+          include: {
+            user: { select: { name: true, avatar: true } },
+          },
+        },
+        farmPassport: true,
+      },
+    });
+    if (p) updatedProduct = p as any;
+  } catch (e) {
+    console.warn('Prisma update notice:', e);
+  }
+
+  // B. Update in memory cache and local JSON file
+  const currentList = globalThis.__f2h_products_cache || readLocalFile();
+  const index = currentList.findIndex((p) => p.id === productId || p.slug === productId);
+  if (index !== -1) {
+    const existing = currentList[index];
+    const modified: ProductItem = {
+      ...existing,
+      approvalStatus,
+      isActive,
+      adminRemarks: remarks || (isApproved ? 'Approved by Admin' : 'Rejected by Admin'),
+      updatedAt: new Date().toISOString(),
+    };
+    currentList[index] = modified;
+    globalThis.__f2h_products_cache = currentList;
+    writeLocalFile(currentList);
+    if (!updatedProduct) updatedProduct = modified;
+  }
+
+  // C. Update in Cloud Firestore
+  try {
+    const firestore = getFirebaseDb();
+    if (firestore) {
+      await setDoc(
+        doc(firestore, 'products', productId),
+        {
+          approvalStatus,
+          isActive,
+          adminRemarks: remarks || (isApproved ? 'Approved by Admin' : 'Rejected by Admin'),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      console.log(`Successfully updated Firestore product ${productId} to ${approvalStatus}`);
+    }
+  } catch (e) {
+    console.warn('Firestore approval update notice:', e);
+  }
+
+  return updatedProduct;
+}
+

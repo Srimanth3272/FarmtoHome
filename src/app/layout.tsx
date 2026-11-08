@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { Navbar } from '@/components/Navbar';
@@ -8,6 +8,14 @@ import { SmartAssistantWidget } from '@/components/SmartAssistantWidget';
 import { AuthProvider } from '@/lib/auth-context';
 import { CartProvider } from '@/lib/cart-context';
 import { WishlistProvider } from '@/lib/wishlist-context';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#1A2B1F',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://farmtohome.store'),

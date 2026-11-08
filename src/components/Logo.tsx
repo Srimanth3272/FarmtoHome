@@ -30,7 +30,7 @@ export const Logo: React.FC<LogoProps> = ({
   const cfg = sizeConfig[size] || sizeConfig.md;
 
   return (
-    <Link href="/" className={`group flex items-center gap-2.5 sm:gap-3 select-none shrink-0 ${className}`}>
+    <Link href="/" className={`group flex items-center gap-1.5 sm:gap-3 select-none shrink-0 ${className}`}>
       {/* Official Farm to Home (F2H) App Logo */}
       <div
         className={`relative overflow-hidden rounded-xl shadow-xs transition-transform duration-200 group-hover:scale-105 shrink-0 ${
@@ -50,9 +50,9 @@ export const Logo: React.FC<LogoProps> = ({
       </div>
 
       {showText && (
-        <div className="flex flex-col justify-center shrink-0 min-w-max">
+        <div className="flex flex-col justify-center shrink-0">
           <span
-            className={`font-serif font-black tracking-tight leading-snug whitespace-nowrap ${cfg.text} ${
+            className={`font-serif font-black tracking-tight leading-snug whitespace-nowrap text-sm sm:text-lg md:${cfg.text} ${
               isLight ? 'text-white' : 'text-forest-950'
             }`}
           >
@@ -60,7 +60,7 @@ export const Logo: React.FC<LogoProps> = ({
           </span>
           {showTagline && (
             <span
-              className={`uppercase font-bold tracking-widest whitespace-nowrap leading-none mt-0.5 ${cfg.sub} ${
+              className={`uppercase font-bold tracking-widest whitespace-nowrap leading-none mt-0.5 hidden sm:block ${cfg.sub} ${
                 isLight ? 'text-harvest-300' : 'text-earth-600'
               }`}
             >

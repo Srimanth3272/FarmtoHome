@@ -27,7 +27,10 @@ import {
   SlidersHorizontal,
   RefreshCw,
   Eye,
-  Info
+  Info,
+  CookingPot,
+  Soup,
+  UtensilsCrossed
 } from 'lucide-react';
 import { ProductItem } from '@/lib/types';
 import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from '@/lib/fallback-data';
@@ -69,9 +72,36 @@ export default function CustomerMarketplacePage() {
     };
   }, []);
 
+  // Deduplicate products so duplicate names or images never render twice
+  const deduplicatedProducts = React.useMemo(() => {
+    const seenNames = new Set<string>();
+    const seenIds = new Set<string>();
+    const result: ProductItem[] = [];
+
+    for (const p of products) {
+      if (!p || seenIds.has(p.id)) continue;
+      const normalizedName = p.name?.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (normalizedName && seenNames.has(normalizedName)) continue;
+      if (normalizedName) seenNames.add(normalizedName);
+      seenIds.add(p.id);
+      result.push(p);
+    }
+    return result;
+  }, [products]);
+
   // Category Icon Resolver
   const getCategoryIcon = (slug: string) => {
     switch (slug) {
+      case 'food-delivery':
+        return <CookingPot className="w-4 h-4 text-orange-600" />;
+      case 'dosas-parothas':
+        return <Flame className="w-4 h-4 text-amber-600" />;
+      case 'pickles':
+        return <Soup className="w-4 h-4 text-rose-600" />;
+      case 'sweets':
+        return <Sparkles className="w-4 h-4 text-yellow-600" />;
+      case 'hots':
+        return <Zap className="w-4 h-4 text-red-600" />;
       case 'mobile-accessories':
         return <Smartphone className="w-4 h-4 text-blue-600" />;
       case 'clothes':
@@ -93,7 +123,7 @@ export default function CustomerMarketplacePage() {
   };
 
   // Filter & Sort Logic
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = deduplicatedProducts.filter((p) => {
     const matchesCategory =
       selectedCategory === 'all' ||
       p.category?.slug === selectedCategory ||
@@ -180,7 +210,7 @@ export default function CustomerMarketplacePage() {
           </h1>
 
           <p className="text-forest-200 text-xs sm:text-sm leading-relaxed">
-            Discover mobile accessories, authentic handloom clothes, fresh harvest produce, and daily utility products directly from registered sellers with 100% verified quality guarantee.
+            Order delicious village dhaba meals, crispy ghee dosas, stuffed parothas, spicy Andhra pickles, desi ghee sweets, crunchy hots, and pesticide-free farm produce directly from verified sellers.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -212,7 +242,7 @@ export default function CustomerMarketplacePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search mobile accessories, clothes, organic veggies, seller stores..."
+              placeholder="Search dosas, parothas, dhaba meals, pickles, sweets, hots, farm harvests..."
               className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-cream-300 focus:outline-none focus:ring-2 focus:ring-forest-600 text-xs sm:text-sm shadow-sm"
             />
             {searchQuery && (
