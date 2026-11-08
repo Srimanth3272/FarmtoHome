@@ -110,6 +110,8 @@ export interface ProductItem {
   rating: number;
   reviewCount: number;
   farmPassport?: FarmPassportItem | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface FarmPassportItem {

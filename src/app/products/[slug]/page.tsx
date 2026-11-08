@@ -75,11 +75,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   }
 
   if (!product) {
-    product = FALLBACK_PRODUCTS.find((p) => p.slug === params.slug) || FALLBACK_PRODUCTS[0];
-    relatedProducts = FALLBACK_PRODUCTS.filter((p) => p.slug !== product?.slug).slice(0, 3);
-  }
-
-  if (!product) {
     notFound();
   }
 

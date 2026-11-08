@@ -30,7 +30,7 @@ import { ProductItem, HarvestCalendarItem, FarmerProfileItem } from '@/lib/types
 import { useAuth } from '@/lib/auth-context';
 import { initiateRazorpayPayment } from '@/lib/razorpay-client';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
-import { addProductToFirebase } from '@/lib/firebase';
+import { addProductToFirebase, subscribeToProducts } from '@/lib/firebase';
 import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
 
 interface SellerDashboardClientProps {
@@ -58,50 +58,41 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
   // Farmer verification & commission ledger state
   const [farmer, setFarmer] = useState<any>(
     farmerProfile || {
-      farmName: 'Patel Natural Organics',
+      id: 'farmer-sreemanth-founder',
+      farmName: "Sreemanth's Certified Organic Farm & Store",
       aadharNumber: '5829-3012-7741',
-      phone: '+91 98251 43210',
-      email: 'ramesh.patel@farmtohome.in',
+      phone: '+91 98480 12345',
+      email: 'sreemanthnagalakunta@gmail.com',
       verificationStatus: 'VERIFIED',
-      commissionRate: 5.0,
-      totalCommissionPaid: 450.0,
-      totalCommissionDue: 96.0,
+      commissionRate: 0.0,
+      totalCommissionPaid: 0.0,
+      totalCommissionDue: 0.0,
     }
   );
 
   const [commissionPayments, setCommissionPayments] = useState<any[]>(
-    farmerProfile?.commissionPayments || [
-      {
-        id: 'cp-1',
-        amount: 450.0,
-        paymentMethod: 'UPI',
-        transactionUtr: '428910398412',
-        status: 'COMPLETED',
-        notes: 'October 2026 Platform Facilitation Commission (5% on ₹9,000 GMV)',
-        createdAt: new Date().toISOString(),
-      },
-    ]
+    farmerProfile?.commissionPayments || []
   );
 
   // Add Product Modal State
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [farmerAadhaar, setFarmerAadhaar] = useState(farmer.aadharNumber || '5829-3012-7741');
-  const [farmerPhone, setFarmerPhone] = useState(farmer.phone || '+91 98251 43210');
-  const [farmerEmail, setFarmerEmail] = useState(farmer.email || 'farmer@farmtohome.in');
+  const [farmerPhone, setFarmerPhone] = useState(farmer.phone || '+91 98480 12345');
+  const [farmerEmail, setFarmerEmail] = useState(farmer.email || 'sreemanthnagalakunta@gmail.com');
 
   const [newProdName, setNewProdName] = useState('');
-  const [newProdCategory, setNewProdCategory] = useState(categories[0]?.id || '');
+  const [newProdCategory, setNewProdCategory] = useState(categories[0]?.id || 'cat-fresh-produce');
   const [newProdBasePrice, setNewProdBasePrice] = useState('100');
   const [newProdUnit, setNewProdUnit] = useState('1 kg');
   const [newProdStock, setNewProdStock] = useState('50');
-  const [newProdOrigin, setNewProdOrigin] = useState('Anand, Gujarat');
+  const [newProdOrigin, setNewProdOrigin] = useState('Andhra Pradesh, India');
   const [newProdDesc, setNewProdDesc] = useState('');
-  const [newProdHarvestDate, setNewProdHarvestDate] = useState('Fresh Harvest - Dawn picking');
+  const [newProdHarvestDate, setNewProdHarvestDate] = useState('Fresh Harvest - Picked Daily');
   const [newProdShelfLife, setNewProdShelfLife] = useState('10');
   const [newProdStorage, setNewProdStorage] = useState('Store in cool ventilated space away from moisture.');
   const [newProdOrganic, setNewProdOrganic] = useState(true);
   const [newProdPractices, setNewProdPractices] = useState('Zero Synthetic Chemicals, Desi Cow Jeevamrutha, Neemastra Spray');
-  const [newProdSoil, setNewProdSoil] = useState('Deep Alluvial Sandy Loam');
+  const [newProdSoil, setNewProdSoil] = useState('Rich Loamy Soil');
   const [newProdWater, setNewProdWater] = useState('Solar Tubewell & Rainwater Harvesting');
   const [newProdChemFreeYears, setNewProdChemFreeYears] = useState('5');
   const [newProdImage, setNewProdImage] = useState(
@@ -122,6 +113,15 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
       .then((r) => r.json())
       .then((d) => setFirestoreStatus(d))
       .catch(() => {});
+
+    // Real-time synchronization across all tabs and devices
+    const unsubscribe = subscribeToProducts((liveList) => {
+      setProducts(liveList);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Commission Payment Modal State
@@ -180,7 +180,7 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
           slug: selectedCatObj.slug,
           name: selectedCatObj.name,
         },
-        farmerId: farmer.id || 'demo-farmer-id',
+        farmerId: farmer.id || user?.id || 'farmer-sreemanth-founder',
         price: finalCustomerPrice,
         compareAtPrice: basePriceNum * 1.3,
         unit: newProdUnit,
@@ -196,16 +196,16 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
       const fbProduct = result.product || result;
 
       // Add to local state (marked as live)
-      setProducts([fbProduct, ...products]);
+      setProducts([fbProduct, ...products.filter((p) => p.id !== fbProduct.id)]);
       setShowAddProductModal(false);
 
       if (result.firestoreSuccess) {
         setProductSuccessAlert(
-          `🎉 Product "${newProdName}" successfully stored in Firebase Firestore and published live! Customers across India can view and purchase it immediately.`
+          `🎉 Product "${newProdName}" successfully uploaded to Firebase Firestore & published live for all customers!`
         );
       } else {
         setProductSuccessAlert(
-          `✅ Product "${newProdName}" published LIVE on the storefront catalog! (Note: Cloud Firestore database needs 1-click creation in Firebase console for cloud backup).`
+          `✅ Product "${newProdName}" published LIVE on the storefront catalog! (Note: Cloud Firestore database needs 1-click creation in Firebase console for cloud sync).`
         );
       }
       setNewProdName('');

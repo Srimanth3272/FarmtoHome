@@ -6,7 +6,8 @@ import { prisma } from '@/lib/prisma';
 import { ProductCard } from '@/components/ProductCard';
 import { ArrowLeft, Sparkles, Sprout } from 'lucide-react';
 
-import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from '@/lib/fallback-data';
+import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
+import { getServerProducts } from '@/lib/server-products';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,7 @@ interface CategoryPageProps {
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   let category: any = null;
+  let dbProducts: any[] = [];
 
   try {
     category = await prisma.category.findUnique({
@@ -36,6 +38,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         },
       },
     });
+    if (category) {
+      dbProducts = category.products || [];
+    }
   } catch (err) {
     console.error('Database connection notice on CategoryPage:', err);
   }
@@ -45,15 +50,47 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     if (!fallbackCategory) {
       notFound();
     }
-    const categoryProducts = FALLBACK_PRODUCTS.filter((p) => p.category?.slug === fallbackCategory.slug);
     category = {
       ...fallbackCategory,
-      products: categoryProducts,
+      products: [],
     };
-  } else if (!category.products || category.products.length === 0) {
-    const categoryProducts = FALLBACK_PRODUCTS.filter((p) => p.category?.slug === category.slug);
-    category.products = categoryProducts;
   }
+
+  // Also merge with persistent server products
+  let serverProds: any[] = [];
+  try {
+    serverProds = await getServerProducts();
+  } catch {}
+
+  const catServerProds = serverProds.filter(
+    (p) =>
+      p.category?.slug === params.slug ||
+      p.categoryId === params.slug ||
+      p.categoryId === `cat-${params.slug}` ||
+      p.categoryId === category?.id
+  );
+
+  const mergedMap = new Map<string, any>();
+  for (const p of catServerProds) {
+    mergedMap.set(p.id, p);
+    if (p.slug) mergedMap.set(p.slug, p);
+  }
+  for (const p of dbProducts) {
+    if (!mergedMap.has(p.id) && !mergedMap.has(p.slug)) {
+      mergedMap.set(p.id, p);
+    }
+  }
+
+  const uniqueProds: any[] = [];
+  const seenIds = new Set<string>();
+  for (const p of Array.from(mergedMap.values())) {
+    if (!seenIds.has(p.id)) {
+      seenIds.add(p.id);
+      uniqueProds.push(p);
+    }
+  }
+
+  category.products = uniqueProds;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">

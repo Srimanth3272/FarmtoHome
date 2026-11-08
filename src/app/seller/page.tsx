@@ -52,7 +52,7 @@ export default function SellerAccountPage() {
   const [showRazorpaySim, setShowRazorpaySim] = useState(false);
 
   // Products state
-  const [allProducts, setAllProducts] = useState<ProductItem[]>(FALLBACK_PRODUCTS as any);
+  const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
   const [sellerProducts, setSellerProducts] = useState<ProductItem[]>([]);
   const [activeTab, setActiveTab] = useState<'products' | 'add' | 'subscription' | 'guide'>('products');
 
@@ -140,7 +140,7 @@ export default function SellerAccountPage() {
           p.farmer?.user?.name === user?.name ||
           p.farmer?.farmName?.toLowerCase().includes((user?.name || '').toLowerCase())
       );
-      setSellerProducts(mine.length > 0 ? mine : live.slice(0, 4));
+      setSellerProducts(mine);
     });
 
     return () => {

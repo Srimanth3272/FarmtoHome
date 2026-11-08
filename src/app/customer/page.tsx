@@ -42,7 +42,7 @@ export default function CustomerMarketplacePage() {
   const { addToCart, setIsCartOpen } = useCart();
   const { wishlistIds, toggleWishlist } = useWishlist();
 
-  const [products, setProducts] = useState<ProductItem[]>(FALLBACK_PRODUCTS as any);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');

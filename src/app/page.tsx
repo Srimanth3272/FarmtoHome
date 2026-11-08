@@ -75,20 +75,27 @@ export default async function HomePage() {
 
     const dbProds = dbProdsRaw || [];
     const serverProds = serverProdsRaw || [];
-    const mergedProds: any[] = [...serverProds];
+    const mergedMap = new Map<string, any>();
 
+    for (const sp of serverProds) {
+      mergedMap.set(sp.id, sp);
+      if (sp.slug) mergedMap.set(sp.slug, sp);
+    }
     for (const dp of dbProds) {
-      if (!mergedProds.some((p) => p.id === dp.id || p.slug === dp.slug)) {
-        mergedProds.push(dp);
+      if (!mergedMap.has(dp.id) && !mergedMap.has(dp.slug)) {
+        mergedMap.set(dp.id, dp);
       }
     }
 
-    for (const fb of FALLBACK_PRODUCTS) {
-      if (!mergedProds.some((p) => p.slug === fb.slug || p.id === fb.id)) {
-        mergedProds.push(fb as any);
+    const uniqueList: any[] = [];
+    const seenIds = new Set<string>();
+    for (const p of Array.from(mergedMap.values())) {
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id);
+        uniqueList.push(p);
       }
     }
-    products = mergedProds;
+    products = uniqueList;
 
     const dbCats = dbCatsRaw || [];
     const mergedCats = [...dbCats];
@@ -101,8 +108,8 @@ export default async function HomePage() {
     farmers = dbFarmersRaw && dbFarmersRaw.length > 0 ? dbFarmersRaw : (FALLBACK_FARMERS as any);
     blogPosts = dbBlogsRaw && dbBlogsRaw.length > 0 ? dbBlogsRaw : (FALLBACK_BLOG_POSTS as any);
   } catch (err) {
-    console.error('Database connection notice (using resilient fallback catalog):', err);
-    products = FALLBACK_PRODUCTS as any;
+    console.error('Database connection notice:', err);
+    products = [];
     categories = FALLBACK_CATEGORIES as any;
     farmers = FALLBACK_FARMERS as any;
     blogPosts = FALLBACK_BLOG_POSTS as any;

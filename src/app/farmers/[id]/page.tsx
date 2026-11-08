@@ -7,7 +7,8 @@ import { ProductCard } from '@/components/ProductCard';
 import { MapPin, Star, ShieldCheck, Sprout, Mail, Phone, Calendar, ArrowLeft, Award, CheckCircle2 } from 'lucide-react';
 import { ContactFarmerButton } from './ContactFarmerButton';
 
-import { FALLBACK_FARMERS, FALLBACK_PRODUCTS } from '@/lib/fallback-data';
+import { FALLBACK_FARMERS } from '@/lib/fallback-data';
+import { getServerProducts } from '@/lib/server-products';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,13 @@ export default async function FarmerProfilePage({ params }: FarmerProfilePagePro
 
   if (!farmer) {
     const fallbackFarmer = FALLBACK_FARMERS.find((f) => f.id === params.id) || FALLBACK_FARMERS[0];
-    const farmerProducts = FALLBACK_PRODUCTS.filter((p) => p.farmer?.id === fallbackFarmer.id || (p as any).farmerId === fallbackFarmer.id);
+    let farmerProducts: any[] = [];
+    try {
+      const serverProds = await getServerProducts();
+      farmerProducts = serverProds.filter(
+        (p) => p.farmer?.id === fallbackFarmer.id || (p as any).farmerId === fallbackFarmer.id
+      );
+    } catch {}
     farmer = {
       ...fallbackFarmer,
       products: farmerProducts,

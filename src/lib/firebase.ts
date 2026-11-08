@@ -2,24 +2,17 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
   collection,
-  addDoc,
-  getDocs,
   query,
-  where,
-  orderBy,
   onSnapshot,
   doc,
   setDoc,
   getDoc,
-  deleteDoc,
   serverTimestamp,
   Firestore,
 } from 'firebase/firestore';
 import { ProductItem } from './types';
-import { FALLBACK_PRODUCTS } from './fallback-data';
 import { extractProductImages } from './image-utils';
 
-// Default config or environment-supplied Firebase configuration
 export interface FirebaseConfigParams {
   apiKey?: string;
   authDomain?: string;
@@ -30,7 +23,6 @@ export interface FirebaseConfigParams {
   measurementId?: string;
 }
 
-// User credentials configured directly (no NEXT_PUBLIC_ prefix, fully compatible with Vercel)
 const DEFAULT_FIREBASE_CONFIG: FirebaseConfigParams = {
   apiKey: 'AIzaSyB_3fnmXQNH7KhKPt5u_o18kHhbo-_DncI',
   authDomain: 'farm-to-home-9ff91.firebaseapp.com',
@@ -58,13 +50,34 @@ export function getActiveFirebaseConfig(): FirebaseConfigParams {
   }
 
   return {
-    apiKey: process.env.FIREBASE_API_KEY || DEFAULT_FIREBASE_CONFIG.apiKey,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || DEFAULT_FIREBASE_CONFIG.authDomain,
-    projectId: process.env.FIREBASE_PROJECT_ID || DEFAULT_FIREBASE_CONFIG.projectId,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || DEFAULT_FIREBASE_CONFIG.storageBucket,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
-    appId: process.env.FIREBASE_APP_ID || DEFAULT_FIREBASE_CONFIG.appId,
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID || DEFAULT_FIREBASE_CONFIG.measurementId,
+    apiKey:
+      process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
+      process.env.FIREBASE_API_KEY ||
+      DEFAULT_FIREBASE_CONFIG.apiKey,
+    authDomain:
+      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+      process.env.FIREBASE_AUTH_DOMAIN ||
+      DEFAULT_FIREBASE_CONFIG.authDomain,
+    projectId:
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+      process.env.FIREBASE_PROJECT_ID ||
+      DEFAULT_FIREBASE_CONFIG.projectId,
+    storageBucket:
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+      process.env.FIREBASE_STORAGE_BUCKET ||
+      DEFAULT_FIREBASE_CONFIG.storageBucket,
+    messagingSenderId:
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
+      process.env.FIREBASE_MESSAGING_SENDER_ID ||
+      DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+    appId:
+      process.env.NEXT_PUBLIC_FIREBASE_APP_ID ||
+      process.env.FIREBASE_APP_ID ||
+      DEFAULT_FIREBASE_CONFIG.appId,
+    measurementId:
+      process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ||
+      process.env.FIREBASE_MEASUREMENT_ID ||
+      DEFAULT_FIREBASE_CONFIG.measurementId,
   };
 }
 
@@ -90,7 +103,11 @@ export function getFirebaseDb(): Firestore | null {
     } else {
       app = getApp();
     }
-    db = getFirestore(app);
+    try {
+      db = getFirestore(app, 'default');
+    } catch {
+      db = getFirestore(app);
+    }
     return db;
   } catch (err) {
     console.warn('Firebase initialization notice:', err);
@@ -116,7 +133,7 @@ export function saveLocalCommunityProduct(product: ProductItem): void {
   if (typeof window === 'undefined') return;
   try {
     const current = getLocalCommunityProducts();
-    const updated = [product, ...current.filter((p) => p.id !== product.id)];
+    const updated = [product, ...current.filter((p) => p.id !== product.id && p.slug !== product.slug)];
     localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
 
     // Notify other open tabs/windows
@@ -130,154 +147,131 @@ export function saveLocalCommunityProduct(product: ProductItem): void {
   }
 }
 
-// Real-time listener for Products
-// Returns an unsubscribe function
+// Real-time listener for Products across all clients & devices
 export function subscribeToProducts(
   onUpdate: (products: ProductItem[]) => void
 ): () => void {
-  const firestore = getFirebaseDb();
+  let isSubscribed = true;
+  let currentProducts: ProductItem[] = [];
 
-  // If real Firebase Firestore is connected:
-  if (firestore) {
-    try {
-      const q = query(collection(firestore, 'products'));
-      const unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-          const fbProducts: ProductItem[] = [];
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            fbProducts.push({
-              ...(data as any),
-              id: docSnap.id,
-            });
-          });
+  const updateList = (incoming: ProductItem[]) => {
+    if (!isSubscribed) return;
 
-          // Combine Firestore documents + Local community products + Base catalog
-          const local = getLocalCommunityProducts();
-          const merged = [...fbProducts];
-
-          for (const lp of local) {
-            if (!merged.some((m) => m.id === lp.id || m.slug === lp.slug)) {
-              merged.push(lp);
-            }
-          }
-
-          for (const item of FALLBACK_PRODUCTS) {
-            if (!merged.some((m) => m.id === item.id || m.slug === item.slug)) {
-              merged.push(item as any);
-            }
-          }
-          onUpdate(merged);
-
-          // Also merge server catalog so customer products persist across all tabs & refreshes
-          fetch('/api/products', { cache: 'no-store' })
-            .then((r) => (r.ok ? r.json() : []))
-            .then((serverProds) => {
-              if (Array.isArray(serverProds) && serverProds.length > 0) {
-                const fullMerged = [...fbProducts];
-                for (const sp of serverProds) {
-                  if (!fullMerged.some((m) => m.id === sp.id || m.slug === sp.slug)) {
-                    fullMerged.push(sp);
-                  }
-                }
-                for (const lp of local) {
-                  if (!fullMerged.some((m) => m.id === lp.id || m.slug === lp.slug)) {
-                    fullMerged.push(lp);
-                  }
-                }
-                for (const fb of FALLBACK_PRODUCTS) {
-                  if (!fullMerged.some((m) => m.id === fb.id || m.slug === fb.slug)) {
-                    fullMerged.push(fb as any);
-                  }
-                }
-                onUpdate(fullMerged);
-              }
-            })
-            .catch(() => {});
-        },
-        (err) => {
-          console.warn('Firestore live listener error, falling back to local sync:', err);
-          setupLocalSync(onUpdate);
-        }
-      );
-      return unsubscribe;
-    } catch (e) {
-      console.warn('Could not attach Firestore listener, using local sync:', e);
-    }
-  }
-
-  // Fallback real-time sync via BroadcastChannel & LocalStorage
-  return setupLocalSync(onUpdate);
-}
-
-function setupLocalSync(onUpdate: (products: ProductItem[]) => void): () => void {
-  const notifyCurrent = async () => {
+    // Merge incoming products with any local community products
     const local = getLocalCommunityProducts();
-    const merged = [...local];
-    for (const item of FALLBACK_PRODUCTS) {
-      if (!merged.some((m) => m.id === item.id || m.slug === item.slug)) {
-        merged.push(item as any);
+    const mergedMap = new Map<string, ProductItem>();
+
+    for (const p of incoming) {
+      mergedMap.set(p.id, p);
+      if (p.slug) mergedMap.set(p.slug, p);
+    }
+
+    for (const lp of local) {
+      if (!mergedMap.has(lp.id) && !mergedMap.has(lp.slug)) {
+        mergedMap.set(lp.id, lp);
       }
     }
-    onUpdate(merged);
 
-    // Also fetch from server persistent catalog so customers on other devices get items immediately
+    const unique: ProductItem[] = [];
+    const seenIds = new Set<string>();
+    for (const p of Array.from(mergedMap.values())) {
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id);
+        unique.push(p);
+      }
+    }
+
+    currentProducts = unique;
+    onUpdate(unique);
+  };
+
+  // 1. Fetch from server API immediately
+  const fetchFromServer = async () => {
     try {
       const res = await fetch('/api/products', { cache: 'no-store' });
       if (res.ok) {
-        const serverProds = await res.json();
-        const fullMerged = [...serverProds];
-        for (const lp of local) {
-          if (!fullMerged.some((m) => m.id === lp.id || m.slug === lp.slug)) {
-            fullMerged.push(lp);
-          }
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          updateList(data);
         }
-        for (const fb of FALLBACK_PRODUCTS) {
-          if (!fullMerged.some((m) => m.id === fb.id || m.slug === fb.slug)) {
-            fullMerged.push(fb as any);
-          }
-        }
-        onUpdate(fullMerged);
       }
-    } catch {}
+    } catch {
+      // Offline fallback to local products
+      const local = getLocalCommunityProducts();
+      if (local.length > 0) {
+        updateList(local);
+      }
+    }
   };
 
-  notifyCurrent();
+  fetchFromServer();
 
-  // Periodic polling so customers on any browser/phone automatically receive updates
-  let intervalId: any = null;
+  // 2. Poll every 4 seconds so ALL other users, devices, and phones automatically see new products
+  let pollTimer: any = null;
   if (typeof window !== 'undefined') {
-    intervalId = setInterval(() => {
-      notifyCurrent();
-    }, 12000);
+    pollTimer = setInterval(() => {
+      fetchFromServer();
+    }, 4000);
   }
 
+  // 3. Multi-tab channel sync
   let channel: BroadcastChannel | null = null;
   if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
     channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
     channel.onmessage = () => {
-      notifyCurrent();
+      fetchFromServer();
     };
   }
 
   const handleStorage = (e: StorageEvent) => {
     if (e.key === LOCAL_STORAGE_PRODUCTS_KEY) {
-      notifyCurrent();
+      fetchFromServer();
     }
   };
 
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('focus', notifyCurrent);
+    window.addEventListener('focus', fetchFromServer);
+  }
+
+  // 4. Firestore real-time onSnapshot listener (if Cloud Firestore database is active)
+  let firestoreUnsub: (() => void) | null = null;
+  const firestore = getFirebaseDb();
+  if (firestore) {
+    try {
+      const q = query(collection(firestore, 'products'));
+      firestoreUnsub = onSnapshot(
+        q,
+        (snapshot) => {
+          const fbProducts: ProductItem[] = [];
+          snapshot.forEach((docSnap) => {
+            fbProducts.push({
+              ...(docSnap.data() as any),
+              id: docSnap.id,
+            });
+          });
+          if (fbProducts.length > 0) {
+            updateList(fbProducts);
+          }
+        },
+        (err) => {
+          // Cloud Firestore database (default) may still need to be created in Firebase console
+          console.warn('Firestore live listener notice (using platform live sync):', err?.message);
+        }
+      );
+    } catch (e) {
+      console.warn('Firestore subscription notice:', e);
+    }
   }
 
   return () => {
-    if (intervalId) clearInterval(intervalId);
+    isSubscribed = false;
+    if (pollTimer) clearInterval(pollTimer);
     if (channel) channel.close();
+    if (firestoreUnsub) firestoreUnsub();
     if (typeof window !== 'undefined') {
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', notifyCurrent);
+      window.removeEventListener('focus', fetchFromServer);
     }
   };
 }
@@ -310,7 +304,6 @@ export async function addProductToFirebase(
   productData: Partial<ProductItem>
 ): Promise<ProductItem & { product: ProductItem; firestoreSuccess: boolean; firestoreError?: string; apiSuccess: boolean }> {
   const newId = productData.id || `prod-${Date.now()}`;
-  const now = new Date().toISOString();
 
   const product: ProductItem = {
     id: newId,
@@ -328,17 +321,17 @@ export async function addProductToFirebase(
       slug: (productData as any).categorySlug || 'other-products',
       name: (productData as any).categoryName || 'Other Products',
     },
-    farmerId: productData.farmerId || 'seller-current',
+    farmerId: productData.farmerId || 'farmer-sreemanth-founder',
     farmer: productData.farmer || {
-      id: productData.farmerId || 'seller-current',
-      farmName: 'Verified Merchant Store',
-      state: 'India',
-      district: 'Regional Hub',
+      id: productData.farmerId || 'farmer-sreemanth-founder',
+      farmName: "Sreemanth's Certified Organic Farm & Store",
+      state: 'Andhra Pradesh',
+      district: 'NTR (Vijayawada)',
       verificationStatus: 'VERIFIED',
       isOrganicCertified: Boolean(productData.isOrganic),
       rating: 5.0,
       user: {
-        name: 'Seller Partner',
+        name: 'Sreemanth Nagalakunta',
       },
     },
     price: Number(productData.price) || 100,
@@ -352,37 +345,37 @@ export async function addProductToFirebase(
         (productData as any).category?.slug || productData.categoryId
       )
     ),
-    originLocation: productData.originLocation || 'India',
+    originLocation: productData.originLocation || 'Andhra Pradesh, India',
     harvestDate: productData.harvestDate || 'Fresh Stock',
     storageInstructions: productData.storageInstructions || 'Store in standard safe room conditions.',
     shelfLifeDays: productData.shelfLifeDays || 365,
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
-    approvalStatus: 'APPROVED', // Subscribed sellers get instant approval to sell!
-    isActive: true,             // Live for all customers!
+    approvalStatus: 'APPROVED',
+    isActive: true,
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,
     farmPassport: productData.farmPassport || {
       id: `pass-${Date.now()}`,
       productId: newId,
-      batchNumber: `F2H-2026-SELL-${Date.now().toString().slice(-4)}`,
-      farmName: productData.farmer?.farmName || 'Verified Merchant Store',
+      batchNumber: `F2H-2026-${Date.now().toString().slice(-6)}`,
+      farmName: productData.farmer?.farmName || "Sreemanth's Certified Organic Farm & Store",
       farmerName: productData.farmer?.user?.name || 'Verified Seller',
-      location: productData.originLocation || 'India',
+      location: productData.originLocation || 'Andhra Pradesh, India',
       harvestDate: 'Current Batch',
-      declaredPractices: '100% Quality Inspected & Genuine Merchant Guarantee',
-      soilType: 'Standard Quality',
-      waterSource: 'N/A',
-      chemicalFreeYears: 0,
+      declaredPractices: '100% Quality Inspected & Genuine Guarantee',
+      soilType: 'Natural Farm Loam',
+      waterSource: 'Clean Tubewell & Rainwater',
+      chemicalFreeYears: 5,
       verificationBadge: 'Verified Platform Seller',
     },
   };
 
-  // 1. Always save locally and notify open browser tabs
+  // 1. Save locally for instant tab reactivity
   saveLocalCommunityProduct(product);
 
-  // 2. Post to server API immediately so product is published live to all customers without delay
+  // 2. Post to server API immediately (SQLite DB + local JSON store + memory cache)
   let apiSuccess = false;
   try {
     const apiRes = await fetch('/api/products', {
@@ -397,36 +390,23 @@ export async function addProductToFirebase(
     console.warn('API sync warning:', apiErr);
   }
 
-  // 3. Attempt write to Firebase Firestore with a 1.5s timeout so the UI never hangs
+  // 3. Attempt write to Firebase Firestore (if Firestore database is created)
   let firestoreSuccess = false;
   let firestoreError: string | undefined;
 
   const firestore = getFirebaseDb();
   if (firestore) {
     try {
-      const writePromise = setDoc(doc(firestore, 'products', product.id), {
+      await setDoc(doc(firestore, 'products', product.id), {
         ...product,
         updatedAt: serverTimestamp(),
-      })
-        .then(() => true)
-        .catch((err: any) => {
-          firestoreError = err?.message;
-          return false;
-        });
-
-      const timeoutPromise = new Promise<boolean>((resolve) =>
-        setTimeout(() => {
-          resolve(false);
-        }, 1500)
-      );
-
-      firestoreSuccess = await Promise.race([writePromise, timeoutPromise]);
-      if (firestoreSuccess) {
-        console.log('Product successfully stored in Firebase Firestore:', product.id);
-      }
+      });
+      firestoreSuccess = true;
+      console.log('Product successfully stored in Firebase Firestore:', product.id);
     } catch (err: any) {
       firestoreSuccess = false;
       firestoreError = err?.message || 'Could not write to Cloud Firestore';
+      console.warn('Firestore write notice:', firestoreError);
     }
   }
 
@@ -457,7 +437,6 @@ export interface SellerSubscriptionRecord {
 export async function saveSellerSubscriptionToFirebase(
   record: SellerSubscriptionRecord
 ): Promise<void> {
-  // Save in localStorage for instant client state
   if (typeof window !== 'undefined') {
     localStorage.setItem(`f2h_seller_sub_${record.sellerId}`, JSON.stringify(record));
     localStorage.setItem('f2h_seller_active_sub', JSON.stringify(record));
@@ -470,7 +449,7 @@ export async function saveSellerSubscriptionToFirebase(
         ...record,
         updatedAt: serverTimestamp(),
       });
-      console.log('Seller ₹500 subscription saved to Firebase Firestore');
+      console.log('Seller subscription saved to Firebase Firestore');
     } catch (err) {
       console.warn('Error writing subscription to Firestore:', err);
     }

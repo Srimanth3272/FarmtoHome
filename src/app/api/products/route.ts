@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { FALLBACK_PRODUCTS } from '@/lib/fallback-data';
 import { getServerProducts, saveServerProduct } from '@/lib/server-products';
 
 export const dynamic = 'force-dynamic';
@@ -16,74 +15,26 @@ export async function GET(request: Request) {
     const sort = searchParams.get('sort'); // price-low, price-high, rating, newest
     const includePending = searchParams.get('includePending') === 'true';
 
-    // 1. Fetch server products (from persistent memory, JSON store, and Firestore)
-    const serverProducts = await getServerProducts();
+    // 1. Fetch server products (unified from SQLite DB, JSON store, memory cache, and Firestore)
+    const combined = await getServerProducts();
 
-    // 2. Fetch Prisma SQLite products (graceful catch if DB is unavailable)
-    let dbProducts: any[] = [];
-    try {
-      const where: any = {};
-      if (!includePending) {
-        where.isActive = true;
-        where.approvalStatus = 'APPROVED';
-      }
-      if (categorySlug) {
-        where.category = { slug: categorySlug };
-      }
-      if (farmerId) {
-        where.farmerId = farmerId;
-      }
-      if (featured === 'true') {
-        where.featured = true;
-      }
-      if (organicOnly === 'true') {
-        where.isOrganic = true;
-      }
-
-      dbProducts = await prisma.product.findMany({
-        where,
-        include: {
-          category: true,
-          farmer: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                  avatar: true,
-                },
-              },
-            },
-          },
-          farmPassport: true,
-        },
-      });
-    } catch (e) {
-      console.warn('Prisma query notice on GET /api/products:', e);
-    }
-
-    // 3. Merge: server products + DB products + fallback products
-    const combined: any[] = [...serverProducts];
-
-    for (const dbp of dbProducts) {
-      if (!combined.some((p) => p.id === dbp.id || p.slug === dbp.slug)) {
-        combined.push(dbp);
-      }
-    }
-
-    for (const fb of FALLBACK_PRODUCTS) {
-      if (!combined.some((p) => p.slug === fb.slug || p.id === fb.id)) {
-        combined.push(fb as any);
-      }
-    }
-
-    // 4. Apply filters
+    // 2. Apply filters
     let filtered = combined.filter((p) => {
       if (!includePending && p.isActive === false) return false;
-      if (categorySlug && p.category?.slug !== categorySlug && p.categoryId !== categorySlug) {
-        return false;
+      if (categorySlug) {
+        const matchesCat =
+          p.category?.slug === categorySlug ||
+          p.categoryId === categorySlug ||
+          p.categoryId === `cat-${categorySlug}` ||
+          p.category?.id === categorySlug;
+        if (!matchesCat) return false;
       }
-      if (farmerId && p.farmerId !== farmerId && p.farmer?.id !== farmerId) {
-        return false;
+      if (farmerId) {
+        const matchesFarmer =
+          p.farmerId === farmerId ||
+          p.farmer?.id === farmerId ||
+          p.farmer?.user?.name === farmerId;
+        if (!matchesFarmer) return false;
       }
       if (featured === 'true' && !p.featured) {
         return false;
@@ -96,12 +47,13 @@ export async function GET(request: Request) {
         const matchesName = p.name?.toLowerCase().includes(q);
         const matchesDesc = p.description?.toLowerCase().includes(q);
         const matchesLoc = p.originLocation?.toLowerCase().includes(q);
-        if (!matchesName && !matchesDesc && !matchesLoc) return false;
+        const matchesCatName = p.category?.name?.toLowerCase().includes(q);
+        if (!matchesName && !matchesDesc && !matchesLoc && !matchesCatName) return false;
       }
       return true;
     });
 
-    // 5. Apply sorting
+    // 3. Apply sorting
     if (sort === 'price-low' || sort === 'price-asc') {
       filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sort === 'price-high' || sort === 'price-desc') {
@@ -111,23 +63,23 @@ export async function GET(request: Request) {
     } else {
       // Newest first by default
       filtered.sort((a, b) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const timeA = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
+        const timeB = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
         return timeB - timeA;
       });
     }
 
     return NextResponse.json(filtered);
   } catch (error) {
-    console.warn('Error in GET /api/products, returning fallback products:', error);
-    return NextResponse.json(FALLBACK_PRODUCTS);
+    console.warn('Error in GET /api/products:', error);
+    return NextResponse.json([]);
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, categoryId, farmerId, price } = body;
+    const { name, categoryId, price } = body;
 
     // Validate required fields
     if (!name || (!categoryId && !body.category) || !price) {
@@ -137,7 +89,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save product via server persistence layer (in-memory + local file + Firestore + Prisma)
+    // Save product via server persistence layer (SQLite + JSON file + Memory cache + Firestore)
     const result = await saveServerProduct(body);
 
     return NextResponse.json(

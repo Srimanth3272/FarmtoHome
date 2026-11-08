@@ -97,22 +97,63 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
     const dbProds = dbProdsRaw || [];
     const serverProds = serverProdsRaw || [];
-    const mergedProds: any[] = [...serverProds];
+    const mergedMap = new Map<string, any>();
+
+    for (const sp of serverProds) {
+      mergedMap.set(sp.id, sp);
+      if (sp.slug) mergedMap.set(sp.slug, sp);
+    }
 
     for (const dp of dbProds) {
-      if (!mergedProds.some((p) => p.id === dp.id || p.slug === dp.slug)) {
-        mergedProds.push(dp);
+      if (!mergedMap.has(dp.id) && !mergedMap.has(dp.slug)) {
+        mergedMap.set(dp.id, dp);
       }
     }
 
-    for (const fb of FALLBACK_PRODUCTS) {
-      if (!mergedProds.some((p) => p.slug === fb.slug || p.id === fb.id)) {
-        if (!category || fb.category?.slug === category) {
-          mergedProds.push(fb as any);
-        }
+    // Apply filters
+    let filteredList: any[] = [];
+    const seenIds = new Set<string>();
+    for (const p of Array.from(mergedMap.values())) {
+      if (seenIds.has(p.id)) continue;
+      seenIds.add(p.id);
+
+      if (category) {
+        const matchesCat =
+          p.category?.slug === category ||
+          p.categoryId === category ||
+          p.categoryId === `cat-${category}` ||
+          p.category?.id === category;
+        if (!matchesCat) continue;
       }
+      if (farmer) {
+        const matchesFarmer =
+          p.farmerId === farmer ||
+          p.farmer?.id === farmer ||
+          p.farmer?.user?.name === farmer;
+        if (!matchesFarmer) continue;
+      }
+      if (organic === 'true' && !p.isOrganic) {
+        continue;
+      }
+      if (minPrice && (p.price || 0) < parseFloat(minPrice)) {
+        continue;
+      }
+      if (maxPrice && (p.price || 0) > parseFloat(maxPrice)) {
+        continue;
+      }
+      if (search) {
+        const q = search.toLowerCase();
+        const matches =
+          p.name?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.originLocation?.toLowerCase().includes(q);
+        if (!matches) continue;
+      }
+
+      filteredList.push(p);
     }
-    products = mergedProds;
+
+    products = filteredList;
 
     const dbCats = dbCatsRaw || [];
     const mergedCats = [...dbCats];
@@ -125,7 +166,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     farmers = dbFarmersRaw && dbFarmersRaw.length > 0 ? dbFarmersRaw : (FALLBACK_FARMERS as any);
   } catch (err) {
     console.error('Database connection notice on ShopPage:', err);
-    products = FALLBACK_PRODUCTS as any;
+    products = [];
     categories = FALLBACK_CATEGORIES as any;
     farmers = FALLBACK_FARMERS as any;
   }
