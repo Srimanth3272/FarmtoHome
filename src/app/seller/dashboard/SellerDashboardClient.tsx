@@ -30,7 +30,12 @@ import { ProductItem, HarvestCalendarItem, FarmerProfileItem } from '@/lib/types
 import { useAuth } from '@/lib/auth-context';
 import { initiateRazorpayPayment } from '@/lib/razorpay-client';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
-import { addProductToFirebase, subscribeToProducts } from '@/lib/firebase';
+import {
+  addProductToFirebase,
+  subscribeToProducts,
+  getSellerSubscriptionFromFirebase,
+  SellerSubscriptionRecord
+} from '@/lib/firebase';
 import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
 
 interface SellerDashboardClientProps {
@@ -76,9 +81,9 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
 
   // Add Product Modal State
   const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [farmerAadhaar, setFarmerAadhaar] = useState(farmer.aadharNumber || '5829-3012-7741');
-  const [farmerPhone, setFarmerPhone] = useState(farmer.phone || '+91 98480 12345');
-  const [farmerEmail, setFarmerEmail] = useState(farmer.email || 'sreemanthnagalakunta@gmail.com');
+  const [farmerAadhaar, setFarmerAadhaar] = useState(farmer.aadharNumber || '');
+  const [farmerPhone, setFarmerPhone] = useState(farmer.phone || user?.phone || '');
+  const [farmerEmail, setFarmerEmail] = useState(farmer.email || user?.email || '');
 
   const [newProdName, setNewProdName] = useState('');
   const [newProdCategory, setNewProdCategory] = useState(categories[0]?.id || 'cat-fresh-produce');
@@ -114,6 +119,29 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
       .then((d) => setFirestoreStatus(d))
       .catch(() => {});
 
+    // Check seller subscription status
+    const cleanEmail = (user?.email || '').trim().toLowerCase();
+    const isFounder = cleanEmail === 'sreemanthnagalakunta@gmail.com';
+    if (isFounder) {
+      setSubscription({
+        sellerId: user?.id || 'founder-sreemanth',
+        sellerName: 'Sreemanth Nagalakunta',
+        sellerEmail: 'sreemanthnagalakunta@gmail.com',
+        isSubscribed: true,
+        planName: 'Founder VIP Seller Plan (100% Free Lifetime)',
+        amount: 0,
+        activatedAt: new Date().toISOString(),
+        expiresAt: '2099-12-31T23:59:59.000Z',
+        paymentMethod: 'FREE_FOUNDER_PASS',
+        paymentId: 'F2H-FREE-VIP-SREEMANTH',
+        status: 'ACTIVE',
+      });
+    } else {
+      getSellerSubscriptionFromFirebase(user?.id || '', user?.email).then((sub) => {
+        setSubscription(sub);
+      });
+    }
+
     // Real-time synchronization across all tabs and devices
     const unsubscribe = subscribeToProducts((liveList) => {
       setProducts(liveList);
@@ -122,7 +150,9 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [user?.email, user?.id]);
+
+  const [subscription, setSubscription] = useState<SellerSubscriptionRecord | null>(null);
 
   // Commission Payment Modal State
   const [showPayCommissionModal, setShowPayCommissionModal] = useState(false);
@@ -164,6 +194,18 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // STRICT CHECK: Free ONLY for sreemanthnagalakunta@gmail.com; All others must have paid ₹500
+    const cleanEmail = (user?.email || '').trim().toLowerCase();
+    const isFounder = cleanEmail === 'sreemanthnagalakunta@gmail.com';
+    const hasActivePaidSub = Boolean(subscription?.isSubscribed && subscription?.amount >= 500 && subscription?.status === 'ACTIVE');
+
+    if (!isFounder && !hasActivePaidSub) {
+      alert('Seller subscription is ₹500/year. Please activate your subscription to list products on the marketplace.');
+      window.location.href = '/seller';
+      return;
+    }
+
     setSubmittingProduct(true);
     setProductSuccessAlert('');
 

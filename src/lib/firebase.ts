@@ -482,9 +482,20 @@ export interface SellerSubscriptionRecord {
 export async function saveSellerSubscriptionToFirebase(
   record: SellerSubscriptionRecord
 ): Promise<void> {
+  const isFounder = record.sellerEmail?.trim().toLowerCase() === 'sreemanthnagalakunta@gmail.com';
+  // Strict rule: Free founder pass is ONLY permitted for sreemanthnagalakunta@gmail.com
+  if (record.paymentMethod === 'FREE_FOUNDER_PASS' && !isFounder) {
+    console.warn('Free seller subscription rejected: Only sreemanthnagalakunta@gmail.com is eligible for free plan.');
+    return;
+  }
+
   if (typeof window !== 'undefined') {
     localStorage.setItem(`f2h_seller_sub_${record.sellerId}`, JSON.stringify(record));
-    localStorage.setItem('f2h_seller_active_sub', JSON.stringify(record));
+    if (isFounder) {
+      localStorage.setItem('f2h_seller_active_sub', JSON.stringify(record));
+    } else {
+      localStorage.removeItem('f2h_seller_active_sub');
+    }
   }
 
   const firestore = getFirebaseDb();
@@ -502,15 +513,21 @@ export async function saveSellerSubscriptionToFirebase(
 }
 
 export async function getSellerSubscriptionFromFirebase(
-  sellerId: string
+  sellerId: string,
+  userEmail?: string
 ): Promise<SellerSubscriptionRecord | null> {
+  const cleanEmail = (userEmail || '').trim().toLowerCase();
+  const isFounder = cleanEmail === 'sreemanthnagalakunta@gmail.com';
+
   if (typeof window !== 'undefined') {
-    const local =
-      localStorage.getItem(`f2h_seller_sub_${sellerId}`) ||
-      localStorage.getItem('f2h_seller_active_sub');
+    const local = localStorage.getItem(`f2h_seller_sub_${sellerId}`);
     if (local) {
       try {
-        return JSON.parse(local);
+        const parsed = JSON.parse(local);
+        if (parsed.paymentMethod === 'FREE_FOUNDER_PASS' && !isFounder && parsed.sellerEmail?.toLowerCase() !== 'sreemanthnagalakunta@gmail.com') {
+          return null;
+        }
+        return parsed;
       } catch {}
     }
   }
@@ -520,7 +537,11 @@ export async function getSellerSubscriptionFromFirebase(
     try {
       const snap = await getDoc(doc(firestore, 'seller_subscriptions', sellerId));
       if (snap.exists()) {
-        return snap.data() as SellerSubscriptionRecord;
+        const data = snap.data() as SellerSubscriptionRecord;
+        if (data.paymentMethod === 'FREE_FOUNDER_PASS' && !isFounder && data.sellerEmail?.toLowerCase() !== 'sreemanthnagalakunta@gmail.com') {
+          return null;
+        }
+        return data;
       }
     } catch (err) {
       console.warn('Error reading subscription from Firestore:', err);

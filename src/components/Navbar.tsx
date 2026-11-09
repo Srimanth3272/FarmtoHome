@@ -35,6 +35,7 @@ export const Navbar: React.FC = () => {
   const { itemCount, setIsCartOpen } = useCart();
   const { wishlistIds } = useWishlist();
   const { user, logout, switchDemoUser } = useAuth();
+  const isOwnerAdmin = user?.email?.toLowerCase() === 'sreemanthnagalakunta@gmail.com';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -177,16 +178,17 @@ export const Navbar: React.FC = () => {
                 <Search className="w-4 h-4 text-forest-800" />
               </button>
 
-              {/* Admin Portal Gateway Trigger Button */}
-              <Link
-                href="/admin"
-                aria-label="Admin Portal"
-                title="Super Admin Portal (Username: Srimanth3272)"
-                className="p-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-forest-900 text-harvest-300 hover:bg-forest-950 border border-harvest-400/40 text-xs font-bold transition-all flex items-center gap-1 shrink-0 shadow-xs"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-harvest-400 shrink-0" />
-                <span className="hidden sm:inline text-[11px]">Admin</span>
-              </Link>
+              {/* Admin Portal Gateway Trigger Button (Restricted to Owner) */}
+              {isOwnerAdmin && (
+                <Link
+                  href="/admin"
+                  aria-label="Admin Portal"
+                  className="p-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-forest-900 text-harvest-300 hover:bg-forest-950 border border-harvest-400/40 text-xs font-bold transition-all flex items-center gap-1 shrink-0 shadow-xs"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-harvest-400 shrink-0" />
+                  <span className="hidden sm:inline text-[11px]">Admin</span>
+                </Link>
+              )}
 
               {/* Wishlist Link */}
               <Link
@@ -296,7 +298,7 @@ export const Navbar: React.FC = () => {
                               🌾 Farmer Seller Dashboard
                             </Link>
                           )}
-                          {user.role === 'ADMIN' && (
+                          {isOwnerAdmin && user.role === 'ADMIN' && (
                             <Link
                               href="/admin/dashboard"
                               onClick={() => setUserMenuOpen(false)}
@@ -305,7 +307,7 @@ export const Navbar: React.FC = () => {
                               ⚡ Admin Management Panel
                             </Link>
                           )}
-                          {user.role === 'ADMIN' && (
+                          {isOwnerAdmin && user.role === 'ADMIN' && (
                             <Link
                               href="/admin/settings"
                               onClick={() => setUserMenuOpen(false)}
@@ -473,18 +475,20 @@ export const Navbar: React.FC = () => {
                   </span>
                 </Link>
 
-                {/* Admin Portal Gateway */}
-                <Link
-                  href="/admin"
-                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
-                    pathname.startsWith('/admin')
-                      ? 'bg-forest-900 text-white border-forest-950 shadow-xs ring-1 ring-harvest-400'
-                      : 'bg-cream-100 hover:bg-cream-200 text-forest-900 border-cream-300'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-harvest-500 shrink-0" />
-                  <span>Admin Portal</span>
-                </Link>
+                {/* Admin Portal Gateway (Owner Only) */}
+                {isOwnerAdmin && (
+                  <Link
+                    href="/admin"
+                    className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold transition-all ${
+                      pathname.startsWith('/admin')
+                        ? 'bg-forest-900 text-white border-forest-950 shadow-xs ring-1 ring-harvest-400'
+                        : 'bg-cream-100 hover:bg-cream-200 text-forest-900 border-cream-300'
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-harvest-500 shrink-0" />
+                    <span>Admin Portal</span>
+                  </Link>
+                )}
 
                 {/* AP Delivery Map */}
                 <Link
@@ -704,19 +708,21 @@ export const Navbar: React.FC = () => {
                     Dosas & Sweets
                   </span>
                 </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between text-harvest-950 font-bold bg-harvest-100 border border-harvest-400 p-2.5 rounded-xl shadow-xs"
-                >
-                  <span className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-forest-800" />
-                    <span>Admin Portal</span>
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-forest-900 text-[10px] font-extrabold text-white">
-                    Srimanth3272
-                  </span>
-                </Link>
+                {isOwnerAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between text-harvest-950 font-bold bg-harvest-100 border border-harvest-400 p-2.5 rounded-xl shadow-xs"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-forest-800" />
+                      <span>Admin Portal</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-forest-900 text-[10px] font-extrabold text-white">
+                      Owner
+                    </span>
+                  </Link>
+                )}
                 <Link
                   href="/customer"
                   onClick={() => setMobileMenuOpen(false)}
@@ -840,7 +846,7 @@ export const Navbar: React.FC = () => {
                       Farmer Seller Dashboard →
                     </Link>
                   )}
-                  {user.role === 'ADMIN' && (
+                  {isOwnerAdmin && user.role === 'ADMIN' && (
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setMobileMenuOpen(false)}

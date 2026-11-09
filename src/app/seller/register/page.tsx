@@ -458,10 +458,10 @@ export default function SellerRegisterPage() {
             <p className="text-[11px] text-gray-600 leading-relaxed">
               To support laboratory pesticide screening, digital Farm Passport maintenance, quality audits, customer delivery logistics, and secure UPI payment transfers, <strong>Farm to Home charges a modest 5% platform facilitation commission</strong> on successfully completed customer orders.
             </p>
-            <div className="p-3 bg-white rounded-xl border border-forest-200/60 text-[11px] text-forest-900 flex justify-between items-center font-medium">
+            <div className="p-3 bg-white rounded-xl border border-forest-200/60 text-[11px] text-forest-900 flex flex-wrap justify-between items-center font-medium gap-2">
               <span>Farmer Base Payout: <strong>95%</strong></span>
               <span>Platform Facilitation Commission: <strong>5%</strong></span>
-              <span>Listing & Registration Fee: <strong>₹0 (Free)</strong></span>
+              <span>Seller Subscription: <strong>₹500/year (Founder VIP Waived)</strong></span>
             </div>
             <label className="flex items-start gap-2 pt-1 cursor-pointer">
               <input
@@ -472,7 +472,7 @@ export default function SellerRegisterPage() {
                 className="mt-0.5 rounded text-forest-800 focus:ring-forest-600"
               />
               <span className="text-[11px] text-gray-700 font-semibold">
-                I agree to the 5% platform commission terms, confirm that my Aadhaar number and contact information are accurate, and understand that my seller profile and uploaded products must be reviewed and accepted by Platform Admin before public sales begin.
+                I agree to the 5% platform commission terms, the ₹500 Annual Pro Seller Subscription, and understand that uploaded products are verified before public sales begin.
               </span>
             </label>
           </div>

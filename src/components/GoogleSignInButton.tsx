@@ -118,7 +118,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
             theme: 'outline',
             size: 'large',
             width: 380,
-            text: 'continue_with',
+            text: 'signin_with',
             shape: 'pill',
             logo_alignment: 'left',
           });
@@ -221,7 +221,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
             theme: 'outline',
             size: 'large',
             width: 380,
-            text: 'continue_with',
+            text: 'signin_with',
             shape: 'pill',
             logo_alignment: 'left',
           });

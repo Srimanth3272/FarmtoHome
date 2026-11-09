@@ -14,6 +14,40 @@ const FIREBASE_PROJECT_ID =
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LOCAL_DATA_FILE = path.join(DATA_DIR, 'community-products.json');
 const TMP_DATA_FILE = path.join(os.tmpdir(), 'f2h-community-products.json');
+const DELETED_DATA_FILE = path.join(DATA_DIR, 'deleted-product-ids.json');
+
+export function getDeletedProductIds(): Set<string> {
+  try {
+    if (fs.existsSync(DELETED_DATA_FILE)) {
+      const raw = fs.readFileSync(DELETED_DATA_FILE, 'utf-8');
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) return new Set(list);
+    }
+  } catch (e) {
+    console.warn('Notice reading deleted-product-ids.json:', e);
+  }
+  return new Set();
+}
+
+export function addDeletedProductId(productId: string): void {
+  try {
+    const set = getDeletedProductIds();
+    set.add(productId);
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(DELETED_DATA_FILE, JSON.stringify(Array.from(set), null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Notice writing deleted-product-ids.json:', e);
+  }
+}
+
+export function removeDeletedProductId(productId: string): void {
+  try {
+    const set = getDeletedProductIds();
+    set.delete(productId);
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(DELETED_DATA_FILE, JSON.stringify(Array.from(set), null, 2), 'utf-8');
+  } catch (e) {}
+}
 
 // Declare global cache for persistent state across Next.js serverless and dev reloads
 declare global {
@@ -272,11 +306,15 @@ export async function getServerProducts(): Promise<ProductItem[]> {
     console.warn('Notice querying Firestore SDK in getServerProducts:', e);
   }
 
-  // Deduplicate products
+  // Deduplicate products and strictly exclude any deleted/blacklisted product IDs
+  const deletedIds = getDeletedProductIds();
   const uniqueProducts: ProductItem[] = [];
   const seenIds = new Set<string>();
 
   for (const item of Array.from(mergedMap.values())) {
+    if (deletedIds.has(item.id) || (item.slug && deletedIds.has(item.slug))) {
+      continue;
+    }
     if (!seenIds.has(item.id)) {
       seenIds.add(item.id);
       uniqueProducts.push(item);
@@ -305,6 +343,10 @@ export async function saveServerProduct(
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '') + `-${Date.now().toString().slice(-4)}`;
+
+  // Remove from deleted list if re-added
+  removeDeletedProductId(newId);
+  removeDeletedProductId(slug);
 
   const product: ProductItem = {
     id: newId,
@@ -558,6 +600,9 @@ export async function saveServerProduct(
 export async function deleteServerProduct(productId: string): Promise<boolean> {
   let deleted = false;
 
+  // Persistently record this product as deleted so it can never reappear
+  addDeletedProductId(productId);
+
   // A. Delete from SQLite (Prisma)
   try {
     await prisma.farmPassport.deleteMany({ where: { productId } }).catch(() => {});
@@ -600,6 +645,55 @@ export async function deleteServerProduct(productId: string): Promise<boolean> {
   }
 
   return deleted;
+}
+
+// 8b. Permanently delete ALL products across SQLite, local JSON file, memory cache, and Firestore
+export async function deleteAllServerProducts(): Promise<number> {
+  let totalDeleted = 0;
+
+  try {
+    const existing = await getServerProducts();
+    for (const p of existing) {
+      addDeletedProductId(p.id);
+      if (p.slug) addDeletedProductId(p.slug);
+    }
+  } catch {}
+
+  // A. Delete from SQLite
+  try {
+    await prisma.farmPassport.deleteMany().catch(() => {});
+    await prisma.cartItem.deleteMany().catch(() => {});
+    await prisma.wishlistItem.deleteMany().catch(() => {});
+    await prisma.review.deleteMany().catch(() => {});
+    await prisma.orderItem.deleteMany().catch(() => {});
+    const res = await prisma.product.deleteMany().catch(() => ({ count: 0 }));
+    totalDeleted = res.count || 0;
+  } catch (e) {
+    console.warn('Prisma deleteAll notice:', e);
+  }
+
+  // B. Clear local files & memory cache
+  try {
+    writeLocalFile([]);
+    globalThis.__f2h_products_cache = [];
+  } catch (e) {
+    console.warn('File clear notice:', e);
+  }
+
+  // C. Clear Firestore products
+  try {
+    const firestore = getFirebaseDb();
+    if (firestore) {
+      const snap = await getDocs(collection(firestore, 'products'));
+      for (const d of snap.docs) {
+        await deleteDoc(doc(firestore, 'products', d.id)).catch(() => {});
+      }
+    }
+  } catch (e) {
+    console.warn('Firestore clear notice:', e);
+  }
+
+  return totalDeleted;
 }
 
 // 9. Update approval status of a product across SQLite, local JSON, memory cache, and Firestore

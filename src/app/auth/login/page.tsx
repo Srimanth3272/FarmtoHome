@@ -24,20 +24,31 @@ export default function LoginPage() {
     try {
       const cleanEmail = email.trim().toLowerCase();
 
-      // Free Seller Founder Account for sreemanthnagalakunta@gmail.com
+      // Super Admin & Founder Account: strictly for sreemanthnagalakunta@gmail.com
       if (cleanEmail === 'sreemanthnagalakunta@gmail.com') {
         if (password.trim() !== 'Srimanth@3272') {
-          throw new Error('Invalid password for Sreemanth Nagalakunta. Please use Srimanth@3272');
+          throw new Error('Invalid password. Please check your credentials.');
         }
 
-        const founderUser = DEMO_USERS.SREEMANTH;
-        login(founderUser);
+        const adminFounderUser = {
+          id: 'user-sreemanth-founder',
+          name: 'Sreemanth Nagalakunta',
+          email: 'sreemanthnagalakunta@gmail.com',
+          role: 'ADMIN' as const,
+          phone: '9347405899',
+          isVerified: true,
+          provider: 'email' as const,
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+          isSubscribed: true,
+        };
+
+        login(adminFounderUser);
 
         if (typeof window !== 'undefined') {
           const freeSubRecord = {
-            sellerId: founderUser.id,
-            sellerName: founderUser.name,
-            sellerEmail: founderUser.email,
+            sellerId: adminFounderUser.id,
+            sellerName: adminFounderUser.name,
+            sellerEmail: adminFounderUser.email,
             isSubscribed: true,
             planName: 'Founder VIP Seller Plan (100% Free Lifetime)',
             amount: 0,
@@ -47,44 +58,16 @@ export default function LoginPage() {
             paymentId: 'F2H-FREE-VIP-SREEMANTH',
             status: 'ACTIVE',
           };
-          localStorage.setItem(`f2h_seller_sub_${founderUser.id}`, JSON.stringify(freeSubRecord));
+          localStorage.setItem(`f2h_seller_sub_${adminFounderUser.id}`, JSON.stringify(freeSubRecord));
           localStorage.setItem('f2h_seller_active_sub', JSON.stringify(freeSubRecord));
         }
 
-        router.push('/seller');
+        router.push('/admin/dashboard');
         return;
       }
 
-      const isRoleAdmin = cleanEmail.includes('admin') || cleanEmail === 'admin@farmtohome.in';
-
-      if (isRoleAdmin) {
-        // Enforce admin@123 password
-        if (password.trim() !== 'admin@123') {
-          throw new Error('Invalid administrator password. Please use admin@123');
-        }
-
-        try {
-          const res = await fetch('/api/auth/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: cleanEmail, password: password.trim() }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            login(data.user || DEMO_USERS.ADMIN);
-            router.push('/admin/dashboard');
-            return;
-          }
-        } catch (apiErr) {
-          console.warn('Admin API login call encountered an issue, falling back to local admin session:', apiErr);
-        }
-
-        // Resilient fallback for admin
-        login(DEMO_USERS.ADMIN);
-        router.push('/admin/dashboard');
-        return;
-      } else if (cleanEmail.includes('farmer') || cleanEmail.includes('patel')) {
+      // Other standard logins (Customers / Registered Farmers)
+      if (cleanEmail.includes('farmer') || cleanEmail.includes('patel')) {
         login(DEMO_USERS.FARMER);
         router.push('/seller/dashboard');
       } else {
@@ -148,7 +131,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                placeholder="name@example.com (or admin@farmtohome.in)"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-forest-600"
@@ -159,11 +142,6 @@ export default function LoginPage() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-bold text-gray-700">Password:</label>
-              {email.toLowerCase().includes('admin') && (
-                <span className="text-[10px] font-bold text-forest-800 bg-forest-50 px-2 py-0.5 rounded-full border border-forest-200">
-                  Password: admin@123
-                </span>
-              )}
             </div>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

@@ -53,12 +53,12 @@ export const DEMO_USERS: Record<string, UserSession> = {
     provider: 'email',
   },
   ADMIN: {
-    id: 'admin-srimanth',
-    name: 'Srimanth Nagalakunta (Super Admin)',
-    email: 'srimanth3272@farmtohome.in',
+    id: 'admin-sreemanth',
+    name: 'Sreemanth Nagalakunta (Platform Owner)',
+    email: 'sreemanthnagalakunta@gmail.com',
     role: 'ADMIN',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
-    phone: '+91 98480 12345',
+    phone: '+91 93474 05899',
     isVerified: true,
     provider: 'email',
   },
@@ -68,7 +68,7 @@ export const DEMO_USERS: Record<string, UserSession> = {
     email: 'sreemanthnagalakunta@gmail.com',
     role: 'FARMER',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
-    phone: '+91 98480 12345',
+    phone: '+91 93474 05899',
     isVerified: true,
     provider: 'email',
     isSubscribed: true,
@@ -129,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchDemoUser = (role: 'CUSTOMER' | 'FARMER' | 'ADMIN') => {
+    if (role === 'ADMIN') return; // Admin portal cannot be bypassed via switcher
     const demo = DEMO_USERS[role];
     if (demo) {
       setUser(demo);

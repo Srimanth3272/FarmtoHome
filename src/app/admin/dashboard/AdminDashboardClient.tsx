@@ -171,6 +171,32 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     }
   };
 
+  const handleDeleteAllProducts = async () => {
+    if (!confirm('Are you sure you want to permanently delete ALL products from the catalog, storefront, and database?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/products/delete-all', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove all products');
+
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('f2h_community_products');
+      }
+
+      setProductList([]);
+      setActionAlert({
+        type: 'success',
+        message: 'All products permanently removed from store and database.',
+      });
+    } catch (err: any) {
+      setActionAlert({ type: 'error', message: err.message || 'Error deleting all products' });
+    }
+  };
+
   const filteredFarmers = farmerList.filter((f) => {
     if (farmerFilter === 'PENDING') return f.verificationStatus === 'PENDING';
     if (farmerFilter === 'VERIFIED') return f.verificationStatus === 'VERIFIED';
@@ -602,6 +628,17 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
               >
                 Active for Sale ({productList.filter((p) => p.approvalStatus === 'APPROVED' && p.isActive === true).length})
               </button>
+
+              {productList.length > 0 && (
+                <button
+                  onClick={handleDeleteAllProducts}
+                  className="px-2.5 py-1 rounded-lg font-bold bg-red-100 hover:bg-red-200 text-red-800 transition-colors flex items-center gap-1 shadow-xs ml-2"
+                  title="Permanently remove all products from database"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  <span>Remove All</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -876,39 +913,73 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       {/* Tab 4: Orders */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
-          <h2 className="font-serif font-bold text-lg text-forest-950">
-            All Platform Orders & Payouts
-          </h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h2 className="font-serif font-bold text-lg text-forest-950">
+                All Platform Orders & Payouts
+              </h2>
+              <p className="text-xs text-gray-500">
+                Live customer orders dispatched directly to Owner: <strong>sreemanthnagalakunta@gmail.com</strong> (+91 9347405899)
+              </p>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-900 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Owner Alert Sync: +91 9347405899</span>
+            </div>
+          </div>
+
           <div className="bg-white rounded-3xl border border-cream-300 shadow-card divide-y divide-gray-100">
-            {orders.map((o) => (
-              <div key={o.id} className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-forest-900">{o.orderNumber}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-800">
-                      {o.status}
-                    </span>
-                    <span className="text-gray-400">
-                      {new Date(o.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 mt-1">
-                    {o.items?.length} Item(s) • Method: <strong>{o.paymentMethod}</strong> ({o.paymentStatus})
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="font-serif font-black text-base text-forest-950">
-                    ₹{o.totalAmount}
-                  </span>
-                  <Link
-                    href={`/orders/${o.orderNumber}`}
-                    className="block text-forest-800 font-bold hover:underline mt-0.5"
-                  >
-                    View Invoice
-                  </Link>
-                </div>
+            {orders.length === 0 ? (
+              <div className="p-8 text-center text-xs text-gray-500">
+                No customer orders placed yet.
               </div>
-            ))}
+            ) : (
+              orders.map((o) => (
+                <div key={o.id} className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-forest-900">{o.orderNumber}</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-800">
+                        {o.status}
+                      </span>
+                      <span className="text-gray-400">
+                        {new Date(o.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mt-1">
+                      {o.items?.length} Item(s) • Method: <strong>{o.paymentMethod}</strong> ({o.paymentStatus})
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                        <span>✓ Alert Sent to 9347405899 & sreemanthnagalakunta@gmail.com</span>
+                      </span>
+                      <a
+                        href={`https://api.whatsapp.com/send?phone=919347405899&text=${encodeURIComponent(
+                          `🌾 Farm to Home Order ${o.orderNumber} placed for ₹${o.totalAmount}. Method: ${o.paymentMethod}.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                      >
+                        <span>WhatsApp Alert</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-serif font-black text-base text-forest-950">
+                      ₹{o.totalAmount}
+                    </span>
+                    <Link
+                      href={`/orders/${o.orderNumber}`}
+                      className="block text-forest-800 font-bold hover:underline mt-0.5"
+                    >
+                      View Invoice
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

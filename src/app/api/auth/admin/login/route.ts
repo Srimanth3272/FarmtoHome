@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { password } = body;
 
     if (!password) {
       return NextResponse.json({ error: 'Password is required' }, { status: 400 });
@@ -16,49 +16,35 @@ export async function POST(request: Request) {
     const identifier = (body.username || body.email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();
 
-    // Official Super Admin credentials specified by user: Username Srimanth3272, Password Srimanth@3272
-    const isSuperAdminPassword = cleanPassword === 'Srimanth@3272' || cleanPassword === 'admin@123';
-    const isSuperAdminUser =
-      identifier === 'srimanth3272' ||
-      identifier === 'srimanth' ||
-      identifier.includes('sreemanth') ||
-      identifier.includes('admin');
+    // Admin access strictly restricted ONLY to owner Sreemanth Nagalakunta
+    const isOwner =
+      identifier === 'sreemanthnagalakunta@gmail.com' ||
+      identifier === 'srimanth3272';
 
-    let adminUser: any = null;
-    try {
-      adminUser = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { email: 'sreemanthnagalakunta@gmail.com' },
-            { email: 'srimanth3272@farmtohome.in' },
-            { role: 'ADMIN' },
-          ],
-        },
-      });
-    } catch (dbErr) {
-      console.warn('Database query during admin login failed, using fallback admin profile:', dbErr);
-    }
+    const isPasswordValid = cleanPassword === 'Srimanth@3272';
 
-    let isValid = false;
-    if (isSuperAdminPassword) {
-      isValid = true;
-    } else if (adminUser && adminUser.password) {
-      isValid = await bcrypt.compare(cleanPassword, adminUser.password);
-    }
-
-    if (!isValid) {
+    if (!isOwner || !isPasswordValid) {
       return NextResponse.json(
-        { error: 'Invalid admin credentials. Please use Username: Srimanth3272 and Password: Srimanth@3272' },
+        { error: 'Invalid credentials. Super Admin access is strictly restricted to platform owner.' },
         { status: 401 }
       );
     }
 
+    let adminUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: 'sreemanthnagalakunta@gmail.com' },
+          { email: 'srimanth3272@farmtohome.in' },
+        ],
+      },
+    }).catch(() => null);
+
     const sessionData = {
-      id: adminUser?.id || 'admin-srimanth',
-      name: 'Srimanth Nagalakunta (Super Admin)',
-      email: 'srimanth3272@farmtohome.in',
+      id: adminUser?.id || 'admin-sreemanth',
+      name: 'Sreemanth Nagalakunta (Super Admin)',
+      email: 'sreemanthnagalakunta@gmail.com',
       role: 'ADMIN',
-      phone: '+91 98480 12345',
+      phone: '9347405899',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
       isVerified: true,
       provider: 'email',

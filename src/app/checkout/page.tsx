@@ -43,8 +43,8 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Address fields - Defaulted to Andhra Pradesh Central Hub
-  const [fullName, setFullName] = useState(user?.name || 'Srimanth Naidu');
-  const [phone, setPhone] = useState(user?.phone || '+91 98480 12345');
+  const [fullName, setFullName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [addressLine1, setAddressLine1] = useState('D.No 4-12, Krishna Nagar, Benz Circle');
   const [addressLine2, setAddressLine2] = useState('MG Road, Near Prakasham Barrage');
   const [landmark, setLandmark] = useState('Near Siddhartha College');
@@ -61,7 +61,7 @@ export default function CheckoutPage() {
 
   // Payment Method: Default to RAZORPAY for modern payment experience
   const [paymentMethod, setPaymentMethod] = useState<'RAZORPAY' | 'UPI' | 'COD'>('RAZORPAY');
-  const [upiId, setUpiId] = useState('priyasharma@okaxis');
+  const [upiId, setUpiId] = useState('');
 
   // Razorpay Gateway Config
   const [razorpayConfig, setRazorpayConfig] = useState<{
@@ -126,6 +126,9 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
+          customerName: fullName,
+          customerEmail: user?.email || '',
+          customerPhone: phone,
           items,
           subtotal,
           shippingFee: shipping,
@@ -139,7 +142,8 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to create order on server');
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to create order on server');
       }
 
       const orderData = await res.json();

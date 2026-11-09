@@ -13,9 +13,13 @@ import {
   CreditCard,
   Truck,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Phone,
+  Mail,
+  ExternalLink
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { useAuth } from '@/lib/auth-context';
 
 interface OrderDetailClientProps {
   order: {
@@ -49,6 +53,8 @@ interface OrderDetailClientProps {
 }
 
 export const OrderDetailClient: React.FC<OrderDetailClientProps> = ({ order }) => {
+  const { user } = useAuth();
+  const isOwner = user?.email?.toLowerCase() === 'sreemanthnagalakunta@gmail.com';
   const [cancelled, setCancelled] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -125,6 +131,57 @@ export const OrderDetailClient: React.FC<OrderDetailClientProps> = ({ order }) =
             </p>
           </div>
         </div>
+
+        {/* Order Status Notice - Protected Privacy */}
+        {isOwner ? (
+          <div className="print:hidden p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              </div>
+              <div>
+                <p className="font-bold text-emerald-950">
+                  Owner Order Control (Admin Mode)
+                </p>
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-emerald-800 mt-0.5">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Phone className="w-3 h-3 text-emerald-600" />
+                    +91 9347405899
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3 h-3 text-emerald-600" />
+                    sreemanthnagalakunta@gmail.com
+                  </span>
+                </div>
+              </div>
+            </div>
+            <a
+              href={`https://api.whatsapp.com/send?phone=919347405899&text=${encodeURIComponent(
+                `🌾 Order Alert: ${order.orderNumber} placed for ₹${order.totalAmount}. Customer Address: ${address.fullName || ''}, ${address.addressLine1 || ''}, ${address.city || ''} (${address.phone || ''}). Direct dispatch requested.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors shadow-xs"
+            >
+              <span>WhatsApp Dispatch Alert</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        ) : (
+          <div className="print:hidden p-4 rounded-2xl bg-forest-50 border border-forest-200 text-xs text-forest-950 flex items-center gap-3 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-forest-100 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-forest-700" />
+            </div>
+            <div>
+              <p className="font-bold text-forest-950">
+                Order Confirmed & Farm Dispatch Initiated!
+              </p>
+              <p className="text-[11px] text-forest-700 mt-0.5">
+                Our local grower hub has received your request. Fresh harvests will be packed and dispatched for your chosen delivery slot.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Tracking Timeline (hidden when printing) */}
         <div className="print:hidden p-6 rounded-2xl bg-cream-100/70 border border-cream-200 space-y-4">

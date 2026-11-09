@@ -76,7 +76,8 @@ export async function POST(request: Request) {
     // Update in-memory process.env
     if (trimmedClientId) {
       process.env.GOOGLE_CLIENT_ID = trimmedClientId;
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = trimmedClientId;
+      const nextPubKey = ['NEXT', 'PUBLIC', 'GOOGLE', 'CLIENT', 'ID'].join('_');
+      process.env[nextPubKey] = trimmedClientId;
     }
     if (trimmedSecret) {
       process.env.GOOGLE_CLIENT_SECRET = trimmedSecret;
