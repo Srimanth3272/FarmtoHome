@@ -186,10 +186,13 @@ export default function CartPage() {
 
                     {/* Delete */}
                     <button
-                      onClick={() => removeFromCart(item.productId)}
-                      className="text-gray-400 hover:text-red-500 p-1"
+                      onClick={() => removeFromCart(item.productId || item.id || item.product?.id || item.product?.slug)}
+                      className="text-red-500 hover:text-red-700 p-1 flex items-center gap-1 group transition-colors"
+                      title="Remove item from basket"
+                      aria-label="Remove item from basket"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 text-red-500 group-hover:text-red-700" />
+                      <span className="text-xs font-semibold text-red-500 group-hover:text-red-700 hover:underline">Remove</span>
                     </button>
                   </div>
                 </div>

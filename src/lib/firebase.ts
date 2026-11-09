@@ -179,12 +179,26 @@ export function removeLocalCommunityProduct(productId: string): void {
   try {
     addClientDeletedProductId(productId);
     const current = getLocalCommunityProducts();
-    const updated = current.filter((p) => p.id !== productId && p.slug !== productId);
+    const match = current.find(
+      (p) => p.id === productId || p.slug === productId || p.name === productId
+    );
+    if (match) {
+      if (match.id) addClientDeletedProductId(match.id);
+      if (match.slug) addClientDeletedProductId(match.slug);
+      if (match.name) addClientDeletedProductId(match.name);
+    }
+    const updated = current.filter(
+      (p) =>
+        p.id !== productId &&
+        p.slug !== productId &&
+        p.name !== productId &&
+        (!match || (p.id !== match.id && p.slug !== match.slug))
+    );
     localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
 
     if (typeof BroadcastChannel !== 'undefined') {
       const channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
-      channel.postMessage({ type: 'PRODUCT_DELETED', productId });
+      channel.postMessage({ type: 'PRODUCT_DELETED', productId, slug: match?.slug });
       channel.close();
     }
   } catch (e) {

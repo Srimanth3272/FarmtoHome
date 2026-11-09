@@ -20,16 +20,18 @@ import {
   HelpCircle,
   Check,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 import { ProductItem } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 import { useWishlist } from '@/lib/wishlist-context';
+import { useAuth } from '@/lib/auth-context';
 import { PinCodeChecker } from '@/components/PinCodeChecker';
 import { FarmPassportModal } from '@/components/FarmPassportModal';
 import { ProductCard } from '@/components/ProductCard';
 import { sanitizeProductImageUrl, getProductFallbackImage, extractProductImages } from '@/lib/image-utils';
-import { getLocalCommunityProducts } from '@/lib/firebase';
+import { getLocalCommunityProducts, deleteProductFromFirebase } from '@/lib/firebase';
 
 interface ProductDetailClientProps {
   slug?: string;
@@ -52,10 +54,42 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   relatedProducts,
 }) => {
   const router = useRouter();
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [product, setProduct] = useState(initialProduct);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const cleanUserEmail = (user?.email || '').toLowerCase().trim();
+  const isOwnerOrAdmin =
+    cleanUserEmail === 'sreemanthnagalakunta@gmail.com' ||
+    user?.role === 'ADMIN' ||
+    (user && (product.farmer as any)?.userId === user.id) ||
+    (user && (product as any).farmerId === user.id);
+
+  const handleDeleteProductDirect = async () => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently remove "${product.name}" from the store catalog, database, and all pages?`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteProductFromFirebase(product.id);
+      if (product.slug && product.slug !== product.id) {
+        await deleteProductFromFirebase(product.slug);
+      }
+      alert(`"${product.name}" has been permanently removed.`);
+      router.push('/shop');
+    } catch (err: any) {
+      alert(`Failed to remove product: ${err?.message || 'Unknown error'}`);
+      setIsDeleting(false);
+    }
+  };
 
   // Sync with local storage or server catalog if user just created this product
   React.useEffect(() => {
@@ -342,6 +376,22 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
                 Buy Now Directly
               </button>
             </div>
+
+            {/* Owner & Admin Product Removal Action */}
+            {isOwnerOrAdmin && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteProductDirect}
+                  disabled={isDeleting}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm"
+                  title="Permanently remove product from storefront and database"
+                >
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                  <span>{isDeleting ? 'Removing Product...' : 'Remove Product from Store'}</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Pin code deliverability checker */}

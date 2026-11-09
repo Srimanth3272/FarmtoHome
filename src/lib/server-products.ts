@@ -629,8 +629,36 @@ export async function deleteServerProduct(productId: string): Promise<boolean> {
     console.warn('Prisma lookup notice in deleteServerProduct:', e);
   }
 
+  // Also check local persistent file and cache if not found in Prisma
+  if (!foundName || foundSlug === productId) {
+    try {
+      const allLocal = [...readLocalFile(), ...(globalThis.__f2h_products_cache || [])];
+      const match = allLocal.find(
+        (p) =>
+          p.id === productId ||
+          p.slug === productId ||
+          p.name?.toLowerCase() === productId.toLowerCase()
+      );
+      if (match) {
+        foundId = match.id || foundId;
+        foundSlug = match.slug || foundSlug;
+        foundName = match.name || foundName;
+      }
+    } catch {}
+  }
+
   const allIdentifiers = Array.from(
-    new Set([productId, foundId, foundSlug, foundName].filter(Boolean) as string[])
+    new Set(
+      [
+        productId,
+        foundId,
+        foundSlug,
+        foundName,
+        productId.toLowerCase(),
+        foundSlug.toLowerCase(),
+        foundName.toLowerCase(),
+      ].filter(Boolean) as string[]
+    )
   );
 
   // Persistently record all identifiers in the deleted blacklist file

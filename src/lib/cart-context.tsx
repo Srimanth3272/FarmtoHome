@@ -96,17 +96,34 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsCartOpen(true);
   };
 
-  const removeFromCart = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.productId !== productId));
+  const removeFromCart = (target: string) => {
+    setItems((prev) =>
+      prev.filter(
+        (item) =>
+          item.productId !== target &&
+          item.id !== target &&
+          item.product?.id !== target &&
+          item.product?.slug !== target &&
+          item.product?.name !== target
+      )
+    );
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (target: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(target);
       return;
     }
     setItems((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, quantity } : item))
+      prev.map((item) => {
+        const matches =
+          item.productId === target ||
+          item.id === target ||
+          item.product?.id === target ||
+          item.product?.slug === target ||
+          item.product?.name === target;
+        return matches ? { ...item, quantity } : item;
+      })
     );
   };
 

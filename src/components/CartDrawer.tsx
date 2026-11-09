@@ -143,10 +143,13 @@ export const CartDrawer: React.FC = () => {
                             {item.product.name}
                           </Link>
                           <button
-                            onClick={() => removeFromCart(item.productId)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            onClick={() => removeFromCart(item.productId || item.id || item.product?.id || item.product?.slug)}
+                            className="text-red-500 hover:text-red-700 transition-colors p-1 flex items-center gap-1 group"
+                            title="Remove item from basket"
+                            aria-label="Remove item from basket"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5 text-red-500 group-hover:text-red-700" />
+                            <span className="text-[11px] font-semibold text-red-500 group-hover:text-red-700 hover:underline">Remove</span>
                           </button>
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5">
