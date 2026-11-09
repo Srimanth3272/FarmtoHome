@@ -51,12 +51,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>('FARM10');
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and filter out deleted items
   useEffect(() => {
     try {
       const stored = localStorage.getItem('f2h_cart');
       if (stored) {
-        setItems(JSON.parse(stored));
+        const parsed: CartItem[] = JSON.parse(stored);
+        const deletedRaw = localStorage.getItem('f2h_deleted_product_ids');
+        const deletedSet = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+        const filtered = parsed.filter(
+          (item) =>
+            !deletedSet.has(item.productId) &&
+            (!item.product?.slug || !deletedSet.has(item.product.slug)) &&
+            (!item.product?.name || !deletedSet.has(item.product.name))
+        );
+        setItems(filtered);
       }
     } catch (e) {
       console.error('Failed to parse stored cart', e);

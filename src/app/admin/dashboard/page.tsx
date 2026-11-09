@@ -1,6 +1,6 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
-import { getServerProducts } from '@/lib/server-products';
+import { getServerProducts, getDeletedProductIds } from '@/lib/server-products';
 import { AdminDashboardClient } from './AdminDashboardClient';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 
@@ -40,13 +40,19 @@ export default async function AdminDashboardPage() {
     getServerProducts().catch(() => []),
   ]);
 
+  const deletedIds = getDeletedProductIds();
+
   // Merge all products from database and server store
   const mergedMap = new Map<string, any>();
-  for (const sp of serverProds || []) {
+  for (const sp of (serverProds || []).filter(
+    (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+  )) {
     mergedMap.set(sp.id, sp);
     if (sp.slug) mergedMap.set(sp.slug, sp);
   }
-  for (const dp of dbProducts || []) {
+  for (const dp of (dbProducts || []).filter(
+    (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+  )) {
     if (!mergedMap.has(dp.id) && !mergedMap.has(dp.slug)) {
       mergedMap.set(dp.id, dp);
     }
@@ -55,6 +61,13 @@ export default async function AdminDashboardPage() {
   const uniqueProducts: any[] = [];
   const seenIds = new Set<string>();
   for (const p of Array.from(mergedMap.values())) {
+    if (
+      deletedIds.has(p.id) ||
+      (p.slug && deletedIds.has(p.slug)) ||
+      (p.name && deletedIds.has(p.name))
+    ) {
+      continue;
+    }
     if (!seenIds.has(p.id)) {
       seenIds.add(p.id);
       uniqueProducts.push(p);

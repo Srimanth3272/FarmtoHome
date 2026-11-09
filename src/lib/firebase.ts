@@ -7,6 +7,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   deleteDoc,
   serverTimestamp,
   Firestore,
@@ -119,12 +120,37 @@ export function getFirebaseDb(): Firestore | null {
 // Local cross-tab synchronizer (BroadcastChannel + LocalStorage) for instant multi-user simulation
 const SYNC_CHANNEL_NAME = 'f2h_realtime_products_channel';
 const LOCAL_STORAGE_PRODUCTS_KEY = 'f2h_community_products';
+const LOCAL_STORAGE_DELETED_KEY = 'f2h_deleted_product_ids';
+
+export function getClientDeletedProductIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_DELETED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export function addClientDeletedProductId(id: string): void {
+  if (typeof window === 'undefined' || !id) return;
+  try {
+    const set = getClientDeletedProductIds();
+    set.add(id);
+    localStorage.setItem(LOCAL_STORAGE_DELETED_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
 
 export function getLocalCommunityProducts(): ProductItem[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_PRODUCTS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const deleted = getClientDeletedProductIds();
+    if (!raw) return [];
+    const parsed: ProductItem[] = JSON.parse(raw);
+    return parsed.filter(
+      (p) => !deleted.has(p.id) && (!p.slug || !deleted.has(p.slug)) && (!p.name || !deleted.has(p.name))
+    );
   } catch {
     return [];
   }
@@ -151,6 +177,7 @@ export function saveLocalCommunityProduct(product: ProductItem): void {
 export function removeLocalCommunityProduct(productId: string): void {
   if (typeof window === 'undefined') return;
   try {
+    addClientDeletedProductId(productId);
     const current = getLocalCommunityProducts();
     const updated = current.filter((p) => p.id !== productId && p.slug !== productId);
     localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
@@ -183,11 +210,33 @@ export async function deleteProductFromFirebase(productId: string): Promise<bool
   try {
     const firestore = getFirebaseDb();
     if (firestore) {
-      await deleteDoc(doc(firestore, 'products', productId));
+      await deleteDoc(doc(firestore, 'products', productId)).catch(() => {});
+      try {
+        const snap = await getDocs(collection(firestore, 'products'));
+        for (const d of snap.docs) {
+          const data = d.data();
+          if (d.id === productId || data.id === productId || data.slug === productId || data.name === productId) {
+            await deleteDoc(doc(firestore, 'products', d.id)).catch(() => {});
+          }
+        }
+      } catch {}
     }
   } catch (e) {
     console.warn('Firestore direct delete notice:', e);
   }
+
+  // 3. Sync deleted IDs from server
+  try {
+    const delRes = await fetch('/api/products/deleted-ids', { cache: 'no-store' });
+    if (delRes.ok) {
+      const delIds = await delRes.json();
+      if (Array.isArray(delIds)) {
+        for (const id of delIds) {
+          addClientDeletedProductId(id);
+        }
+      }
+    }
+  } catch {}
 
   return true;
 }
@@ -202,24 +251,21 @@ export function subscribeToProducts(
   const updateList = (incoming: ProductItem[]) => {
     if (!isSubscribed) return;
 
-    // Merge incoming products with any local community products
-    const local = getLocalCommunityProducts();
-    const mergedMap = new Map<string, ProductItem>();
+    const deletedIds = getClientDeletedProductIds();
 
-    for (const p of incoming) {
-      mergedMap.set(p.id, p);
-      if (p.slug) mergedMap.set(p.slug, p);
-    }
-
-    for (const lp of local) {
-      if (!mergedMap.has(lp.id) && !mergedMap.has(lp.slug)) {
-        mergedMap.set(lp.id, lp);
-      }
-    }
-
+    // The incoming list from server is authoritative!
+    // Exclude any deleted or blacklisted products
     const unique: ProductItem[] = [];
     const seenIds = new Set<string>();
-    for (const p of Array.from(mergedMap.values())) {
+
+    for (const p of incoming) {
+      if (
+        deletedIds.has(p.id) ||
+        (p.slug && deletedIds.has(p.slug)) ||
+        (p.name && deletedIds.has(p.name))
+      ) {
+        continue;
+      }
       if (!seenIds.has(p.id)) {
         seenIds.add(p.id);
         unique.push(p);
@@ -227,12 +273,30 @@ export function subscribeToProducts(
     }
 
     currentProducts = unique;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(unique));
+      } catch {}
+    }
     onUpdate(unique);
   };
 
   // 1. Fetch from server API immediately
   const fetchFromServer = async () => {
     try {
+      // First refresh deleted IDs blacklist from server so all clients stay synchronized
+      try {
+        const delRes = await fetch('/api/products/deleted-ids', { cache: 'no-store' });
+        if (delRes.ok) {
+          const delIds = await delRes.json();
+          if (Array.isArray(delIds)) {
+            for (const id of delIds) {
+              addClientDeletedProductId(id);
+            }
+          }
+        }
+      } catch {}
+
       const res = await fetch('/api/products', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
@@ -269,7 +333,7 @@ export function subscribeToProducts(
   }
 
   const handleStorage = (e: StorageEvent) => {
-    if (e.key === LOCAL_STORAGE_PRODUCTS_KEY) {
+    if (e.key === LOCAL_STORAGE_PRODUCTS_KEY || e.key === LOCAL_STORAGE_DELETED_KEY) {
       fetchFromServer();
     }
   };
@@ -288,16 +352,26 @@ export function subscribeToProducts(
       firestoreUnsub = onSnapshot(
         q,
         (snapshot) => {
+          const deletedIds = getClientDeletedProductIds();
           const fbProducts: ProductItem[] = [];
           snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const pid = docSnap.id;
+            if (
+              deletedIds.has(pid) ||
+              (data.id && deletedIds.has(data.id)) ||
+              (data.slug && deletedIds.has(data.slug)) ||
+              (data.name && deletedIds.has(data.name))
+            ) {
+              return;
+            }
             fbProducts.push({
-              ...(docSnap.data() as any),
-              id: docSnap.id,
+              ...(data as any),
+              id: pid,
             });
           });
-          if (fbProducts.length > 0) {
-            updateList(fbProducts);
-          }
+          // Update list with non-deleted Firestore products
+          updateList(fbProducts);
         },
         (err) => {
           // Cloud Firestore database (default) may still need to be created in Firebase console

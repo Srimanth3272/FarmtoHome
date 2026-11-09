@@ -33,7 +33,7 @@ import {
   FALLBACK_FARMERS,
   FALLBACK_BLOG_POSTS,
 } from '@/lib/fallback-data';
-import { getServerProducts } from '@/lib/server-products';
+import { getServerProducts, getDeletedProductIds } from '@/lib/server-products';
 
 export const revalidate = 0; // Dynamic server rendering
 
@@ -75,8 +75,13 @@ export default async function HomePage() {
       getServerProducts().catch(() => []),
     ]);
 
-    const dbProds = dbProdsRaw || [];
-    const serverProds = serverProdsRaw || [];
+    const deletedIds = getDeletedProductIds();
+    const dbProds = (dbProdsRaw || []).filter(
+      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+    );
+    const serverProds = (serverProdsRaw || []).filter(
+      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+    );
     const mergedMap = new Map<string, any>();
 
     for (const sp of serverProds) {
@@ -92,6 +97,13 @@ export default async function HomePage() {
     const uniqueList: any[] = [];
     const seenIds = new Set<string>();
     for (const p of Array.from(mergedMap.values())) {
+      if (
+        deletedIds.has(p.id) ||
+        (p.slug && deletedIds.has(p.slug)) ||
+        (p.name && deletedIds.has(p.name))
+      ) {
+        continue;
+      }
       if (!seenIds.has(p.id)) {
         seenIds.add(p.id);
         uniqueList.push(p);

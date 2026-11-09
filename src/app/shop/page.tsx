@@ -9,7 +9,7 @@ import {
   FALLBACK_PRODUCTS,
   FALLBACK_FARMERS,
 } from '@/lib/fallback-data';
-import { getServerProducts } from '@/lib/server-products';
+import { getServerProducts, getDeletedProductIds } from '@/lib/server-products';
 import { ShopProductsGrid } from '@/components/ShopProductsGrid';
 
 export const revalidate = 0;
@@ -95,8 +95,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       getServerProducts().catch(() => []),
     ]);
 
-    const dbProds = dbProdsRaw || [];
-    const serverProds = serverProdsRaw || [];
+    const deletedIds = getDeletedProductIds();
+    const dbProds = (dbProdsRaw || []).filter(
+      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+    );
+    const serverProds = (serverProdsRaw || []).filter(
+      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+    );
     const mergedMap = new Map<string, any>();
 
     for (const sp of serverProds) {
@@ -114,6 +119,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     let filteredList: any[] = [];
     const seenIds = new Set<string>();
     for (const p of Array.from(mergedMap.values())) {
+      if (
+        deletedIds.has(p.id) ||
+        (p.slug && deletedIds.has(p.slug)) ||
+        (p.name && deletedIds.has(p.name))
+      ) {
+        continue;
+      }
       if (seenIds.has(p.id)) continue;
       seenIds.add(p.id);
 

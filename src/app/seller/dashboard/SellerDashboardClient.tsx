@@ -24,7 +24,8 @@ import {
   Building,
   Check,
   Info,
-  Zap
+  Zap,
+  Trash2
 } from 'lucide-react';
 import { ProductItem, HarvestCalendarItem, FarmerProfileItem } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
@@ -32,6 +33,7 @@ import { initiateRazorpayPayment } from '@/lib/razorpay-client';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
 import {
   addProductToFirebase,
+  deleteProductFromFirebase,
   subscribeToProducts,
   getSellerSubscriptionFromFirebase,
   SellerSubscriptionRecord
@@ -394,6 +396,30 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
       setShowPayCommissionModal(false);
     } catch (err: any) {
       alert('Error updating commission: ' + err.message);
+    }
+  };
+
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+
+  const handleSellerProductDelete = async (productId: string, productName: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently remove "${productName}" from the storefront, catalog, and database?`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingProductId(productId);
+    try {
+      await deleteProductFromFirebase(productId);
+      setProducts((prev) => prev.filter((p) => p.id !== productId && p.slug !== productId));
+      setProductSuccessAlert(`Product "${productName}" has been permanently removed.`);
+      setTimeout(() => setProductSuccessAlert(''), 5000);
+    } catch (err: any) {
+      alert(`Error removing product: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setDeletingProductId(null);
     }
   };
 
@@ -765,11 +791,11 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 text-right space-x-2">
+                      <td className="py-3.5 px-4 text-right space-x-3 whitespace-nowrap">
                         {isApproved ? (
                           <Link
                             href={`/products/${p.slug}`}
-                            className="text-forest-800 font-bold hover:underline"
+                            className="text-forest-800 font-bold hover:underline text-xs"
                           >
                             View Live
                           </Link>
@@ -778,6 +804,15 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
                             Awaiting Admin
                           </span>
                         )}
+                        <button
+                          onClick={() => handleSellerProductDelete(p.id, p.name)}
+                          disabled={deletingProductId === p.id}
+                          className="text-red-600 hover:text-red-800 font-semibold text-xs hover:underline disabled:opacity-50 inline-flex items-center gap-1 ml-2"
+                          title="Permanently remove product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{deletingProductId === p.id ? 'Removing...' : 'Remove'}</span>
+                        </button>
                       </td>
                     </tr>
                   );

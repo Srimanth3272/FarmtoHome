@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import RazorpaySettingsCard from '@/components/RazorpaySettingsCard';
 import { GoogleSettingsCard } from '@/components/GoogleSettingsCard';
+import { deleteProductFromFirebase, addClientDeletedProductId } from '@/lib/firebase';
 
 interface AdminDashboardClientProps {
   users: any[];
@@ -140,28 +141,8 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     }
 
     try {
-      const res = await fetch('/api/admin/products/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to remove product');
-
-      // Also clean up local community products in localStorage
-      if (typeof window !== 'undefined') {
-        try {
-          const raw = localStorage.getItem('f2h_community_products');
-          if (raw) {
-            const list = JSON.parse(raw);
-            const filtered = list.filter((p: any) => p.id !== productId && p.slug !== productId);
-            localStorage.setItem('f2h_community_products', JSON.stringify(filtered));
-          }
-        } catch {}
-      }
-
-      setProductList((prev) => prev.filter((p) => p.id !== productId));
+      await deleteProductFromFirebase(productId);
+      setProductList((prev) => prev.filter((p) => p.id !== productId && p.slug !== productId));
       setActionAlert({
         type: 'success',
         message: `Product "${productName}" has been permanently removed from the storefront.`,
@@ -183,8 +164,19 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to remove all products');
 
+      // Purge client-side storage and blacklist all product IDs
+      for (const p of productList) {
+        if (p.id) addClientDeletedProductId(p.id);
+        if (p.slug) addClientDeletedProductId(p.slug);
+        if (p.name) addClientDeletedProductId(p.name);
+      }
       if (typeof window !== 'undefined') {
         localStorage.removeItem('f2h_community_products');
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('f2h_products_sync');
+          channel.postMessage({ type: 'ALL_PRODUCTS_DELETED' });
+          channel.close();
+        }
       }
 
       setProductList([]);

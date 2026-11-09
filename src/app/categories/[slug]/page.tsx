@@ -7,7 +7,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { ArrowLeft, Sparkles, Sprout } from 'lucide-react';
 
 import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
-import { getServerProducts } from '@/lib/server-products';
+import { getServerProducts, getDeletedProductIds } from '@/lib/server-products';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -56,6 +56,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     };
   }
 
+  const deletedIds = getDeletedProductIds();
+
   // Also merge with persistent server products
   let serverProds: any[] = [];
   try {
@@ -64,10 +66,17 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   const catServerProds = serverProds.filter(
     (p) =>
-      p.category?.slug === params.slug ||
-      p.categoryId === params.slug ||
-      p.categoryId === `cat-${params.slug}` ||
-      p.categoryId === category?.id
+      !deletedIds.has(p.id) &&
+      (!p.slug || !deletedIds.has(p.slug)) &&
+      (!p.name || !deletedIds.has(p.name)) &&
+      (p.category?.slug === params.slug ||
+        p.categoryId === params.slug ||
+        p.categoryId === `cat-${params.slug}` ||
+        p.categoryId === category?.id)
+  );
+
+  const cleanDbProducts = (dbProducts || []).filter(
+    (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
   );
 
   const mergedMap = new Map<string, any>();
@@ -75,7 +84,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     mergedMap.set(p.id, p);
     if (p.slug) mergedMap.set(p.slug, p);
   }
-  for (const p of dbProducts) {
+  for (const p of cleanDbProducts) {
     if (!mergedMap.has(p.id) && !mergedMap.has(p.slug)) {
       mergedMap.set(p.id, p);
     }
@@ -84,6 +93,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const uniqueProds: any[] = [];
   const seenIds = new Set<string>();
   for (const p of Array.from(mergedMap.values())) {
+    if (
+      deletedIds.has(p.id) ||
+      (p.slug && deletedIds.has(p.slug)) ||
+      (p.name && deletedIds.has(p.name))
+    ) {
+      continue;
+    }
     if (!seenIds.has(p.id)) {
       seenIds.add(p.id);
       uniqueProds.push(p);

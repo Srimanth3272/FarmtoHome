@@ -24,7 +24,16 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const stored = localStorage.getItem('f2h_wishlist');
       if (stored) {
-        setWishlistItems(JSON.parse(stored));
+        const parsed: ProductItem[] = JSON.parse(stored);
+        const deletedRaw = localStorage.getItem('f2h_deleted_product_ids');
+        const deletedSet = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+        const filtered = parsed.filter(
+          (p) =>
+            !deletedSet.has(p.id) &&
+            (!p.slug || !deletedSet.has(p.slug)) &&
+            (!p.name || !deletedSet.has(p.name))
+        );
+        setWishlistItems(filtered);
       }
     } catch (e) {
       console.error('Failed to load wishlist', e);

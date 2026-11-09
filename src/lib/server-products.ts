@@ -312,7 +312,11 @@ export async function getServerProducts(): Promise<ProductItem[]> {
   const seenIds = new Set<string>();
 
   for (const item of Array.from(mergedMap.values())) {
-    if (deletedIds.has(item.id) || (item.slug && deletedIds.has(item.slug))) {
+    if (
+      deletedIds.has(item.id) ||
+      (item.slug && deletedIds.has(item.slug)) ||
+      (item.name && deletedIds.has(item.name))
+    ) {
       continue;
     }
     if (!seenIds.has(item.id)) {
@@ -599,32 +603,91 @@ export async function saveServerProduct(
 // 8. Delete a product across SQLite, local JSON file, memory cache, and Firestore
 export async function deleteServerProduct(productId: string): Promise<boolean> {
   let deleted = false;
+  if (!productId) return false;
 
-  // Persistently record this product as deleted so it can never reappear
-  addDeletedProductId(productId);
+  // A. Find product in DB or file to get all identifier variants (id, slug, name)
+  let foundId = productId;
+  let foundSlug = productId;
+  let foundName = '';
 
-  // A. Delete from SQLite (Prisma)
   try {
-    await prisma.farmPassport.deleteMany({ where: { productId } }).catch(() => {});
-    await prisma.cartItem.deleteMany({ where: { productId } }).catch(() => {});
-    await prisma.wishlistItem.deleteMany({ where: { productId } }).catch(() => {});
-    await prisma.review.deleteMany({ where: { productId } }).catch(() => {});
-    await prisma.orderItem.deleteMany({ where: { productId } }).catch(() => {});
-    await prisma.product.deleteMany({ where: { id: productId } }).catch(() => {});
+    const existing = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { id: productId },
+          { slug: productId },
+          { name: productId },
+        ],
+      },
+    });
+    if (existing) {
+      foundId = existing.id;
+      foundSlug = existing.slug;
+      foundName = existing.name;
+    }
+  } catch (e) {
+    console.warn('Prisma lookup notice in deleteServerProduct:', e);
+  }
+
+  const allIdentifiers = Array.from(
+    new Set([productId, foundId, foundSlug, foundName].filter(Boolean) as string[])
+  );
+
+  // Persistently record all identifiers in the deleted blacklist file
+  for (const ident of allIdentifiers) {
+    addDeletedProductId(ident);
+  }
+
+  // B. Delete from SQLite (Prisma)
+  try {
+    await prisma.farmPassport.deleteMany({
+      where: { productId: { in: allIdentifiers } },
+    }).catch(() => {});
+    await prisma.cartItem.deleteMany({
+      where: { productId: { in: allIdentifiers } },
+    }).catch(() => {});
+    await prisma.wishlistItem.deleteMany({
+      where: { productId: { in: allIdentifiers } },
+    }).catch(() => {});
+    await prisma.review.deleteMany({
+      where: { productId: { in: allIdentifiers } },
+    }).catch(() => {});
+    await prisma.orderItem.deleteMany({
+      where: { productId: { in: allIdentifiers } },
+    }).catch(() => {});
+
+    await prisma.product.deleteMany({
+      where: {
+        OR: [
+          { id: { in: allIdentifiers } },
+          { slug: { in: allIdentifiers } },
+          ...(foundName ? [{ name: foundName }] : []),
+        ],
+      },
+    }).catch(() => {});
+
     deleted = true;
   } catch (e) {
     console.warn('Prisma delete notice:', e);
   }
 
-  // B. Delete from memory cache & local file
+  // C. Delete from persistent local file & memory cache
   try {
     const fileProducts = readLocalFile();
-    const filtered = fileProducts.filter((p) => p.id !== productId && p.slug !== productId);
+    const filtered = fileProducts.filter(
+      (p) =>
+        !allIdentifiers.includes(p.id) &&
+        !allIdentifiers.includes(p.slug) &&
+        (!p.name || !allIdentifiers.includes(p.name))
+    );
     writeLocalFile(filtered);
 
     if (globalThis.__f2h_products_cache) {
       globalThis.__f2h_products_cache = globalThis.__f2h_products_cache.filter(
-        (p) => p.id !== productId && p.slug !== productId
+        (p) =>
+          !allIdentifiers.includes(p.id) &&
+          !allIdentifiers.includes(p.slug) &&
+          (!p.name || !allIdentifiers.includes(p.name))
       );
     }
     deleted = true;
@@ -632,12 +695,27 @@ export async function deleteServerProduct(productId: string): Promise<boolean> {
     console.warn('File delete notice:', e);
   }
 
-  // C. Delete from Cloud Firestore
+  // D. Delete from Cloud Firestore
   try {
     const firestore = getFirebaseDb();
     if (firestore) {
-      await deleteDoc(doc(firestore, 'products', productId));
-      console.log('Successfully deleted product from Firestore:', productId);
+      for (const ident of allIdentifiers) {
+        await deleteDoc(doc(firestore, 'products', ident)).catch(() => {});
+      }
+      try {
+        const snap = await getDocs(collection(firestore, 'products'));
+        for (const d of snap.docs) {
+          const data = d.data();
+          if (
+            allIdentifiers.includes(d.id) ||
+            allIdentifiers.includes(data.id) ||
+            allIdentifiers.includes(data.slug) ||
+            (data.name && allIdentifiers.includes(data.name))
+          ) {
+            await deleteDoc(doc(firestore, 'products', d.id)).catch(() => {});
+          }
+        }
+      } catch {}
       deleted = true;
     }
   } catch (e) {
@@ -652,10 +730,14 @@ export async function deleteAllServerProducts(): Promise<number> {
   let totalDeleted = 0;
 
   try {
-    const existing = await getServerProducts();
-    for (const p of existing) {
+    const [existingServer, dbProducts] = await Promise.all([
+      getServerProducts().catch(() => []),
+      prisma.product.findMany({ select: { id: true, slug: true, name: true } }).catch(() => []),
+    ]);
+    for (const p of [...existingServer, ...dbProducts]) {
       addDeletedProductId(p.id);
       if (p.slug) addDeletedProductId(p.slug);
+      if (p.name) addDeletedProductId(p.name);
     }
   } catch {}
 
