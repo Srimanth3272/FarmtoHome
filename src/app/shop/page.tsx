@@ -97,10 +97,20 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
     const deletedIds = getDeletedProductIds();
     const dbProds = (dbProdsRaw || []).filter(
-      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+      (p) =>
+        !deletedIds.has(p.id) &&
+        (!p.slug || !deletedIds.has(p.slug)) &&
+        (!p.name || !deletedIds.has(p.name)) &&
+        p.approvalStatus === 'APPROVED' &&
+        p.isActive !== false
     );
     const serverProds = (serverProdsRaw || []).filter(
-      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+      (p) =>
+        !deletedIds.has(p.id) &&
+        (!p.slug || !deletedIds.has(p.slug)) &&
+        (!p.name || !deletedIds.has(p.name)) &&
+        p.approvalStatus === 'APPROVED' &&
+        p.isActive !== false
     );
     const mergedMap = new Map<string, any>();
 

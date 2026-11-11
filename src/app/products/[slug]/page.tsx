@@ -52,7 +52,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       if (
         deletedIds.has(product.id) ||
         deletedIds.has(product.slug) ||
-        (product.name && deletedIds.has(product.name))
+        (product.name && deletedIds.has(product.name)) ||
+        product.approvalStatus !== 'APPROVED' ||
+        product.isActive === false
       ) {
         notFound();
       }
@@ -97,6 +99,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           !deletedIds.has(p.id) &&
           (!p.slug || !deletedIds.has(p.slug)) &&
           (!p.name || !deletedIds.has(p.name)) &&
+          p.approvalStatus === 'APPROVED' &&
+          p.isActive !== false &&
           (p.slug === decodedSlug || p.id === decodedSlug || p.slug === rawSlug || p.id === rawSlug)
       );
       if (product) {

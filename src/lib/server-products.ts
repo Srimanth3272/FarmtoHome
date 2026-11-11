@@ -238,13 +238,15 @@ function writeLocalFile(products: ProductItem[]) {
 }
 
 // 6. Get all server products (merges SQLite DB, persistent file, memory cache, and Firestore)
-export async function getServerProducts(): Promise<ProductItem[]> {
+export async function getServerProducts(options?: { includePending?: boolean }): Promise<ProductItem[]> {
   const mergedMap = new Map<string, ProductItem>();
+  const includePending = Boolean(options?.includePending);
 
   // 1. Fetch from SQLite Prisma database
   try {
+    const dbWhere: any = includePending ? {} : { isActive: true, approvalStatus: 'APPROVED' };
     const dbProducts = await prisma.product.findMany({
-      where: { isActive: true },
+      where: dbWhere,
       include: {
         category: true,
         farmer: {
@@ -286,24 +288,30 @@ export async function getServerProducts(): Promise<ProductItem[]> {
     }
   }
 
-  // 3. Fetch from Cloud Firestore if enabled
+  // 3. Fetch from Cloud Firestore if enabled (with 1.5s timeout)
   try {
     const firestore = getFirebaseDb();
     if (firestore) {
-      const snap = await getDocs(collection(firestore, 'products'));
-      snap.forEach((docSnap) => {
-        const data = docSnap.data();
-        const item: ProductItem = {
-          ...(data as any),
-          id: docSnap.id,
-        };
-        if (!mergedMap.has(item.id) && !mergedMap.has(item.slug)) {
-          mergedMap.set(item.id, item);
-        }
-      });
+      const snapPromise = getDocs(collection(firestore, 'products'));
+      const snap: any = await Promise.race([
+        snapPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore read timeout')), 1500)),
+      ]);
+      if (snap && snap.forEach) {
+        snap.forEach((docSnap: any) => {
+          const data = docSnap.data();
+          const item: ProductItem = {
+            ...(data as any),
+            id: docSnap.id,
+          };
+          if (!mergedMap.has(item.id) && !mergedMap.has(item.slug)) {
+            mergedMap.set(item.id, item);
+          }
+        });
+      }
     }
   } catch (e) {
-    console.warn('Notice querying Firestore SDK in getServerProducts:', e);
+    // Firestore timed out or is offline - instant local DB & file fallback used
   }
 
   // Deduplicate products and strictly exclude any deleted/blacklisted product IDs
@@ -325,11 +333,20 @@ export async function getServerProducts(): Promise<ProductItem[]> {
     }
   }
 
-  // Update in-memory cache and file
+  // Update in-memory cache and file only if products exist
   globalThis.__f2h_products_cache = uniqueProducts;
-  writeLocalFile(uniqueProducts);
+  if (uniqueProducts.length > 0) {
+    writeLocalFile(uniqueProducts);
+  }
 
-  return uniqueProducts;
+  if (includePending) {
+    return uniqueProducts;
+  }
+
+  // Customer store front rule: Only show products that are strictly APPROVED and active
+  return uniqueProducts.filter(
+    (p) => p.approvalStatus === 'APPROVED' && p.isActive !== false
+  );
 }
 
 // 7. Save a product persistently across SQLite, file store, memory cache, and Firestore
@@ -394,8 +411,8 @@ export async function saveServerProduct(
     shelfLifeDays: Number(productData.shelfLifeDays) || 365,
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
-    approvalStatus: productData.approvalStatus || 'APPROVED',
-    isActive: productData.isActive !== undefined ? productData.isActive : true,
+    approvalStatus: productData.approvalStatus || 'PENDING',
+    isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (productData.approvalStatus === 'APPROVED'),
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,
@@ -579,10 +596,14 @@ export async function saveServerProduct(
   try {
     const firestore = getFirebaseDb();
     if (firestore) {
-      await setDoc(doc(firestore, 'products', product.id), {
+      const writePromise = setDoc(doc(firestore, 'products', product.id), {
         ...product,
         updatedAt: serverTimestamp(),
       });
+      await Promise.race([
+        writePromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore write timeout')), 2000)),
+      ]);
       firestoreSaved = true;
       console.log('Successfully saved product to Cloud Firestore:', product.id);
     } else {
@@ -668,6 +689,23 @@ export async function deleteServerProduct(productId: string): Promise<boolean> {
 
   // B. Delete from SQLite (Prisma)
   try {
+    // 1. Immediately deactivate product so no storefront query will ever return it
+    await prisma.product.updateMany({
+      where: {
+        OR: [
+          { id: { in: allIdentifiers } },
+          { slug: { in: allIdentifiers } },
+          ...(foundName ? [{ name: foundName }] : []),
+        ],
+      },
+      data: {
+        isActive: false,
+        approvalStatus: 'REJECTED',
+        adminRemarks: 'DELETED',
+      },
+    }).catch(() => {});
+
+    // 2. Cascade delete linked records
     await prisma.farmPassport.deleteMany({
       where: { productId: { in: allIdentifiers } },
     }).catch(() => {});
@@ -681,9 +719,15 @@ export async function deleteServerProduct(productId: string): Promise<boolean> {
       where: { productId: { in: allIdentifiers } },
     }).catch(() => {});
     await prisma.orderItem.deleteMany({
-      where: { productId: { in: allIdentifiers } },
+      where: {
+        OR: [
+          { productId: { in: allIdentifiers } },
+          ...(foundId ? [{ productId: foundId }] : []),
+        ],
+      },
     }).catch(() => {});
 
+    // 3. Remove product record completely from Prisma
     await prisma.product.deleteMany({
       where: {
         OR: [
@@ -723,27 +767,19 @@ export async function deleteServerProduct(productId: string): Promise<boolean> {
     console.warn('File delete notice:', e);
   }
 
-  // D. Delete from Cloud Firestore
+  // D. Delete from Cloud Firestore (non-blocking with 1.5s timeout)
   try {
     const firestore = getFirebaseDb();
     if (firestore) {
-      for (const ident of allIdentifiers) {
-        await deleteDoc(doc(firestore, 'products', ident)).catch(() => {});
-      }
-      try {
-        const snap = await getDocs(collection(firestore, 'products'));
-        for (const d of snap.docs) {
-          const data = d.data();
-          if (
-            allIdentifiers.includes(d.id) ||
-            allIdentifiers.includes(data.id) ||
-            allIdentifiers.includes(data.slug) ||
-            (data.name && allIdentifiers.includes(data.name))
-          ) {
-            await deleteDoc(doc(firestore, 'products', d.id)).catch(() => {});
-          }
+      const delPromise = (async () => {
+        for (const ident of allIdentifiers) {
+          await deleteDoc(doc(firestore, 'products', ident)).catch(() => {});
         }
-      } catch {}
+      })();
+      await Promise.race([
+        delPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore delete timeout')), 1500)),
+      ]).catch(() => {});
       deleted = true;
     }
   } catch (e) {
@@ -820,32 +856,44 @@ export async function updateServerProductApproval(
 
   // A. Update in SQLite (Prisma)
   try {
-    const p = await prisma.product.update({
-      where: { id: productId },
-      data: {
-        approvalStatus,
-        isActive,
-        adminRemarks:
-          remarks ||
-          (action === 'APPROVE'
-            ? 'Approved by Admin for public sale'
-            : action === 'REJECT'
-            ? 'Rejected by Admin'
-            : action === 'DEACTIVATE'
-            ? 'Deactivated by Admin'
-            : 'Reactivated by Admin'),
-      },
-      include: {
-        category: true,
-        farmer: {
-          include: {
-            user: { select: { name: true, avatar: true } },
-          },
-        },
-        farmPassport: true,
+    const existing = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { id: productId },
+          { slug: productId },
+          { name: productId },
+        ],
       },
     });
-    if (p) updatedProduct = p as any;
+
+    if (existing) {
+      const p = await prisma.product.update({
+        where: { id: existing.id },
+        data: {
+          approvalStatus,
+          isActive,
+          adminRemarks:
+            remarks ||
+            (action === 'APPROVE'
+              ? 'Approved by Admin for public sale'
+              : action === 'REJECT'
+              ? 'Rejected by Admin'
+              : action === 'DEACTIVATE'
+              ? 'Deactivated by Admin'
+              : 'Reactivated by Admin'),
+        },
+        include: {
+          category: true,
+          farmer: {
+            include: {
+              user: { select: { name: true, avatar: true } },
+            },
+          },
+          farmPassport: true,
+        },
+      });
+      if (p) updatedProduct = p as any;
+    }
   } catch (e) {
     console.warn('Prisma update notice:', e);
   }

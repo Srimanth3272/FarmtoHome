@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
+import {
+  OWNER_PHONE,
+  OWNER_EMAIL,
+  dispatchOrderDeliveryNotification,
+} from '@/lib/order-notifications';
 
 export const dynamic = 'force-dynamic';
 
-const OWNER_EMAIL = 'sreemanthnagalakunta@gmail.com';
-const OWNER_PHONE = '9347405899';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const ORDERS_BACKUP_FILE = path.join(DATA_DIR, 'orders.json');
 const OWNER_ALERTS_FILE = path.join(DATA_DIR, 'owner-order-alerts.json');
@@ -314,50 +317,25 @@ export async function POST(request: Request) {
     saveOrderBackup(newOrder);
 
     // 5. OWNER NOTIFICATION (Dispatched to Sreemanth Nagalakunta)
-    // Owner Email: sreemanthnagalakunta@gmail.com
-    // Owner Phone: 9347405899
-    const itemsSummary = processedItems
-      .map((i) => `• ${i.productName} (${i.quantity} x ₹${i.priceAtPurchase} = ₹${i.itemTotal})`)
-      .join('\n');
-
+    // 5. OWNER NOTIFICATION (Dispatched to Sreemanth Nagalakunta: 9347405899 & sreemanthnagalakunta@gmail.com)
     const fullAddressText = `${parsedAddr.addressLine1 || ''}, ${parsedAddr.addressLine2 || ''}, ${parsedAddr.landmark ? 'Landmark: ' + parsedAddr.landmark + ', ' : ''}${parsedAddr.city || ''}, ${parsedAddr.state || ''} - ${parsedAddr.pincode || ''}`;
 
-    const alertMessage = `🌾 *NEW FARM TO HOME ORDER RECEIVED!*
-Order No: ${orderNumber}
-Total Amount: ₹${calcTotal} (${paymentMethod || 'UPI'} - ${newOrder.paymentStatus})
-
-*Customer Details:*
-Name: ${customerName}
-Phone: ${customerPhone}
-Address: ${fullAddressText}
-
-*Items Ordered:*
-${itemsSummary}
-Subtotal: ₹${calcSubtotal} | Delivery: ₹${calcShipping}
-Total: ₹${calcTotal}
-
-⚡ Dispatch Alert transmitted to Owner Sreemanth Nagalakunta (Phone: ${OWNER_PHONE}, Email: ${OWNER_EMAIL})`;
-
-    const ownerAlert = {
+    const ownerAlert = await dispatchOrderDeliveryNotification({
       orderNumber,
-      timestamp: new Date().toISOString(),
-      ownerEmail: OWNER_EMAIL,
-      ownerPhone: OWNER_PHONE,
+      orderId: newOrder.id,
       customerName,
       customerPhone,
+      customerEmail: body.customerEmail || '',
       deliveryAddress: fullAddressText,
+      deliverySlot: newOrder.deliverySlot,
       items: processedItems,
       subtotal: calcSubtotal,
       shippingFee: calcShipping,
+      discountAmount: calcDiscount,
       totalAmount: calcTotal,
       paymentMethod: paymentMethod || 'UPI',
       paymentStatus: newOrder.paymentStatus,
-      status: 'TRANSMITTED_TO_OWNER',
-      whatsappUrl: `https://api.whatsapp.com/send?phone=91${OWNER_PHONE}&text=${encodeURIComponent(alertMessage)}`,
-      smsContent: alertMessage,
-    };
-
-    saveOwnerAlert(ownerAlert);
+    });
 
     return NextResponse.json(
       {
@@ -375,5 +353,54 @@ Total: ₹${calcTotal}
       { error: error?.message || 'Failed to create order on server' },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const orderId = searchParams.get('id');
+    const orderNumber = searchParams.get('orderNumber');
+    const all = searchParams.get('all') === 'true';
+
+    if (all) {
+      await prisma.orderItem.deleteMany({}).catch(() => {});
+      await prisma.order.deleteMany({}).catch(() => {});
+      if (fs.existsSync(ORDERS_BACKUP_FILE)) {
+        fs.writeFileSync(ORDERS_BACKUP_FILE, '[]', 'utf-8');
+      }
+      return NextResponse.json({ success: true, message: 'All orders removed successfully' });
+    }
+
+    if (!orderId && !orderNumber) {
+      return NextResponse.json({ error: 'Order ID or Order Number is required' }, { status: 400 });
+    }
+
+    const where: any = {};
+    if (orderId) where.id = orderId;
+    if (orderNumber) where.orderNumber = orderNumber;
+
+    const existingOrder = await prisma.order.findFirst({ where });
+    if (existingOrder) {
+      await prisma.orderItem.deleteMany({ where: { orderId: existingOrder.id } }).catch(() => {});
+      await prisma.order.delete({ where: { id: existingOrder.id } }).catch(() => {});
+    }
+
+    // Also remove from backup file
+    if (fs.existsSync(ORDERS_BACKUP_FILE)) {
+      try {
+        const raw = fs.readFileSync(ORDERS_BACKUP_FILE, 'utf-8');
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          const filtered = list.filter((o: any) => o.id !== orderId && o.orderNumber !== orderNumber);
+          fs.writeFileSync(ORDERS_BACKUP_FILE, JSON.stringify(filtered, null, 2), 'utf-8');
+        }
+      } catch {}
+    }
+
+    return NextResponse.json({ success: true, message: 'Order removed successfully' });
+  } catch (error: any) {
+    console.error('Error in DELETE /api/orders:', error);
+    return NextResponse.json({ error: error?.message || 'Failed to delete order' }, { status: 500 });
   }
 }

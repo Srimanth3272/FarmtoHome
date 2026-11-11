@@ -47,7 +47,7 @@ export default async function HomePage() {
   try {
     const [dbProdsRaw, dbCatsRaw, dbFarmersRaw, dbBlogsRaw, serverProdsRaw] = await Promise.all([
       prisma.product.findMany({
-        where: { isActive: true },
+        where: { isActive: true, approvalStatus: 'APPROVED' },
         include: {
           category: true,
           farmer: {
@@ -77,10 +77,20 @@ export default async function HomePage() {
 
     const deletedIds = getDeletedProductIds();
     const dbProds = (dbProdsRaw || []).filter(
-      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+      (p) =>
+        !deletedIds.has(p.id) &&
+        (!p.slug || !deletedIds.has(p.slug)) &&
+        (!p.name || !deletedIds.has(p.name)) &&
+        p.approvalStatus === 'APPROVED' &&
+        p.isActive !== false
     );
     const serverProds = (serverProdsRaw || []).filter(
-      (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+      (p) =>
+        !deletedIds.has(p.id) &&
+        (!p.slug || !deletedIds.has(p.slug)) &&
+        (!p.name || !deletedIds.has(p.name)) &&
+        p.approvalStatus === 'APPROVED' &&
+        p.isActive !== false
     );
     const mergedMap = new Map<string, any>();
 

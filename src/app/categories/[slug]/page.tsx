@@ -25,7 +25,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       where: { slug: params.slug },
       include: {
         products: {
-          where: { isActive: true },
+          where: { isActive: true, approvalStatus: 'APPROVED' },
           include: {
             category: true,
             farmer: {
@@ -69,6 +69,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       !deletedIds.has(p.id) &&
       (!p.slug || !deletedIds.has(p.slug)) &&
       (!p.name || !deletedIds.has(p.name)) &&
+      p.approvalStatus === 'APPROVED' &&
+      p.isActive !== false &&
       (p.category?.slug === params.slug ||
         p.categoryId === params.slug ||
         p.categoryId === `cat-${params.slug}` ||
@@ -76,7 +78,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   );
 
   const cleanDbProducts = (dbProducts || []).filter(
-    (p) => !deletedIds.has(p.id) && (!p.slug || !deletedIds.has(p.slug)) && (!p.name || !deletedIds.has(p.name))
+    (p) =>
+      !deletedIds.has(p.id) &&
+      (!p.slug || !deletedIds.has(p.slug)) &&
+      (!p.name || !deletedIds.has(p.name)) &&
+      p.approvalStatus === 'APPROVED' &&
+      p.isActive !== false
   );
 
   const mergedMap = new Map<string, any>();

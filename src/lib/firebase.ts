@@ -267,8 +267,6 @@ export function subscribeToProducts(
 
     const deletedIds = getClientDeletedProductIds();
 
-    // The incoming list from server is authoritative!
-    // Exclude any deleted or blacklisted products
     const unique: ProductItem[] = [];
     const seenIds = new Set<string>();
 
@@ -276,7 +274,11 @@ export function subscribeToProducts(
       if (
         deletedIds.has(p.id) ||
         (p.slug && deletedIds.has(p.slug)) ||
-        (p.name && deletedIds.has(p.name))
+        (p.name && deletedIds.has(p.name)) ||
+        (p.name && deletedIds.has(p.name.toLowerCase())) ||
+        p.isActive === false ||
+        p.approvalStatus === 'REJECTED' ||
+        p.approvalStatus === 'PENDING'
       ) {
         continue;
       }
@@ -295,7 +297,7 @@ export function subscribeToProducts(
     onUpdate(unique);
   };
 
-  // 1. Fetch from server API immediately
+  // 1. Fetch from server API on mount
   const fetchFromServer = async () => {
     try {
       // First refresh deleted IDs blacklist from server so all clients stay synchronized
@@ -319,7 +321,7 @@ export function subscribeToProducts(
         }
       }
     } catch {
-      // Offline fallback to local products
+      // Offline fallback
       const local = getLocalCommunityProducts();
       if (local.length > 0) {
         updateList(local);
@@ -327,17 +329,10 @@ export function subscribeToProducts(
     }
   };
 
+  // Initial fetch only - NO background setInterval autoupdate polling
   fetchFromServer();
 
-  // 2. Poll every 4 seconds so ALL other users, devices, and phones automatically see new products
-  let pollTimer: any = null;
-  if (typeof window !== 'undefined') {
-    pollTimer = setInterval(() => {
-      fetchFromServer();
-    }, 4000);
-  }
-
-  // 3. Multi-tab channel sync
+  // Multi-tab channel sync (event-driven, not timer-based)
   let channel: BroadcastChannel | null = null;
   if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
     channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
@@ -354,10 +349,9 @@ export function subscribeToProducts(
 
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('focus', fetchFromServer);
   }
 
-  // 4. Firestore real-time onSnapshot listener (if Cloud Firestore database is active)
+  // Firestore real-time onSnapshot listener (pure event-driven from Cloud Firestore)
   let firestoreUnsub: (() => void) | null = null;
   const firestore = getFirebaseDb();
   if (firestore) {
@@ -375,7 +369,11 @@ export function subscribeToProducts(
               deletedIds.has(pid) ||
               (data.id && deletedIds.has(data.id)) ||
               (data.slug && deletedIds.has(data.slug)) ||
-              (data.name && deletedIds.has(data.name))
+              (data.name && deletedIds.has(data.name)) ||
+              (data.name && deletedIds.has(data.name.toLowerCase())) ||
+              data.isActive === false ||
+              data.approvalStatus === 'REJECTED' ||
+              data.approvalStatus === 'PENDING'
             ) {
               return;
             }
@@ -384,12 +382,10 @@ export function subscribeToProducts(
               id: pid,
             });
           });
-          // Update list with non-deleted Firestore products
           updateList(fbProducts);
         },
         (err) => {
-          // Cloud Firestore database (default) may still need to be created in Firebase console
-          console.warn('Firestore live listener notice (using platform live sync):', err?.message);
+          console.warn('Firestore live listener notice:', err?.message);
         }
       );
     } catch (e) {
@@ -399,12 +395,10 @@ export function subscribeToProducts(
 
   return () => {
     isSubscribed = false;
-    if (pollTimer) clearInterval(pollTimer);
     if (channel) channel.close();
     if (firestoreUnsub) firestoreUnsub();
     if (typeof window !== 'undefined') {
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', fetchFromServer);
     }
   };
 }
@@ -485,7 +479,7 @@ export async function addProductToFirebase(
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
     approvalStatus: productData.approvalStatus || 'APPROVED',
-    isActive: productData.isActive !== undefined ? productData.isActive : true,
+    isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : true,
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,
@@ -505,7 +499,7 @@ export async function addProductToFirebase(
     },
   };
 
-  // 1. Save locally for instant tab reactivity
+  // 1. Save locally for instant tab reactivity & offline persistence
   saveLocalCommunityProduct(product);
 
   // 2. Post to server API immediately (SQLite DB + local JSON store + memory cache)
@@ -523,17 +517,21 @@ export async function addProductToFirebase(
     console.warn('API sync warning:', apiErr);
   }
 
-  // 3. Attempt write to Firebase Firestore (if Firestore database is created)
+  // 3. Attempt write to Firebase Firestore (non-blocking with 2s timeout)
   let firestoreSuccess = false;
   let firestoreError: string | undefined;
 
   const firestore = getFirebaseDb();
   if (firestore) {
     try {
-      await setDoc(doc(firestore, 'products', product.id), {
+      const writePromise = setDoc(doc(firestore, 'products', product.id), {
         ...product,
         updatedAt: serverTimestamp(),
       });
+      await Promise.race([
+        writePromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore write timeout')), 2000)),
+      ]);
       firestoreSuccess = true;
       console.log('Product successfully stored in Firebase Firestore:', product.id);
     } catch (err: any) {

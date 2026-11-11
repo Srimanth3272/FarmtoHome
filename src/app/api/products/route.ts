@@ -16,11 +16,11 @@ export async function GET(request: Request) {
     const includePending = searchParams.get('includePending') === 'true';
 
     // 1. Fetch server products (unified from SQLite DB, JSON store, memory cache, and Firestore)
-    const combined = await getServerProducts();
+    const combined = await getServerProducts({ includePending });
 
     // 2. Apply filters
     let filtered = combined.filter((p) => {
-      if (!includePending && p.isActive === false) return false;
+      if (!includePending && (p.isActive === false || p.approvalStatus !== 'APPROVED')) return false;
       if (categorySlug) {
         const matchesCat =
           p.category?.slug === categorySlug ||

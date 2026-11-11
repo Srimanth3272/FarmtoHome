@@ -247,30 +247,13 @@ export function sanitizeProductImageUrl(
     }
   }
 
-  // Known webpage hosts / paths that are HTML pages, NOT image files:
-  const isWebpage =
-    trimmed.includes('/products/') ||
-    trimmed.includes('/product/') ||
-    trimmed.includes('/item/') ||
-    trimmed.includes('/dp/') ||
-    trimmed.includes('/gp/') ||
-    trimmed.includes('amazon.in') ||
-    trimmed.includes('flipkart.com') ||
-    trimmed.includes('foodcare.in') ||
-    trimmed.includes('blinkit.com') ||
-    trimmed.includes('zeptonow.com') ||
-    trimmed.includes('bigbasket.com') ||
-    trimmed.includes('jiomart.com') ||
-    trimmed.includes('indiamart.com') ||
-    trimmed.includes('myntra.com') ||
-    trimmed.includes('youtube.com') ||
-    trimmed.includes('instagram.com') ||
-    trimmed.includes('facebook.com') ||
-    (trimmed.includes('wikipedia.org') && !trimmed.includes('upload.wikimedia.org')) ||
-    /\.(html|htm|php|asp|aspx)($|\?)/i.test(trimmed);
+  // Only reject purely HTML/webpage extensions if explicitly detected
+  const isHtmlPage =
+    /\.(html|htm|php|asp|aspx)($|\?)/i.test(trimmed) ||
+    trimmed.includes('youtube.com/watch') ||
+    trimmed.includes('instagram.com/p/');
 
-  // If it's a known webpage link, replace it with high-res keyword match
-  if (isWebpage) {
+  if (isHtmlPage) {
     return getProductFallbackImage(productName, categorySlug);
   }
 

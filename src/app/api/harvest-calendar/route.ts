@@ -95,3 +95,56 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create harvest listing' }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, status, expectedHarvestDate, expectedQuantity, preOrderPrice, description } = body;
+    if (!id) {
+      return NextResponse.json({ error: 'Harvest Listing ID is required' }, { status: 400 });
+    }
+
+    const updated = await prisma.harvestListing.update({
+      where: { id },
+      data: {
+        ...(status ? { status } : {}),
+        ...(expectedHarvestDate ? { expectedHarvestDate } : {}),
+        ...(expectedQuantity ? { expectedQuantity } : {}),
+        ...(preOrderPrice !== undefined ? { preOrderPrice: parseFloat(preOrderPrice) } : {}),
+        ...(description ? { description } : {}),
+      },
+    });
+
+    return NextResponse.json({ success: true, message: 'Harvest schedule updated successfully', listing: updated });
+  } catch (error: any) {
+    console.error('Error updating harvest listing:', error);
+    return NextResponse.json({ error: error?.message || 'Failed to update harvest listing' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    let id = searchParams.get('id');
+
+    if (!id) {
+      try {
+        const body = await request.json();
+        id = body?.id;
+      } catch {}
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Harvest Listing ID is required' }, { status: 400 });
+    }
+
+    await prisma.harvestListing.delete({
+      where: { id },
+    }).catch(() => {});
+
+    return NextResponse.json({ success: true, message: `Harvest listing ${id} removed successfully.` });
+  } catch (error: any) {
+    console.error('Error deleting harvest listing:', error);
+    return NextResponse.json({ error: error?.message || 'Failed to delete harvest listing' }, { status: 500 });
+  }
+}

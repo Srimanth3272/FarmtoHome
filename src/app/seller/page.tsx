@@ -232,6 +232,8 @@ export default function SellerAccountPage() {
         originLocation: prodOrigin,
         description: prodDesc || `Premium ${selectedCatObj.name} listed by ${storeName} on Farm to Home. Quality checked and verified.`,
         isOrganic: selectedCatObj.slug === 'fresh-produce' || selectedCatObj.slug === 'organic-farming',
+        approvalStatus: 'APPROVED',
+        isActive: true,
       });
 
       const newProduct = result.product || result;
@@ -241,7 +243,6 @@ export default function SellerAccountPage() {
         firestoreError: result.firestoreError,
       });
       setSellerProducts([newProduct, ...sellerProducts.filter((p) => p.id !== newProduct.id)]);
-      setAllProducts([newProduct, ...allProducts.filter((p) => p.id !== newProduct.id)]);
       setProdName('');
       setProdDesc('');
     } catch (err: any) {
@@ -586,19 +587,7 @@ export default function SellerAccountPage() {
                       Product Image URL *
                     </label>
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const match = getProductFallbackImage(prodName || 'Fresh Produce', prodCategory);
-                          setProdImageUrl(match);
-                        }}
-                        className="text-[11px] font-bold text-forest-800 hover:text-forest-950 bg-harvest-100 hover:bg-harvest-200 px-2.5 py-1 rounded-lg border border-harvest-300 flex items-center gap-1 transition-colors shadow-xs"
-                      >
-                        <Sparkles className="w-3 h-3 text-forest-700" />
-                        <span>✨ Auto-Match Photo</span>
-                      </button>
-
-                      <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors">
+                      <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors shadow-xs">
                         <span>📁 Upload from Device</span>
                         <input
                           type="file"
@@ -625,7 +614,7 @@ export default function SellerAccountPage() {
                     required
                     value={prodImageUrl}
                     onChange={(e) => setProdImageUrl(e.target.value)}
-                    placeholder="Paste image link, or click Auto-Match / Upload"
+                    placeholder="Paste direct image link, or click Upload from Device"
                     className="w-full p-3 bg-gray-50 border border-cream-300 rounded-xl focus:ring-2 focus:ring-forest-600 focus:outline-none text-xs font-mono"
                   />
 

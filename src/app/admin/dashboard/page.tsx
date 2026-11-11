@@ -8,7 +8,7 @@ export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
-  const [users, farmers, dbProducts, orders, blogPosts, coupons, wasteListings, commissionPayments, serverProds] = await Promise.all([
+  const [users, farmers, dbProducts, orders, blogPosts, coupons, wasteListings, commissionPayments, harvestListings, serverProds] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
     prisma.farmerProfile.findMany({
       include: {
@@ -37,7 +37,11 @@ export default async function AdminDashboardPage() {
       include: { farmer: true },
       orderBy: { createdAt: 'desc' },
     }).catch(() => []),
-    getServerProducts().catch(() => []),
+    prisma.harvestListing.findMany({
+      include: { farmer: { include: { user: { select: { name: true } } } } },
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => []),
+    getServerProducts({ includePending: true }).catch(() => []),
   ]);
 
   const deletedIds = getDeletedProductIds();
@@ -88,6 +92,7 @@ export default async function AdminDashboardPage() {
           coupons={coupons as any}
           wasteListings={wasteListings as any}
           commissionPayments={commissionPayments as any}
+          harvestListings={harvestListings as any}
           totalRevenue={totalRevenue}
         />
       </AdminAuthGuard>

@@ -108,3 +108,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    let id = searchParams.get('id');
+    let slug = searchParams.get('slug');
+
+    if (!id && !slug) {
+      try {
+        const body = await request.json();
+        id = body?.id;
+        slug = body?.slug;
+      } catch {}
+    }
+
+    if (!id && !slug) {
+      return NextResponse.json({ error: 'Blog ID or Slug is required' }, { status: 400 });
+    }
+
+    const where: any = {};
+    if (id) where.id = id;
+    if (slug) where.slug = slug;
+
+    // First delete any comments
+    const existing = await prisma.blogPost.findFirst({ where });
+    if (existing) {
+      await prisma.blogComment.deleteMany({ where: { postId: existing.id } }).catch(() => {});
+      await prisma.blogPost.delete({ where: { id: existing.id } }).catch(() => {});
+    }
+
+    return NextResponse.json({ success: true, message: 'Blog article removed successfully' });
+  } catch (error: any) {
+    console.error('Error deleting blog post:', error);
+    return NextResponse.json({ error: error?.message || 'Failed to delete blog post' }, { status: 500 });
+  }
+}

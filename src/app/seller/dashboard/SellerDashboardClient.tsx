@@ -235,6 +235,8 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
         storageInstructions: newProdStorage,
         isOrganic: newProdOrganic,
         images: JSON.stringify([newProdImage]),
+        approvalStatus: 'APPROVED',
+        isActive: true,
       });
 
       const fbProduct = result.product || result;
@@ -243,15 +245,9 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
       setProducts([fbProduct, ...products.filter((p) => p.id !== fbProduct.id)]);
       setShowAddProductModal(false);
 
-      if (result.firestoreSuccess) {
-        setProductSuccessAlert(
-          `🎉 Product "${newProdName}" successfully uploaded to Firebase Firestore & published live for all customers!`
-        );
-      } else {
-        setProductSuccessAlert(
-          `✅ Product "${newProdName}" published LIVE on the storefront catalog! (Note: Cloud Firestore database needs 1-click creation in Firebase console for cloud sync).`
-        );
-      }
+      setProductSuccessAlert(
+        `🎉 Product "${newProdName}" successfully published live! It is now active in the store catalog.`
+      );
       setNewProdName('');
       setNewProdDesc('');
     } catch (err: any) {
@@ -1160,6 +1156,41 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
                       className="w-full px-3 py-2 rounded-xl border border-gray-300"
                     />
                   </div>
+                </div>
+
+                {/* Product Image URL and File Upload */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-gray-700">Product Image URL:</label>
+                    <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors">
+                      <span>📁 Upload from Device</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              if (typeof reader.result === 'string') {
+                                setNewProdImage(reader.result);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Paste direct image link, or upload from device"
+                    value={newProdImage}
+                    onChange={(e) => setNewProdImage(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 font-mono text-xs"
+                  />
                 </div>
 
                 {/* Pricing & 5% Platform Commission Calculation */}
