@@ -206,6 +206,36 @@ export function removeLocalCommunityProduct(productId: string): void {
   }
 }
 
+export function updateLocalCommunityProductStatus(
+  productId: string,
+  status: 'APPROVED' | 'REJECTED',
+  isActive: boolean
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getLocalCommunityProducts();
+    const updated = current.map((p) => {
+      if (p.id === productId || p.slug === productId) {
+        return {
+          ...p,
+          approvalStatus: status,
+          isActive,
+        };
+      }
+      return p;
+    });
+    localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
+
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+      channel.postMessage({ type: 'PRODUCT_STATUS_UPDATED', productId, status, isActive });
+      channel.close();
+    }
+  } catch (e) {
+    console.error('Error updating local community product status', e);
+  }
+}
+
 export async function deleteProductFromFirebase(productId: string): Promise<boolean> {
   removeLocalCommunityProduct(productId);
 

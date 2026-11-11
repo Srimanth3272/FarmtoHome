@@ -37,7 +37,7 @@ import {
   SellerSubscriptionRecord,
   isFirebaseConfigured
 } from '@/lib/firebase';
-import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage } from '@/lib/image-utils';
+import { sanitizeProductImageUrl, getProductFallbackImage, extractProductMainImage, compressImageFile } from '@/lib/image-utils';
 import RazorpayModalSimulator from '@/components/RazorpayModalSimulator';
 
 export default function SellerAccountPage() {
@@ -68,6 +68,7 @@ export default function SellerAccountPage() {
   const [prodImageUrl, setProdImageUrl] = useState('');
   const [storeName, setStoreName] = useState(user?.name ? `${user.name}'s Official Store` : 'My Super Store');
   const [submittingProduct, setSubmittingProduct] = useState(false);
+  const [compressingImage, setCompressingImage] = useState(false);
   const [productCreatedAlert, setProductCreatedAlert] = useState<any | null>(null);
   const [firestoreStatus, setFirestoreStatus] = useState<{
     enabled: boolean;
@@ -227,6 +228,7 @@ export default function SellerAccountPage() {
       setSellerProducts([newProduct, ...sellerProducts.filter((p) => p.id !== newProduct.id)]);
       setProdName('');
       setProdDesc('');
+      setProdImageUrl('');
     } catch (err: any) {
       alert(err.message || 'Error creating product in Firebase');
     } finally {
@@ -546,26 +548,36 @@ export default function SellerAccountPage() {
                       Product Image URL *
                     </label>
                     <div className="flex items-center gap-2">
-                      <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors shadow-xs">
-                        <span>📁 Upload from Device</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = () => {
-                                if (typeof reader.result === 'string') {
-                                  setProdImageUrl(reader.result);
-                                }
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
+                      {compressingImage ? (
+                        <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-300 flex items-center gap-1 shadow-xs">
+                          <span className="animate-spin">⏳</span> Compressing photo...
+                        </span>
+                      ) : (
+                        <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors shadow-xs">
+                          <span>📁 Upload from Device</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setCompressingImage(true);
+                                compressImageFile(file)
+                                  .then((compressed) => {
+                                    setProdImageUrl(compressed);
+                                  })
+                                  .catch((err) => {
+                                    alert('Error compressing image: ' + err.message);
+                                  })
+                                  .finally(() => {
+                                    setCompressingImage(false);
+                                  });
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                   <input

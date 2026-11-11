@@ -324,3 +324,74 @@ export function extractProductMainImage(
   const list = extractProductImages(imagesField, productName, categorySlug);
   return list[0] || getProductFallbackImage(productName, categorySlug);
 }
+
+/**
+ * Client-side HTML5 canvas image compressor.
+ * Downscales large smartphone photos (3-10MB) to max 800px width/height and compresses to JPEG ~40-60KB.
+ * Prevents Next.js API 413 Payload Too Large, localStorage QuotaExceededError, and Firestore 1MB document limit.
+ */
+export function compressImageFile(
+  file: File,
+  maxWidth = 800,
+  maxHeight = 800,
+  quality = 0.75
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      return reject(new Error('No file provided'));
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result !== 'string') {
+        return reject(new Error('Failed to process image data'));
+      }
+
+      // If in non-browser environment
+      if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return resolve(result);
+      }
+
+      const img = new Image();
+      img.onerror = () => resolve(result);
+      img.onload = () => {
+        try {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            return resolve(result);
+          }
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        } catch {
+          resolve(result);
+        }
+      };
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+

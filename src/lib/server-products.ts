@@ -15,26 +15,52 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const LOCAL_DATA_FILE = path.join(DATA_DIR, 'community-products.json');
 const TMP_DATA_FILE = path.join(os.tmpdir(), 'f2h-community-products.json');
 const DELETED_DATA_FILE = path.join(DATA_DIR, 'deleted-product-ids.json');
+const TMP_DELETED_FILE = path.join(os.tmpdir(), 'f2h-deleted-product-ids.json');
 
 export function getDeletedProductIds(): Set<string> {
+  const result = new Set<string>();
+  // 1. Read from TMP_DELETED_FILE (receives runtime deletions on Vercel)
+  try {
+    if (fs.existsSync(TMP_DELETED_FILE)) {
+      const raw = fs.readFileSync(TMP_DELETED_FILE, 'utf-8');
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        for (const id of list) result.add(id);
+      }
+    }
+  } catch (e) {}
+
+  // 2. Read from DELETED_DATA_FILE (bundled or local repo)
   try {
     if (fs.existsSync(DELETED_DATA_FILE)) {
       const raw = fs.readFileSync(DELETED_DATA_FILE, 'utf-8');
       const list = JSON.parse(raw);
-      if (Array.isArray(list)) return new Set(list);
+      if (Array.isArray(list)) {
+        for (const id of list) result.add(id);
+      }
     }
   } catch (e) {
     console.warn('Notice reading deleted-product-ids.json:', e);
   }
-  return new Set();
+  return result;
 }
 
 export function addDeletedProductId(productId: string): void {
   try {
     const set = getDeletedProductIds();
     set.add(productId);
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(DELETED_DATA_FILE, JSON.stringify(Array.from(set), null, 2), 'utf-8');
+    const arr = Array.from(set);
+
+    // Always write to TMP_DELETED_FILE (writable in Vercel serverless environment)
+    try {
+      fs.writeFileSync(TMP_DELETED_FILE, JSON.stringify(arr, null, 2), 'utf-8');
+    } catch {}
+
+    // Also attempt writing to DELETED_DATA_FILE (local development)
+    try {
+      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.writeFileSync(DELETED_DATA_FILE, JSON.stringify(arr, null, 2), 'utf-8');
+    } catch {}
   } catch (e) {
     console.warn('Notice writing deleted-product-ids.json:', e);
   }
@@ -44,8 +70,16 @@ export function removeDeletedProductId(productId: string): void {
   try {
     const set = getDeletedProductIds();
     set.delete(productId);
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(DELETED_DATA_FILE, JSON.stringify(Array.from(set), null, 2), 'utf-8');
+    const arr = Array.from(set);
+
+    try {
+      fs.writeFileSync(TMP_DELETED_FILE, JSON.stringify(arr, null, 2), 'utf-8');
+    } catch {}
+
+    try {
+      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.writeFileSync(DELETED_DATA_FILE, JSON.stringify(arr, null, 2), 'utf-8');
+    } catch {}
   } catch (e) {}
 }
 
@@ -206,34 +240,56 @@ function marshalFirestore(obj: Record<string, any>): { fields: Record<string, an
   return { fields };
 }
 
-// 4. Read from local persistent file
+// 4. Read from local persistent file (merges bundled repo file and /tmp runtime writes on Vercel)
 function readLocalFile(): ProductItem[] {
+  const map = new Map<string, ProductItem>();
+
+  // A. First read bundled LOCAL_DATA_FILE
   try {
     if (fs.existsSync(LOCAL_DATA_FILE)) {
       const raw = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
-      return JSON.parse(raw);
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        for (const p of list) {
+          if (p && p.id) map.set(p.id, p);
+        }
+      }
     }
+  } catch (e) {}
+
+  // B. Then read TMP_DATA_FILE (runtime writes on Vercel override/augment bundled list)
+  try {
     if (fs.existsSync(TMP_DATA_FILE)) {
       const raw = fs.readFileSync(TMP_DATA_FILE, 'utf-8');
-      return JSON.parse(raw);
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        for (const p of list) {
+          if (p && p.id) map.set(p.id, p);
+        }
+      }
     }
-  } catch (e) {
-    console.warn('Notice reading local products file:', e);
-  }
-  return [];
+  } catch (e) {}
+
+  return Array.from(map.values());
 }
 
 // 5. Write to local persistent file
 function writeLocalFile(products: ProductItem[]) {
+  // Always write to TMP_DATA_FILE first (writable in Vercel serverless environment)
+  try {
+    fs.writeFileSync(TMP_DATA_FILE, JSON.stringify(products, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Notice writing TMP_DATA_FILE:', e);
+  }
+
+  // Also try writing to LOCAL_DATA_FILE for local dev persistence
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(LOCAL_DATA_FILE, JSON.stringify(products, null, 2), 'utf-8');
   } catch (e) {
-    try {
-      fs.writeFileSync(TMP_DATA_FILE, JSON.stringify(products, null, 2), 'utf-8');
-    } catch {}
+    // EROFS on Vercel is expected and safely handled
   }
 }
 

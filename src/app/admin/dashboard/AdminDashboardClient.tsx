@@ -35,7 +35,14 @@ import {
 } from 'lucide-react';
 import RazorpaySettingsCard from '@/components/RazorpaySettingsCard';
 import { GoogleSettingsCard } from '@/components/GoogleSettingsCard';
-import { deleteProductFromFirebase, addClientDeletedProductId } from '@/lib/firebase';
+import {
+  deleteProductFromFirebase,
+  addClientDeletedProductId,
+  subscribeToProducts,
+  updateLocalCommunityProductStatus,
+  removeLocalCommunityProduct,
+  getLocalCommunityProducts,
+} from '@/lib/firebase';
 import { OWNER_PHONE, OWNER_EMAIL } from '@/lib/order-notifications';
 
 interface AdminDashboardClientProps {
@@ -73,6 +80,36 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
   const [harvestList, setHarvestList] = useState(harvestListings || []);
   const [blogList, setBlogList] = useState(blogPosts || []);
   const [actionAlert, setActionAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Real-time synchronization across all tabs, devices, server, and local storage
+  React.useEffect(() => {
+    // 1. Initial client-side local sync to ensure any products added locally are immediately shown
+    if (typeof window !== 'undefined') {
+      try {
+        const local = getLocalCommunityProducts();
+        if (local && local.length > 0) {
+          setProductList((prev) => {
+            const merged = [...prev];
+            for (const lp of local) {
+              if (!merged.some((p) => p.id === lp.id || (p.slug && p.slug === lp.slug))) {
+                merged.unshift(lp);
+              }
+            }
+            return merged;
+          });
+        }
+      } catch {}
+    }
+
+    // 2. Real-time subscription across tabs, devices, server, and Firestore
+    const unsubscribe = subscribeToProducts((liveList) => {
+      setProductList(liveList);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Modals
   const [showAddFarmerModal, setShowAddFarmerModal] = useState(false);
@@ -171,21 +208,32 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update product');
 
+      const isApproved = action === 'APPROVE';
+
       setProductList((prev) =>
         prev.map((p) =>
-          p.id === productId
+          p.id === productId || p.slug === productId
             ? {
                 ...p,
-                approvalStatus: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-                isActive: action === 'APPROVE',
+                approvalStatus: isApproved ? 'APPROVED' : 'REJECTED',
+                isActive: isApproved,
               }
             : p
         )
       );
 
+      // Persist status change locally and broadcast across tabs
+      if (isApproved) {
+        updateLocalCommunityProductStatus(productId, 'APPROVED', true);
+      } else {
+        updateLocalCommunityProductStatus(productId, 'REJECTED', false);
+        removeLocalCommunityProduct(productId);
+        addClientDeletedProductId(productId);
+      }
+
       setActionAlert({
         type: 'success',
-        message: data.message || `Product has been ${action === 'APPROVE' ? 'APPROVED & activated for sale' : 'REJECTED'}.`,
+        message: data.message || `Product has been ${isApproved ? 'APPROVED & activated for sale' : 'REJECTED'}.`,
       });
     } catch (err: any) {
       setActionAlert({ type: 'error', message: err.message || 'Error updating product status.' });

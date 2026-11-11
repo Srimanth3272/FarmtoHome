@@ -39,6 +39,7 @@ import {
   SellerSubscriptionRecord
 } from '@/lib/firebase';
 import { FALLBACK_CATEGORIES } from '@/lib/fallback-data';
+import { compressImageFile } from '@/lib/image-utils';
 
 interface SellerDashboardClientProps {
   initialProducts: ProductItem[];
@@ -103,6 +104,7 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
   const [newProdWater, setNewProdWater] = useState('Solar Tubewell & Rainwater Harvesting');
   const [newProdChemFreeYears, setNewProdChemFreeYears] = useState('5');
   const [newProdImage, setNewProdImage] = useState('');
+  const [compressingImage, setCompressingImage] = useState(false);
 
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [productSuccessAlert, setProductSuccessAlert] = useState('');
@@ -233,21 +235,22 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
         storageInstructions: newProdStorage,
         isOrganic: newProdOrganic,
         images: JSON.stringify([newProdImage]),
-        approvalStatus: 'APPROVED',
-        isActive: true,
+        approvalStatus: 'PENDING',
+        isActive: false,
       });
 
       const fbProduct = result.product || result;
 
-      // Add to local state (marked as live)
+      // Add to local state (awaiting Admin approval)
       setProducts([fbProduct, ...products.filter((p) => p.id !== fbProduct.id)]);
       setShowAddProductModal(false);
 
       setProductSuccessAlert(
-        `🎉 Product "${newProdName}" successfully published live! It is now active in the store catalog.`
+        `🎉 Product "${newProdName}" submitted for Admin compliance review! Once approved by Admin, it will be published live in the customer storefront.`
       );
       setNewProdName('');
       setNewProdDesc('');
+      setNewProdImage('');
     } catch (err: any) {
       alert(err.message || 'Error uploading product');
     } finally {
@@ -1160,26 +1163,36 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block font-bold text-gray-700">Product Image URL:</label>
-                    <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors">
-                      <span>📁 Upload from Device</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              if (typeof reader.result === 'string') {
-                                setNewProdImage(reader.result);
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
+                    {compressingImage ? (
+                      <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-300 flex items-center gap-1">
+                        <span className="animate-spin">⏳</span> Compressing photo...
+                      </span>
+                    ) : (
+                      <label className="text-[11px] font-bold text-gray-700 hover:text-forest-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg border border-gray-300 cursor-pointer flex items-center gap-1 transition-colors">
+                        <span>📁 Upload from Device</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setCompressingImage(true);
+                              compressImageFile(file)
+                                .then((compressed) => {
+                                  setNewProdImage(compressed);
+                                })
+                                .catch((err) => {
+                                  alert('Error compressing image: ' + err.message);
+                                })
+                                .finally(() => {
+                                  setCompressingImage(false);
+                                });
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
                   <input
                     type="text"
