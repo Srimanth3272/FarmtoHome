@@ -65,9 +65,7 @@ export default function SellerAccountPage() {
   const [prodStock, setProdStock] = useState('50');
   const [prodOrigin, setProdOrigin] = useState('Vijayawada, Andhra Pradesh');
   const [prodDesc, setProdDesc] = useState('');
-  const [prodImageUrl, setProdImageUrl] = useState(
-    'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop&q=80'
-  );
+  const [prodImageUrl, setProdImageUrl] = useState('');
   const [storeName, setStoreName] = useState(user?.name ? `${user.name}'s Official Store` : 'My Super Store');
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [productCreatedAlert, setProductCreatedAlert] = useState<any | null>(null);
@@ -77,22 +75,6 @@ export default function SellerAccountPage() {
     message: string;
     fixUrl: string;
   } | null>(null);
-
-  // Preset images helper for fast product listing
-  const sampleImages = [
-    { label: 'Dhaba Dal Tadka 🍲', category: 'cat-food-delivery', url: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Ghee Karam Dosa 🥞', category: 'cat-dosas-parothas', url: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Aloo Paratha 🫓', category: 'cat-dosas-parothas', url: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Avakaya Pickle 🏺', category: 'cat-pickles', url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Tirupati Laddu 🍯', category: 'cat-sweets', url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Rice Murukku 🥨', category: 'cat-hots', url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fresh Mangoes 🥭', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Fresh Tomatoes 🍅', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Desi Cow Ghee 🧈', category: 'cat-fresh-produce', url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Vermicompost 🪴', category: 'cat-organic-farming', url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Cotton Shirt 👕', category: 'cat-clothes', url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&auto=format&fit=crop&q=80' },
-    { label: 'Mobile Case 📱', category: 'cat-mobile-accessories', url: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80' },
-  ];
 
   const sellerId = user?.id || 'guest-seller-01';
 
@@ -232,8 +214,8 @@ export default function SellerAccountPage() {
         originLocation: prodOrigin,
         description: prodDesc || `Premium ${selectedCatObj.name} listed by ${storeName} on Farm to Home. Quality checked and verified.`,
         isOrganic: selectedCatObj.slug === 'fresh-produce' || selectedCatObj.slug === 'organic-farming',
-        approvalStatus: 'APPROVED',
-        isActive: true,
+        approvalStatus: 'PENDING',
+        isActive: false,
       });
 
       const newProduct = result.product || result;
@@ -398,48 +380,25 @@ export default function SellerAccountPage() {
             <div className="bg-white rounded-3xl border border-cream-300 shadow-card p-6 sm:p-10 space-y-8">
               {/* Alert when product is created */}
               {productCreatedAlert && (
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 space-y-2 animate-in fade-in">
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 space-y-2 animate-in fade-in">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <p className="font-bold text-xs sm:text-sm flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                      <span>🎉 Product "{productCreatedAlert.product?.name || productCreatedAlert.name}" is now LIVE!</span>
+                      <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                      <span>⏳ Product &quot;{productCreatedAlert.product?.name || productCreatedAlert.name}&quot; Submitted for Admin Approval!</span>
                     </p>
                     <div className="flex items-center gap-2">
-                      <Link
-                        href="/shop"
+                      <button
+                        onClick={() => setActiveTab('products')}
                         className="px-3 py-1.5 rounded-xl bg-forest-800 text-white font-bold text-xs hover:bg-forest-900 flex items-center gap-1 shadow-sm"
                       >
-                        <span>View in Shop</span>
+                        <span>View My Listed Products</span>
                         <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
-                      <Link
-                        href="/customer"
-                        className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 flex items-center gap-1 shadow-sm"
-                      >
-                        <span>Customer Market</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
+                      </button>
                     </div>
                   </div>
-                  {productCreatedAlert.firestoreSuccess ? (
-                    <p className="text-xs text-emerald-800">
-                      Product stored in Firebase Firestore (<code className="bg-emerald-100 px-1 py-0.5 rounded font-mono font-bold">farm-to-home-9ff91</code>) and synchronized live for all customers!
-                    </p>
-                  ) : (
-                    <div className="mt-1 p-2 rounded-xl bg-amber-100/70 border border-amber-300 text-amber-900 text-[11px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                      <span>
-                        ℹ️ Product published live to storefront catalog for all customers. To also sync directly into your Firebase project, click below:
-                      </span>
-                      <a
-                        href="https://console.firebase.google.com/project/farm-to-home-9ff91/firestore"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-2.5 py-1 rounded-lg bg-amber-700 text-white font-bold text-[10px] shrink-0 hover:bg-amber-800"
-                      >
-                        Create Database in Firebase →
-                      </a>
-                    </div>
-                  )}
+                  <p className="text-xs text-amber-800">
+                    Your product has been submitted to the platform catalog and is awaiting administrator verification. Once accepted by the admin in the Admin Portal, it will immediately go live on the customer storefront.
+                  </p>
                 </div>
               )}
 
@@ -643,26 +602,7 @@ export default function SellerAccountPage() {
                     </div>
                   )}
 
-                  <div>
-                    <span className="text-[11px] text-gray-500 font-semibold">
-                      Or Quick Select One-Click Sample Image:
-                    </span>
-                    <div className="flex flex-wrap gap-2 pt-1.5">
-                      {sampleImages.map((s, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setProdImageUrl(s.url);
-                            setProdCategory(s.category);
-                          }}
-                          className="px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 hover:bg-forest-50 hover:border-forest-400 text-[11px] text-gray-700 font-medium transition-colors"
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+
                 </div>
 
                 {/* Description & Origin */}

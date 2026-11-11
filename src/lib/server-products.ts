@@ -519,9 +519,8 @@ export async function saveServerProduct(
           harvestDate: product.harvestDate,
           shelfLifeDays: product.shelfLifeDays,
           storageInstructions: product.storageInstructions,
-          isOrganic: product.isOrganic,
-          approvalStatus: product.approvalStatus || 'APPROVED',
-          isActive: product.isActive !== undefined ? product.isActive : true,
+          approvalStatus: product.approvalStatus || 'PENDING',
+          isActive: product.isActive !== undefined ? product.isActive : (product.approvalStatus === 'APPROVED'),
         },
         create: {
           id: product.id,
@@ -540,8 +539,8 @@ export async function saveServerProduct(
           shelfLifeDays: product.shelfLifeDays,
           storageInstructions: product.storageInstructions,
           isOrganic: product.isOrganic,
-          approvalStatus: product.approvalStatus || 'APPROVED',
-          isActive: product.isActive !== undefined ? product.isActive : true,
+          approvalStatus: product.approvalStatus || 'PENDING',
+          isActive: product.isActive !== undefined ? product.isActive : (product.approvalStatus === 'APPROVED'),
         },
       });
 

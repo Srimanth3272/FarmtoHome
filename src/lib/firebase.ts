@@ -267,18 +267,31 @@ export function subscribeToProducts(
 
     const deletedIds = getClientDeletedProductIds();
 
+    // Preserve locally stored community products (pending review or approved)
+    const local = getLocalCommunityProducts();
+    const merged = [...incoming];
+    for (const lp of local) {
+      if (
+        !merged.some((p) => p.id === lp.id || (p.slug && p.slug === lp.slug)) &&
+        !deletedIds.has(lp.id) &&
+        (!lp.slug || !deletedIds.has(lp.slug)) &&
+        (!lp.name || !deletedIds.has(lp.name)) &&
+        lp.approvalStatus !== 'REJECTED'
+      ) {
+        merged.push(lp);
+      }
+    }
+
     const unique: ProductItem[] = [];
     const seenIds = new Set<string>();
 
-    for (const p of incoming) {
+    for (const p of merged) {
       if (
         deletedIds.has(p.id) ||
         (p.slug && deletedIds.has(p.slug)) ||
         (p.name && deletedIds.has(p.name)) ||
         (p.name && deletedIds.has(p.name.toLowerCase())) ||
-        p.isActive === false ||
-        p.approvalStatus === 'REJECTED' ||
-        p.approvalStatus === 'PENDING'
+        p.approvalStatus === 'REJECTED'
       ) {
         continue;
       }
@@ -313,7 +326,7 @@ export function subscribeToProducts(
         }
       } catch {}
 
-      const res = await fetch('/api/products', { cache: 'no-store' });
+      const res = await fetch('/api/products?includePending=true', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -371,9 +384,7 @@ export function subscribeToProducts(
               (data.slug && deletedIds.has(data.slug)) ||
               (data.name && deletedIds.has(data.name)) ||
               (data.name && deletedIds.has(data.name.toLowerCase())) ||
-              data.isActive === false ||
-              data.approvalStatus === 'REJECTED' ||
-              data.approvalStatus === 'PENDING'
+              data.approvalStatus === 'REJECTED'
             ) {
               return;
             }
@@ -478,8 +489,8 @@ export async function addProductToFirebase(
     shelfLifeDays: productData.shelfLifeDays || 365,
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
-    approvalStatus: productData.approvalStatus || 'APPROVED',
-    isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : true,
+    approvalStatus: productData.approvalStatus || 'PENDING',
+    isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : false,
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,

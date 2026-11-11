@@ -102,9 +102,7 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
   const [newProdSoil, setNewProdSoil] = useState('Rich Loamy Soil');
   const [newProdWater, setNewProdWater] = useState('Solar Tubewell & Rainwater Harvesting');
   const [newProdChemFreeYears, setNewProdChemFreeYears] = useState('5');
-  const [newProdImage, setNewProdImage] = useState(
-    'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80'
-  );
+  const [newProdImage, setNewProdImage] = useState('');
 
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [productSuccessAlert, setProductSuccessAlert] = useState('');
