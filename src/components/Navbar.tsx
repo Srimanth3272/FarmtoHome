@@ -392,30 +392,48 @@ export const Navbar: React.FC = () => {
                   Home
                 </Link>
 
-                {/* Categories Dropdown */}
+                {/* Categories Dropdown & Page Link */}
                 <div
                   className="relative"
                   onMouseEnter={() => setCategoriesOpen(true)}
                   onMouseLeave={() => setCategoriesOpen(false)}
                 >
-                  <button className="flex items-center gap-1 hover:text-forest-700 transition-colors px-2 py-1 rounded-lg">
+                  <Link
+                    href="/categories"
+                    onClick={() => setCategoriesOpen(false)}
+                    className={`flex items-center gap-1 hover:text-forest-700 transition-colors px-2 py-1 rounded-lg ${
+                      pathname.startsWith('/categories') ? 'text-forest-900 font-bold bg-white/80 shadow-xs' : ''
+                    }`}
+                  >
                     <span>Categories</span>
                     <ChevronDown className="w-3.5 h-3.5 text-forest-600" />
-                  </button>
+                  </Link>
 
                   {categoriesOpen && (
-                    <div className="absolute top-full left-0 w-72 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                      {categories.map((cat) => (
-                        <Link
-                          key={cat.slug}
-                          href={`/categories/${cat.slug}`}
-                          onClick={() => setCategoriesOpen(false)}
-                          className="block p-2.5 rounded-xl hover:bg-forest-50 transition-colors"
-                        >
-                          <p className="font-semibold text-xs text-forest-950">{cat.name}</p>
-                          <p className="text-[11px] text-gray-500 truncate">{cat.desc}</p>
-                        </Link>
-                      ))}
+                    <div className="absolute top-full left-0 w-80 bg-white rounded-2xl shadow-elevated border border-cream-300 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                      <Link
+                        href="/categories"
+                        onClick={() => setCategoriesOpen(false)}
+                        className="block p-2.5 rounded-xl bg-forest-50 hover:bg-forest-100 text-forest-950 font-bold border border-forest-200 transition-colors mb-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs">✨ Explore All 13 Categories</span>
+                          <span className="text-[10px] text-forest-700">View All →</span>
+                        </div>
+                      </Link>
+                      <div className="max-h-96 overflow-y-auto space-y-0.5">
+                        {categories.map((cat) => (
+                          <Link
+                            key={cat.slug}
+                            href={`/categories/${cat.slug}`}
+                            onClick={() => setCategoriesOpen(false)}
+                            className="block p-2 rounded-xl hover:bg-forest-50 transition-colors"
+                          >
+                            <p className="font-semibold text-xs text-forest-950">{cat.name}</p>
+                            <p className="text-[11px] text-gray-500 truncate">{cat.desc}</p>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -808,7 +826,15 @@ export const Navbar: React.FC = () => {
               </div>
 
               {/* Mobile Categories Accordion */}
-              <div className="pt-4 border-t border-gray-100">
+              <div className="pt-4 border-t border-gray-100 space-y-2">
+                <Link
+                  href="/categories"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between font-bold text-xs text-forest-950 bg-cream-100 p-2.5 rounded-xl border border-cream-300"
+                >
+                  <span>📂 All 13 Categories Directory</span>
+                  <span className="text-forest-700">Explore →</span>
+                </Link>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                   Catalog Categories
                 </p>

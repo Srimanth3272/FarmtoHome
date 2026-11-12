@@ -30,7 +30,8 @@ import {
   Info,
   CookingPot,
   Soup,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Grid
 } from 'lucide-react';
 import { ProductItem } from '@/lib/types';
 import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from '@/lib/fallback-data';
@@ -59,6 +60,13 @@ export default function CustomerMarketplacePage() {
 
   useEffect(() => {
     setFirebaseActive(isFirebaseConfigured());
+
+    if (typeof window !== 'undefined') {
+      const qCat = new URLSearchParams(window.location.search).get('category');
+      if (qCat) {
+        setSelectedCategory(qCat);
+      }
+    }
 
     // Subscribe to live products (from Firebase Firestore or local real-time sync)
     const unsubscribe = subscribeToProducts((liveProducts) => {
@@ -128,7 +136,13 @@ export default function CustomerMarketplacePage() {
       selectedCategory === 'all' ||
       p.category?.slug === selectedCategory ||
       p.categoryId === selectedCategory ||
-      p.categoryId === `cat-${selectedCategory}`;
+      p.categoryId === `cat-${selectedCategory}` ||
+      p.category?.id === selectedCategory ||
+      p.category?.id === `cat-${selectedCategory}` ||
+      (selectedCategory.startsWith('cat-') && (
+        p.category?.slug === selectedCategory.replace('cat-', '') ||
+        p.categoryId === selectedCategory.replace('cat-', '')
+      ));
 
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -286,11 +300,48 @@ export default function CustomerMarketplacePage() {
           </div>
         </div>
 
-        {/* Category Pill Filters */}
+        {/* Quick Category Selector for Mobile / Small Screens */}
+        <div className="sm:hidden flex items-center gap-2 bg-cream-100 p-2.5 rounded-2xl border border-cream-300">
+          <span className="text-xs font-bold text-forest-950 shrink-0">Filter Category:</span>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="flex-1 text-xs font-bold bg-white text-forest-950 py-2 px-3 rounded-xl border border-cream-400 focus:outline-none focus:ring-2 focus:ring-forest-600 shadow-xs"
+          >
+            <option value="all">✨ All Categories ({products.length})</option>
+            {FALLBACK_CATEGORIES.map((c) => {
+              const count = deduplicatedProducts.filter(
+                (p) =>
+                  p.category?.slug === c.slug ||
+                  p.categoryId === c.id ||
+                  p.categoryId === c.slug ||
+                  p.categoryId === `cat-${c.slug}` ||
+                  p.category?.id === c.id ||
+                  p.category?.id === c.slug ||
+                  p.category?.id === `cat-${c.slug}`
+              ).length;
+              return (
+                <option key={c.slug} value={c.slug}>
+                  {c.name} ({count})
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        {/* Category Pill Filters (Horizontal Scrollable Strip) */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none pt-1">
+          <Link
+            href="/categories"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm bg-harvest-100 text-forest-950 border border-harvest-400/80 hover:bg-harvest-200 shrink-0"
+          >
+            <Grid className="w-3.5 h-3.5 text-forest-900" />
+            <span>📂 All 13 Categories Directory</span>
+          </Link>
+
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm shrink-0 ${
               selectedCategory === 'all'
                 ? 'bg-forest-900 text-white shadow-soft'
                 : 'bg-white text-gray-700 border border-cream-300 hover:bg-cream-100'
@@ -301,11 +352,15 @@ export default function CustomerMarketplacePage() {
           </button>
 
           {FALLBACK_CATEGORIES.map((cat) => {
-            const count = products.filter(
+            const count = deduplicatedProducts.filter(
               (p) =>
                 p.category?.slug === cat.slug ||
                 p.categoryId === cat.id ||
-                p.categoryId === cat.slug
+                p.categoryId === cat.slug ||
+                p.categoryId === `cat-${cat.slug}` ||
+                p.category?.id === cat.id ||
+                p.category?.id === cat.slug ||
+                p.category?.id === `cat-${cat.slug}`
             ).length;
             const isSelected = selectedCategory === cat.slug;
 
@@ -313,7 +368,7 @@ export default function CustomerMarketplacePage() {
               <button
                 key={cat.slug}
                 onClick={() => setSelectedCategory(cat.slug)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 shadow-sm ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 shadow-sm shrink-0 ${
                   isSelected
                     ? 'bg-forest-900 text-white shadow-soft'
                     : 'bg-white text-gray-700 border border-cream-300 hover:bg-cream-100'

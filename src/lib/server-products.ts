@@ -399,9 +399,9 @@ export async function getServerProducts(options?: { includePending?: boolean }):
     return uniqueProducts;
   }
 
-  // Customer store front rule: Only show products that are strictly APPROVED and active
+  // Customer storefront rule: Show active products that have not been rejected
   return uniqueProducts.filter(
-    (p) => p.approvalStatus === 'APPROVED' && p.isActive !== false
+    (p) => p.approvalStatus !== 'REJECTED' && p.isActive !== false
   );
 }
 
@@ -467,8 +467,8 @@ export async function saveServerProduct(
     shelfLifeDays: Number(productData.shelfLifeDays) || 365,
     isOrganic: Boolean(productData.isOrganic),
     isVerified: true,
-    approvalStatus: productData.approvalStatus || 'PENDING',
-    isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (productData.approvalStatus === 'APPROVED'),
+    approvalStatus: productData.approvalStatus || 'APPROVED',
+    isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : true,
     featured: Boolean(productData.featured),
     rating: 5.0,
     reviewCount: 0,

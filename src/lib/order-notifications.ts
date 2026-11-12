@@ -82,6 +82,7 @@ ${itemsText}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚡ Auto-Dispatched to Platform Owner:
+👤 Owner: Nagulakunta Srimanth
 📞 Phone / WhatsApp: +91 ${OWNER_PHONE}
 📧 Email: ${OWNER_EMAIL}`;
 }

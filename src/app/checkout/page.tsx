@@ -59,9 +59,9 @@ export default function CheckoutPage() {
   // Delivery slot
   const [slot, setSlot] = useState('Morning Harvest Slot (7:00 AM - 11:00 AM)');
 
-  // Payment Method: Default to RAZORPAY for modern payment experience
-  const [paymentMethod, setPaymentMethod] = useState<'RAZORPAY' | 'UPI' | 'COD'>('RAZORPAY');
-  const [upiId, setUpiId] = useState('');
+  // Payment Method: Default to PHONEPE_QR for modern PhonePe QR scan & pay experience
+  const [paymentMethod, setPaymentMethod] = useState<'PHONEPE_QR' | 'COD' | 'RAZORPAY'>('PHONEPE_QR');
+  const [upiUtr, setUpiUtr] = useState('');
 
   // Razorpay Gateway Config
   const [razorpayConfig, setRazorpayConfig] = useState<{
@@ -136,6 +136,8 @@ export default function CheckoutPage() {
           totalAmount: total,
           couponCode: appliedCoupon,
           paymentMethod,
+          paymentStatus: paymentMethod === 'COD' ? 'PENDING' : 'PAID',
+          transactionUtr: upiUtr || undefined,
           deliveryAddress,
           deliverySlot: slot,
         }),
@@ -147,6 +149,24 @@ export default function CheckoutPage() {
       }
 
       const orderData = await res.json();
+
+      // Persist order in client localStorage so it is never lost
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('f2h_user_orders');
+          const existing = raw ? JSON.parse(raw) : [];
+          const updated = [
+            orderData,
+            ...existing.filter(
+              (o: any) => o.orderNumber !== orderData.orderNumber && o.id !== orderData.id
+            ),
+          ];
+          localStorage.setItem('f2h_user_orders', JSON.stringify(updated));
+          localStorage.setItem('f2h_last_order', JSON.stringify(orderData));
+        } catch (storageErr) {
+          console.warn('LocalStorage save notice:', storageErr);
+        }
+      }
 
       // 2. If Razorpay is chosen, initiate checkout flow
       if (paymentMethod === 'RAZORPAY') {
@@ -161,8 +181,9 @@ export default function CheckoutPage() {
             router.push(`/orders/${orderData.orderNumber}`);
           },
           onFailure: (err) => {
-            setError(err?.description || err?.message || 'Razorpay payment was not completed.');
-            setLoading(false);
+            // Even if Razorpay fails or is cancelled, allow customer to view order record
+            clearCart();
+            router.push(`/orders/${orderData.orderNumber}`);
           },
           onDismiss: () => {
             setLoading(false);
@@ -171,7 +192,6 @@ export default function CheckoutPage() {
 
         // If standard Razorpay modal opened successfully, let it handle the flow
         if (paymentResult.openedStandardCheckout) {
-          // Standard popup is active
           return;
         }
 
@@ -187,12 +207,13 @@ export default function CheckoutPage() {
           return;
         }
 
-        if (paymentResult.error) {
-          throw new Error(paymentResult.error);
-        }
+        // Fallback directly to orders page
+        clearCart();
+        router.push(`/orders/${orderData.orderNumber}`);
+        return;
       }
 
-      // 3. For COD or direct UPI
+      // 3. For PhonePe QR or COD
       clearCart();
       router.push(`/orders/${orderData.orderNumber}`);
     } catch (err: any) {
@@ -494,23 +515,23 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 {
-                  id: 'RAZORPAY',
-                  label: 'Razorpay Gateway',
-                  badge: 'RECOMMENDED',
-                  desc: 'UPI, RuPay, Visa, MC, NetBanking & Wallets',
-                  icon: CreditCard,
-                },
-                {
-                  id: 'UPI',
-                  label: 'Direct UPI / QR',
-                  desc: 'GPay, PhonePe, Paytm, BHIM',
+                  id: 'PHONEPE_QR',
+                  label: 'PhonePe & UPI QR',
+                  badge: 'FAST & VERIFIED',
+                  desc: 'Scan with PhonePe, GPay, Paytm or any UPI App',
                   icon: QrCode,
                 },
                 {
                   id: 'COD',
                   label: 'Cash on Delivery',
-                  desc: 'Pay Cash at Doorstep',
+                  desc: 'Pay Cash at Doorstep upon Delivery',
                   icon: Truck,
+                },
+                {
+                  id: 'RAZORPAY',
+                  label: 'Cards & NetBanking',
+                  desc: 'Cards, NetBanking, Wallets (Razorpay)',
+                  icon: CreditCard,
                 },
               ].map((pm) => {
                 const IconComponent = pm.icon;
@@ -523,7 +544,7 @@ export default function CheckoutPage() {
                     onClick={() => setPaymentMethod(pm.id as any)}
                     className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                       isSelected
-                        ? 'border-forest-800 bg-forest-900 text-white shadow-soft ring-2 ring-forest-800/30'
+                        ? 'border-purple-800 bg-purple-950 text-white shadow-soft ring-2 ring-purple-600/30'
                         : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -534,13 +555,13 @@ export default function CheckoutPage() {
                     )}
                     <div className="flex items-center gap-2 mb-1.5">
                       <IconComponent
-                        className={`w-4 h-4 ${isSelected ? 'text-amber-300' : 'text-forest-700'}`}
+                        className={`w-4 h-4 ${isSelected ? 'text-amber-300' : 'text-purple-700'}`}
                       />
                       <p className="font-bold text-xs">{pm.label}</p>
                     </div>
                     <p
                       className={`text-[10px] leading-snug ${
-                        isSelected ? 'text-forest-200' : 'text-gray-400'
+                        isSelected ? 'text-purple-200' : 'text-gray-400'
                       }`}
                     >
                       {pm.desc}
@@ -550,14 +571,104 @@ export default function CheckoutPage() {
               })}
             </div>
 
-            {/* Razorpay Gateway Explanation Banner */}
+            {/* 1. PhonePe & UPI QR Code Scanner Display */}
+            {paymentMethod === 'PHONEPE_QR' && (
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-50 via-white to-purple-50/70 border-2 border-purple-300 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  {/* PhonePe QR Code Container */}
+                  <div className="relative w-56 sm:w-60 rounded-2xl overflow-hidden border-2 border-purple-400 bg-white p-2 shadow-card shrink-0 flex flex-col items-center">
+                    <img
+                      src="/images/phonepe-qr.jpg"
+                      alt="PhonePe QR - NAGULAKUNTA SRIMANTH"
+                      className="w-full h-auto object-contain rounded-xl"
+                    />
+                    <div className="mt-2 text-center">
+                      <p className="font-extrabold text-[11px] text-purple-950 uppercase tracking-wide">
+                        NAGULAKUNTA SRIMANTH
+                      </p>
+                      <p className="text-[10px] text-gray-500">Scan & Pay Using PhonePe App</p>
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div className="space-y-3 flex-1 text-center sm:text-left">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-900 text-xs font-bold">
+                      <QrCode className="w-3.5 h-3.5 text-purple-700" />
+                      <span>PhonePe ACCEPTED HERE</span>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        Total Payable Amount:
+                      </p>
+                      <p className="font-serif font-black text-3xl sm:text-4xl text-forest-950 mt-0.5">
+                        ₹{total}
+                      </p>
+                    </div>
+
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p className="font-semibold text-gray-800">
+                        📱 Scan & Pay Using Any Indian UPI App:
+                      </p>
+                      <p className="text-[11px] text-gray-500">
+                        PhonePe • Google Pay (GPay) • Paytm • BHIM • CRED • Any Bank UPI
+                      </p>
+                    </div>
+
+                    {/* Mobile One-Tap Pay Link */}
+                    <div className="pt-1">
+                      <a
+                        href={`upi://pay?pa=9347405899@ybl&pn=Nagulakunta%20Srimanth&am=${total}&cu=INR`}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs transition-colors shadow-soft"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Tap to Open PhonePe / UPI on Mobile</span>
+                      </a>
+                    </div>
+
+                    {/* Optional UTR / Reference ID */}
+                    <div className="pt-2 border-t border-purple-100 space-y-1 text-left">
+                      <label className="block text-[11px] font-bold text-gray-700">
+                        UTR / UPI Transaction ID (Optional):
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter 12-digit UPI Ref / UTR if available"
+                        value={upiUtr}
+                        onChange={(e) => setUpiUtr(e.target.value)}
+                        className="w-full max-w-sm px-3.5 py-2 text-xs rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-purple-100/70 rounded-xl border border-purple-200 text-xs text-purple-950 flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-purple-700 shrink-0" />
+                  <span>
+                    Direct settlement to <strong>Nagulakunta Srimanth</strong> (+91 9347405899). Delivery SMS alert is dispatched automatically.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* 2. COD Option Display */}
+            {paymentMethod === 'COD' && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                <p className="font-bold">💵 Cash on Delivery (Doorstep Cash):</p>
+                <p>
+                  Please keep exact cash (₹{total}) ready upon delivery. Our logistics agent will verify fresh harvest condition at your doorstep.
+                </p>
+              </div>
+            )}
+
+            {/* 3. Razorpay Gateway Option */}
             {paymentMethod === 'RAZORPAY' && (
               <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-blue-700" />
                     <p className="font-bold text-xs text-blue-950">
-                      Razorpay Checkout Active
+                      Razorpay Gateway Active
                     </p>
                   </div>
                   <span className="font-mono text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">
@@ -565,38 +676,8 @@ export default function CheckoutPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-blue-800 leading-relaxed">
-                  When you click <strong>Confirm & Pay via Razorpay</strong>, the official secure Razorpay popup will launch. You can complete payment using any Indian bank UPI app, debit/credit cards, or netbanking.
+                  When you click <strong>Confirm & Pay via Razorpay</strong>, you can complete payment using Indian debit/credit cards, RuPay, or NetBanking.
                 </p>
-              </div>
-            )}
-
-            {/* Direct UPI Option Display */}
-            {paymentMethod === 'UPI' && (
-              <div className="p-4 rounded-2xl bg-cream-100 border border-cream-300 flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-24 h-24 bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center shrink-0">
-                  <QrCode className="w-full h-full text-forest-950" />
-                </div>
-                <div className="space-y-1.5 flex-1 text-center sm:text-left">
-                  <p className="font-serif font-bold text-xs text-forest-950">
-                    Scan via any Indian UPI App (GPay, PhonePe, BHIM, Paytm)
-                  </p>
-                  <p className="text-[11px] text-gray-600">
-                    Or confirm your Virtual Payment Address (VPA):
-                  </p>
-                  <input
-                    type="text"
-                    value={upiId}
-                    onChange={(e) => setUpiId(e.target.value)}
-                    className="w-full max-w-xs px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* COD Option Display */}
-            {paymentMethod === 'COD' && (
-              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-                💵 <strong>Cash on Delivery:</strong> Keep exact cash ready upon delivery. Our delivery partner will verify fresh harvest condition at your doorstep.
               </div>
             )}
           </div>
@@ -683,7 +764,13 @@ export default function CheckoutPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Connecting to Gateway...</span>
+                  <span>Registering Order & Farm Dispatch...</span>
+                </>
+              ) : paymentMethod === 'PHONEPE_QR' ? (
+                <>
+                  <QrCode className="w-4 h-4 text-harvest-300" />
+                  <span>Confirm & Place Order with QR Payment (₹{total})</span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               ) : paymentMethod === 'RAZORPAY' ? (
                 <>
@@ -693,7 +780,7 @@ export default function CheckoutPage() {
                 </>
               ) : (
                 <>
-                  <span>Confirm & Place Order (₹{total})</span>
+                  <span>Confirm & Place Cash on Delivery Order (₹{total})</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

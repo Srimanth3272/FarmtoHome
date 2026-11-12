@@ -69,11 +69,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       !deletedIds.has(p.id) &&
       (!p.slug || !deletedIds.has(p.slug)) &&
       (!p.name || !deletedIds.has(p.name)) &&
-      p.approvalStatus === 'APPROVED' &&
+      p.approvalStatus !== 'REJECTED' &&
       p.isActive !== false &&
       (p.category?.slug === params.slug ||
         p.categoryId === params.slug ||
         p.categoryId === `cat-${params.slug}` ||
+        p.category?.id === params.slug ||
+        p.category?.id === `cat-${params.slug}` ||
         p.categoryId === category?.id)
   );
 
@@ -82,7 +84,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       !deletedIds.has(p.id) &&
       (!p.slug || !deletedIds.has(p.slug)) &&
       (!p.name || !deletedIds.has(p.name)) &&
-      p.approvalStatus === 'APPROVED' &&
+      p.approvalStatus !== 'REJECTED' &&
       p.isActive !== false
   );
 

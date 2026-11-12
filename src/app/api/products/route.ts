@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     // 2. Apply filters
     let filtered = combined.filter((p) => {
-      if (!includePending && (p.isActive === false || p.approvalStatus !== 'APPROVED')) return false;
+      if (!includePending && (p.isActive === false || p.approvalStatus === 'REJECTED')) return false;
       if (categorySlug) {
         const matchesCat =
           p.category?.slug === categorySlug ||

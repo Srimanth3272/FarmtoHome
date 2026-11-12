@@ -235,18 +235,18 @@ export const SellerDashboardClient: React.FC<SellerDashboardClientProps> = ({
         storageInstructions: newProdStorage,
         isOrganic: newProdOrganic,
         images: JSON.stringify([newProdImage]),
-        approvalStatus: 'PENDING',
-        isActive: false,
+        approvalStatus: 'APPROVED',
+        isActive: true,
       });
 
       const fbProduct = result.product || result;
 
-      // Add to local state (awaiting Admin approval)
+      // Add to local state
       setProducts([fbProduct, ...products.filter((p) => p.id !== fbProduct.id)]);
       setShowAddProductModal(false);
 
       setProductSuccessAlert(
-        `🎉 Product "${newProdName}" submitted for Admin compliance review! Once approved by Admin, it will be published live in the customer storefront.`
+        `🎉 Product "${newProdName}" successfully uploaded and live! It is now visible in the "${selectedCatObj.name}" category and in "All Categories".`
       );
       setNewProdName('');
       setNewProdDesc('');

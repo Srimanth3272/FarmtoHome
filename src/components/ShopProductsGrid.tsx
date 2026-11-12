@@ -37,9 +37,9 @@ export function ShopProductsGrid({
     const unsubscribe = subscribeToProducts((liveList) => {
       setIsLiveConnected(true);
 
-      // Strictly enforce: customer storefront only displays approved and active products
+      // Display active products that are not rejected
       let filtered = liveList.filter(
-        (p) => p.approvalStatus === 'APPROVED' && p.isActive === true
+        (p) => p.approvalStatus !== 'REJECTED' && p.isActive !== false
       );
 
       if (category) {

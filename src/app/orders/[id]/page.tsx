@@ -1,6 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import fs from 'fs';
+import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { OrderDetailClient } from './OrderDetailClient';
 
@@ -10,10 +10,6 @@ export const dynamic = 'force-dynamic';
 interface OrderDetailPageProps {
   params: { id: string };
 }
-
-import fs from 'fs';
-import path from 'path';
-import { redirect } from 'next/navigation';
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const cleanId = decodeURIComponent(params.id || '').trim();
@@ -52,7 +48,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     console.warn('Prisma lookup notice in OrderDetailPage:', err);
   }
 
-  // Backup fallback from data/orders.json
+  // Backup fallback 1: data/orders.json
   if (!order) {
     try {
       const ordersFile = path.join(process.cwd(), 'data', 'orders.json');
@@ -65,10 +61,40 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     }
   }
 
-  // If still not found, gracefully redirect to order history instead of showing a harsh 404
+  // Backup fallback 2: data/owner-order-alerts.json
   if (!order) {
-    redirect('/orders');
+    try {
+      const alertsFile = path.join(process.cwd(), 'data', 'owner-order-alerts.json');
+      if (fs.existsSync(alertsFile)) {
+        const fileAlerts = JSON.parse(fs.readFileSync(alertsFile, 'utf-8'));
+        const a = fileAlerts.find((o: any) => o.orderNumber === cleanId || o.orderId === cleanId);
+        if (a) {
+          order = {
+            id: a.orderId || a.orderNumber,
+            orderNumber: a.orderNumber,
+            status: 'CONFIRMED',
+            totalAmount: a.totalAmount,
+            subtotal: a.subtotal,
+            shippingFee: a.shippingFee,
+            discountAmount: a.discountAmount || 0,
+            paymentMethod: a.paymentMethod || 'PHONEPE_QR',
+            paymentStatus: a.paymentStatus || 'PAID',
+            deliveryAddress: typeof a.deliveryAddress === 'string' ? a.deliveryAddress : JSON.stringify(a.deliveryAddress),
+            deliverySlot: a.deliverySlot,
+            createdAt: a.timestamp || new Date().toISOString(),
+            items: (a.items || []).map((it: any, idx: number) => ({
+              id: `it-${idx}`,
+              productName: it.productName || it.name,
+              productUnit: it.productUnit || it.unit || '1 Piece',
+              priceAtPurchase: it.priceAtPurchase || it.price,
+              quantity: it.quantity || 1,
+              itemTotal: it.itemTotal || ((it.priceAtPurchase || 0) * (it.quantity || 1)),
+            })),
+          };
+        }
+      }
+    } catch (fsErr) {}
   }
 
-  return <OrderDetailClient order={order as any} />;
+  return <OrderDetailClient order={order} orderNumber={cleanId} />;
 }
