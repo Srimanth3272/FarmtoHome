@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { sendDirectWhatsAppToOwner } from './whatsapp-service';
 
 export const OWNER_PHONE = '9347405899';
 export const OWNER_EMAIL = 'sreemanthnagalakunta@gmail.com';
@@ -185,10 +186,32 @@ export async function dispatchOrderDeliveryNotification(order: {
     }
   }
 
-  // 4. Log alert to system console
+  // 4. AUTOMATED DIRECT WHATSAPP DISPATCH TO OWNER (Nagulakunta Srimanth: 9347405899)
+  // Sends WhatsApp notification directly to owner without requiring customer click
+  try {
+    const waResult = await sendDirectWhatsAppToOwner({
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      deliveryAddress: order.deliveryAddress,
+      deliverySlot: order.deliverySlot,
+      items: order.items || [],
+      subtotal: order.subtotal,
+      shippingFee: order.shippingFee,
+      discountAmount: order.discountAmount,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+    });
+    console.log(`[AUTO WHATSAPP DISPATCH RESULT]:`, waResult);
+  } catch (waErr) {
+    console.warn('Auto WhatsApp dispatch background error:', waErr);
+  }
+
+  // 5. Log alert to system console
   console.log(`\n======================================================`);
   console.log(`📢 [OWNER DELIVERY ALERT DISPATCHED]`);
-  console.log(`Destination Phone / SMS: +91 ${OWNER_PHONE}`);
+  console.log(`Destination Phone / WhatsApp: +91 ${OWNER_PHONE}`);
   console.log(`Destination Email: ${OWNER_EMAIL}`);
   console.log(`Order: ${order.orderNumber} | Customer: ${order.customerName} (${order.customerPhone})`);
   console.log(`Delivery Address: ${order.deliveryAddress}`);
@@ -197,3 +220,4 @@ export async function dispatchOrderDeliveryNotification(order: {
 
   return alertPayload;
 }
+

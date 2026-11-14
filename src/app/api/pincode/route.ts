@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { findDistrictByPincode, isAndhraPradeshPincode } from '@/lib/andhra-pradesh-data';
+import {
+  findDistrictByPincode,
+  isAndhraPradeshPincode,
+  isHyperlocal524301Pincode,
+  getHyperlocalDeliveryInfo,
+} from '@/lib/andhra-pradesh-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +19,34 @@ export async function GET(request: Request) {
     }
 
     const trimmedCode = code.trim();
+
+    // 0. Special 7 km Hyperlocal Delivery Check for Somasila / Ananthasagaram (524301)
+    if (isHyperlocal524301Pincode(trimmedCode)) {
+      const info = getHyperlocalDeliveryInfo(trimmedCode);
+      return NextResponse.json({
+        deliverable: true,
+        isAndhraPradesh: true,
+        isHyperlocal7Km: true,
+        hyperlocalRadius: '7 km',
+        pincode: trimmedCode,
+        district: 'Sri Potti Sriramulu Nellore (Somasila / Ananthasagaram)',
+        state: 'Andhra Pradesh',
+        headquarters: 'Somasila Project, Nellore',
+        estimatedDays: 0,
+        estimatedDeliveryHours: '30 - 45 Mins Hyperlocal Express',
+        standardRate: 0,
+        hubName: 'Somasila 7km Hyperlocal Kitchen & Farm Hub (Nellore AP)',
+        hyperlocalItems: [
+          'Fresh Farm Vegetables & Greens',
+          'Crispy Desi Ghee Dosas',
+          'Steaming Hot Idlis with Sambar & Chutneys',
+          'Stone-Ground Dosa & Idli Batters',
+          'Village Kitchen Meals'
+        ],
+        message:
+          '⚡ Hyperlocal 7km Express Active: Fresh Vegetables, Hot Dosas & Steaming Idlis delivered to 524301 & within 7 km in 30-45 mins!',
+      });
+    }
 
     // 1. Check database for explicit custom rate/delivery records
     try {

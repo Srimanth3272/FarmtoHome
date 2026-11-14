@@ -17,6 +17,9 @@ export interface APDistrict {
     lat: number;
     lng: number;
   };
+  isHyperlocal7KmHub?: boolean;
+  hyperlocalRadiusKm?: number;
+  hyperlocalItems?: string[];
 }
 
 export const ANDHRA_PRADESH_DISTRICTS: APDistrict[] = [
@@ -294,20 +297,29 @@ export const ANDHRA_PRADESH_DISTRICTS: APDistrict[] = [
   },
   {
     id: 'spsr-nellore',
-    name: 'Sri Potti Sriramulu Nellore',
-    teluguName: 'శ్రీ పొట్టి శ్రీరాములు నెల్లూరు',
-    headquarters: 'Nellore',
+    name: 'Sri Potti Sriramulu Nellore (Somasila 7km Hub)',
+    teluguName: 'శ్రీ పొట్టి శ్రీరాములు నెల్లూరు (సోమశిల హబ్)',
+    headquarters: 'Nellore / Somasila',
     region: 'Coastal Andhra',
     pinPrefixes: ['524'],
-    primaryPin: '524001',
-    samplePins: ['524001', '524002', '524003', '524004', '524101', '524305'],
-    deliveryType: 'NEXT_DAY',
-    estimatedDeliveryHours: '12 - 18 Hours',
-    deliveryFee: 35,
-    hubName: 'Nellore Coastal Paddy & Citrus Depot',
-    famousProduce: ['Nellore Molagolukulu Rice', 'Organic Sweet Lemons (Nimmakaya)', 'Black Gram', 'Betel Leaves'],
-    activeFarmersCount: 195,
-    coordinates: { lat: 14.4426, lng: 79.9865 },
+    primaryPin: '524301',
+    samplePins: ['524301', '524001', '524002', '524003', '524004', '524101', '524305'],
+    deliveryType: 'SAME_DAY',
+    estimatedDeliveryHours: '30 - 45 Mins Hyperlocal (524301 & 7km radius) / 12 Hours District',
+    deliveryFee: 30,
+    hubName: 'Somasila 7km Hyperlocal Kitchen & Farm Hub (Nellore AP)',
+    famousProduce: [
+      'Fresh Organic Vegetables & Greens (7km Express)',
+      'Crisp Desi Ghee Dosas & Hot Idlis (Delivered in 30-45 mins)',
+      'Nellore Molagolukulu Rice',
+      'Organic Sweet Lemons (Nimmakaya)',
+      'Stone-Ground Dosa & Idli Batter'
+    ],
+    activeFarmersCount: 220,
+    coordinates: { lat: 14.4985, lng: 79.3050 },
+    isHyperlocal7KmHub: true,
+    hyperlocalRadiusKm: 7,
+    hyperlocalItems: ['Fresh Vegetables', 'Hot Dosas', 'Steaming Idlis', 'Tiffin Meals', 'Fresh Batters'],
   },
   {
     id: 'prakasam',
@@ -524,12 +536,45 @@ export function findDistrictByPincode(pincode: string): APDistrict | null {
   if (prefix3 === '523') {
     return ANDHRA_PRADESH_DISTRICTS.find((d) => d.id === 'prakasam') || null;
   }
+  if (pincode.trim() === '524301' || isHyperlocal524301Pincode(pincode)) {
+    return ANDHRA_PRADESH_DISTRICTS.find((d) => d.id === 'spsr-nellore') || null;
+  }
+
   if (prefix3 === '524') {
     return ANDHRA_PRADESH_DISTRICTS.find((d) => d.id === 'spsr-nellore') || null;
   }
 
   // Fallback to central hub
   return ANDHRA_PRADESH_DISTRICTS[0];
+}
+
+// ⚡ Special 7 km Hyperlocal Delivery Zone for Somasila / Ananthasagaram (524301)
+export function isHyperlocal524301Pincode(pincode: string): boolean {
+  if (!pincode) return false;
+  const clean = pincode.trim();
+  // 524301 is Somasila Project / Ananthasagaram, and surrounding 7km cluster
+  return ['524301', '524302', '524305', '524311', '524314'].includes(clean);
+}
+
+export function getHyperlocalDeliveryInfo(pincode: string) {
+  if (isHyperlocal524301Pincode(pincode)) {
+    return {
+      isHyperlocal: true,
+      pincode: '524301',
+      hubName: 'Somasila 7km Hyperlocal Kitchen & Farm Hub (Nellore AP)',
+      radiusKm: 7,
+      estimatedDeliveryHours: '30 - 45 Mins Hyperlocal Express',
+      supportedItems: [
+        'Fresh Farm Vegetables & Greens',
+        'Hot Desi Ghee Dosas',
+        'Steaming Idlis with Sambar & Chutneys',
+        'Fresh Stone-Ground Batters',
+        'Dhaba Village Kitchen Food'
+      ],
+      message: '⚡ Hyperlocal 7km Express Active: Fresh Vegetables, Hot Dosas & Steaming Idlis delivered to 524301 & within 7 km in 30-45 mins!',
+    };
+  }
+  return null;
 }
 
 // Search districts by name or keyword

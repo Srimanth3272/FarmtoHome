@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, CreditCard, ShieldCheck, Settings, Lock, CheckCircle2 } from 'lucide-react';
 import RazorpaySettingsCard from '@/components/RazorpaySettingsCard';
 import { GoogleSettingsCard } from '@/components/GoogleSettingsCard';
+import WhatsAppSettingsCard from '@/components/WhatsAppSettingsCard';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 
 export default function AdminSettingsPage() {
@@ -22,10 +23,10 @@ export default function AdminSettingsPage() {
             </Link>
             <div>
               <h1 className="font-serif font-black text-2xl sm:text-3xl text-forest-950">
-                Platform Authentication & Payment Settings
+                Platform Authentication, Payment & WhatsApp Settings
               </h1>
               <p className="text-xs text-gray-500">
-                Configure real-time Google OAuth 2.0 Sign-In and Razorpay Payment Gateway credentials.
+                Configure real-time Google Sign-In, Razorpay Payment Gateway, and Direct WhatsApp Order Dispatch to Owner (+91 9347405899).
               </p>
             </div>
           </div>
@@ -35,6 +36,9 @@ export default function AdminSettingsPage() {
             <span>Admin Authenticated (admin@123)</span>
           </div>
         </div>
+
+        {/* Direct WhatsApp Notification Card */}
+        <WhatsAppSettingsCard />
 
         {/* Google OAuth Card */}
         <GoogleSettingsCard />

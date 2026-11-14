@@ -1,0 +1,19 @@
+{
+  "provider": "auto",
+  "ownerPhone": "9347405899",
+  "callmebotApiKey": "",
+  "twilioAccountSid": "",
+  "twilioAuthToken": "",
+  "twilioFromNumber": "",
+  "metaApiToken": "",
+  "metaPhoneNumberId": "",
+  "webhookUrl": "",
+  "isAutoSendEnabled": true,
+  "lastDispatchResult": {
+    "timestamp": "2026-11-14T07:01:09.544Z",
+    "success": true,
+    "provider": "direct_simulation_ready",
+    "message": "Order logged and queued for WhatsApp (+91 9347405899). Add CallMeBot free API key in Admin Settings for instant cloud delivery.",
+    "statusDetail": "Order registered & saved to server queue"
+  }
+}

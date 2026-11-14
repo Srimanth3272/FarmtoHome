@@ -231,14 +231,14 @@ ${itemsBreakdown || '1. Direct Farm Order'}
                 </span>
               </div>
               <h2 className="font-serif font-bold text-base sm:text-lg text-white mt-0.5">
-                Dispatch Notification Sent to Owner & Customer
+                Order Info Auto-Dispatched to Owner's WhatsApp (+91 {ownerPhone})
               </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-emerald-200">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-            <span>Instant Dispatch Ready</span>
+            <span>WhatsApp Auto-Dispatched</span>
           </div>
         </div>
 
@@ -264,39 +264,34 @@ ${itemsBreakdown || '1. Direct Farm Order'}
         </div>
 
         {/* 1-Click Send Info Action Buttons */}
-        <div className="space-y-2 pt-1">
-          <p className="text-xs font-semibold text-forest-200">
-            Send order info directly to WhatsApp, SMS, or Email:
-          </p>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* WhatsApp Link */}
+        <div className="space-y-3 pt-1">
+          <div className="p-3 bg-emerald-500/20 rounded-xl border border-emerald-400/30 flex items-center gap-2.5 text-xs text-emerald-100">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>Automated WhatsApp Dispatch:</strong> Order details have been sent directly to Store Owner <strong>{ownerName} (+91 {ownerPhone})</strong>. You do not need to click anything or send messages manually!
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            {/* Optional Customer Copy on WhatsApp */}
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-soft"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all shadow-xs"
             >
-              <MessageSquare className="w-4 h-4 text-emerald-200" />
-              <span>Send via WhatsApp (+91 {ownerPhone})</span>
-              <ExternalLink className="w-3 h-3 text-emerald-200" />
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Customer WhatsApp Copy (Optional)</span>
+              <ExternalLink className="w-3 h-3 text-emerald-300" />
             </a>
 
             {/* Email Link */}
             <a
               href={mailtoUrl}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-soft"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all shadow-xs"
             >
-              <Mail className="w-4 h-4 text-blue-200" />
-              <span>Send via Email ({ownerEmail})</span>
-            </a>
-
-            {/* SMS Link */}
-            <a
-              href={smsUrl}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all"
-            >
-              <Phone className="w-3.5 h-3.5 text-harvest-300" />
-              <span>Send SMS Alert</span>
+              <Mail className="w-3.5 h-3.5 text-blue-300" />
+              <span>Email Receipt</span>
             </a>
 
             {/* Copy Details */}
@@ -308,7 +303,7 @@ ${itemsBreakdown || '1. Direct Farm Order'}
                   setTimeout(() => setCopiedAlert(false), 2500);
                 }
               }}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-forest-800 hover:bg-forest-700 text-forest-100 font-bold text-xs border border-forest-700 transition-all"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-700 text-forest-100 font-bold text-xs border border-forest-700 transition-all"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>{copiedAlert ? '✓ Copied!' : 'Copy Summary'}</span>

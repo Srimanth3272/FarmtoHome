@@ -139,9 +139,10 @@ export const PinCodeChecker: React.FC<{ initialPin?: string }> = ({ initialPin =
       <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
         <span className="text-gray-500 font-medium">Quick AP Hubs:</span>
         {[
+          { name: 'Somasila (524301 - 7km)', pin: '524301' },
           { name: 'Vijayawada', pin: '520001' },
+          { name: 'Nellore', pin: '524001' },
           { name: 'Vizag', pin: '530001' },
-          { name: 'Guntur', pin: '522001' },
           { name: 'Tirupati', pin: '517501' },
         ].map((hub) => (
           <button
@@ -172,7 +173,13 @@ export const PinCodeChecker: React.FC<{ initialPin?: string }> = ({ initialPin =
           )}
           <div className="space-y-1">
             <p className="font-semibold leading-relaxed">{result.message}</p>
-            {result.deliverable && result.isAndhraPradesh && (
+            {result.deliverable && (result as any).isHyperlocal7Km && (
+              <div className="p-2 rounded-lg bg-emerald-100/80 border border-emerald-300 text-emerald-950 font-bold text-[11px] flex items-center gap-1.5 mt-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>⚡ 7 km Hyperlocal Hub Active: Fast 30-45 Mins Delivery for Fresh Vegetables, Hot Dosas & Steaming Idlis to 524301!</span>
+              </div>
+            )}
+            {result.deliverable && result.isAndhraPradesh && !(result as any).isHyperlocal7Km && (
               <div className="flex items-center gap-2 pt-1 border-t border-emerald-200/60">
                 <span className="text-[11px] text-emerald-800 font-medium flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-emerald-600" />
